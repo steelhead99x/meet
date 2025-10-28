@@ -18,8 +18,9 @@ const nextConfig = {
   },
   headers: async () => {
     return [
+      // Apply security headers to HTML pages (needed for SharedArrayBuffer/E2EE)
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
           {
             key: 'Cross-Origin-Opener-Policy',
@@ -28,6 +29,16 @@ const nextConfig = {
           {
             key: 'Cross-Origin-Embedder-Policy',
             value: 'credentialless',
+          },
+        ],
+      },
+      // Ensure proper MIME types and caching for static assets
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
