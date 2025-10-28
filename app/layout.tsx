@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import '@livekit/components-styles';
 import '@livekit/components-styles/prefabs';
+import '../styles/modern-theme.css';
 import type { Metadata, Viewport } from 'next';
 import { ToasterProvider } from './ToasterProvider';
 

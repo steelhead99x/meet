@@ -135,20 +135,28 @@
 }
 
 .passphraseInput {
-  padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(5px);
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: white;
-  font-family: monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.passphraseInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .passphraseInput:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.01);
 }
 
 .footer {
