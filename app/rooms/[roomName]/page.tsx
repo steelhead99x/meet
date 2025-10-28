@@ -27,7 +27,7 @@ export default async function Page({
 
   return (
     <PageClientImpl
-      roomName={_params.roomName}
+      roomName={'Ruha Meetup'}
       region={_searchParams.region}
       hq={hq}
       codec={codec}

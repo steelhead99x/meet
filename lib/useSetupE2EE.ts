@@ -20,17 +20,58 @@ import { decodePassphrase } from './client-utils';
  * const e2eeEnabled = !!(worker && e2eePassphrase);
  * ```
  */
-export function useSetupE2EE(): { worker: Worker | undefined; e2eePassphrase: string | undefined } {
-  const e2eePassphrase = React.useMemo(() => 
-    typeof window !== 'undefined' ? decodePassphrase(location.hash.substring(1)) : undefined,
-    []
-  );
+export function useSetupE2EE(): { worker: Worker | undefined; e2eePassphrase: string | undefined; isResolved: boolean } {
+  const [e2eePassphrase, setE2eePassphrase] = React.useState<string | undefined>(undefined);
+  const [isResolved, setIsResolved] = React.useState<boolean>(false);
+
+  // Resolve passphrase from URL hash first; otherwise fetch a daily key from the server
+  React.useEffect(() => {
+    let timer: number | undefined;
+
+    const resolvePassphrase = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const fromHash = location.hash.substring(1);
+          if (fromHash && fromHash.length > 0) {
+            setE2eePassphrase(decodePassphrase(fromHash));
+            setIsResolved(true);
+            return;
+          }
+        }
+
+        // No URL hash provided; fetch shared daily key that rotates at UTC midnight
+        const res = await fetch('/api/e2ee-key');
+        if (!res.ok) throw new Error(`Failed to fetch E2EE key: ${res.status}`);
+        const data: { passphrase: string; validUntilISO?: string } = await res.json();
+        setE2eePassphrase(data.passphrase);
+        setIsResolved(true);
+
+        // Schedule a refresh at the server-provided rotation time if present
+        if (typeof window !== 'undefined' && data.validUntilISO) {
+          const ms = new Date(data.validUntilISO).getTime() - Date.now();
+          if (ms > 0 && ms < 36 * 60 * 60 * 1000) {
+            timer = window.setTimeout(resolvePassphrase, ms + 1000);
+          }
+        }
+      } catch (err) {
+        console.error('E2EE passphrase resolution failed:', err);
+        setE2eePassphrase(undefined);
+        setIsResolved(true);
+      }
+    };
+
+    resolvePassphrase();
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, []);
 
   const worker = React.useMemo(() => {
     if (typeof window === 'undefined' || !e2eePassphrase) {
       return undefined;
     }
-    
     try {
       // Load worker from public directory for reliable Next.js compatibility
       return new Worker('/livekit-e2ee-worker.mjs', { type: 'module' });
@@ -40,5 +81,5 @@ export function useSetupE2EE(): { worker: Worker | undefined; e2eePassphrase: st
     }
   }, [e2eePassphrase]);
 
-  return { worker, e2eePassphrase };
+  return { worker, e2eePassphrase, isResolved };
 }

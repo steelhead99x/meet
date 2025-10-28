@@ -33,6 +33,12 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing required query parameter: participantName', { status: 400 });
     }
 
+    // Enforce single room name
+    const SINGLE_ROOM_NAME = 'Ruha Meetup';
+    if (roomName !== SINGLE_ROOM_NAME) {
+      return new NextResponse(`Room not allowed. Use "${SINGLE_ROOM_NAME}"`, { status: 403 });
+    }
+
     // Generate participant token
     if (!randomParticipantPostfix) {
       randomParticipantPostfix = randomString(4);

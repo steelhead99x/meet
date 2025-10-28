@@ -7,31 +7,30 @@ import { ToasterProvider } from './ToasterProvider';
 
 export const metadata: Metadata = {
   title: {
-    default: 'LiveKit Meet | Conference app build with LiveKit open source',
+    default: 'Ruha Meetup',
     template: '%s',
   },
-  description:
-    'LiveKit is an open source WebRTC project that gives you everything needed to build scalable and real-time audio and/or video experiences in your applications.',
+  description: 'Single-room video meetup. Welcome to the Ruha Meetup.',
   twitter: {
     creator: '@livekitted',
     site: '@livekitted',
     card: 'summary_large_image',
   },
   openGraph: {
-    url: 'https://meet.livekit.io',
+    url: 'https://example.com',
     images: [
       {
-        url: 'https://meet.livekit.io/images/livekit-meet-open-graph.png',
-        width: 2000,
-        height: 1000,
-        type: 'image/png',
+        url: '/images/ruha-logo.jpg',
+        width: 192,
+        height: 192,
+        type: 'image/jpeg',
       },
     ],
-    siteName: 'LiveKit Meet',
+    siteName: 'Ruha Meetup',
   },
   icons: {
     icon: '/favicon.ico',
-    apple: '/images/livekit-apple-touch.png',
+    apple: '/images/ruha-logo.jpg',
   },
 };
 

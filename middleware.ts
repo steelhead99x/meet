@@ -5,6 +5,13 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const pathname = request.nextUrl.pathname;
   
+  // Always rewrite /meet/* to /* so the app runs at the root path
+  if (pathname === '/meet' || pathname.startsWith('/meet/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/meet/, '') || '/';
+    return NextResponse.rewrite(url);
+  }
+  
   // Quiet missing CSS source map requests (Next may reference them in dev)
   if (pathname.startsWith('/_next/static/css/') && pathname.endsWith('.map')) {
     return new NextResponse(null, { status: 204 });

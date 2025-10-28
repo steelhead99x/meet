@@ -49,6 +49,7 @@ export function PageClientImpl(props: {
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
+  const [useEncryption, setUseEncryption] = React.useState(true);
   const preJoinDefaults = React.useMemo(() => {
     return {
       username: '',
@@ -126,13 +127,24 @@ export function PageClientImpl(props: {
             onValidate={handlePreJoinValidate}
             onError={handlePreJoinError}
           />
+          <div style={{ marginTop: 16, textAlign: 'center' }}>
+            <label style={{ cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={useEncryption}
+                onChange={(e) => setUseEncryption(e.target.checked)}
+                style={{ marginRight: 8 }}
+              />
+              Use end-to-end encryption
+            </label>
+          </div>
         </div>
       ) : (
         <RoomErrorBoundary>
           <VideoConferenceComponent
             connectionDetails={connectionDetails}
             userChoices={preJoinChoices}
-            options={{ codec: props.codec, hq: props.hq }}
+            options={{ codec: props.codec, hq: props.hq, useEncryption }}
           />
         </RoomErrorBoundary>
       )}
@@ -146,11 +158,12 @@ function VideoConferenceComponent(props: {
   options: {
     hq: boolean;
     codec: VideoCodec;
+    useEncryption: boolean;
   };
 }) {
   const keyProvider = React.useMemo(() => new ExternalE2EEKeyProvider(), []);
-  const { worker, e2eePassphrase } = useSetupE2EE();
-  const e2eeEnabled = !!(e2eePassphrase && worker);
+  const { worker, e2eePassphrase, isResolved } = useSetupE2EE();
+  const e2eeEnabled = !!(props.options.useEncryption && e2eePassphrase && worker);
 
   const [room, setRoom] = React.useState<Room | null>(null);
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
@@ -161,6 +174,10 @@ function VideoConferenceComponent(props: {
 
     const setupRoomWithE2EE = async () => {
       try {
+        // Wait until E2EE resolution completes to avoid double room creation
+        if (!isResolved) {
+          return;
+        }
         // Step 1: Set the key BEFORE creating the room
         if (e2eeEnabled) {
           console.log('E2EE Setup: Starting encryption setup');
@@ -287,7 +304,7 @@ function VideoConferenceComponent(props: {
     return () => {
       cancelled = true;
     };
-  }, [e2eeEnabled, e2eePassphrase, keyProvider, worker, props.options.hq, props.options.codec, props.userChoices]);
+  }, [isResolved, e2eeEnabled, e2eePassphrase, keyProvider, worker, props.options.hq, props.options.codec, props.userChoices]);
 
   const connectOptions = React.useMemo((): RoomConnectOptions => {
     return {
@@ -393,7 +410,7 @@ function VideoConferenceComponent(props: {
   if (!room) {
     return (
       <div className="lk-room-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Setting up encrypted connection...</div>
+        <div>{e2eeEnabled ? 'Setting up encrypted connection...' : 'Preparing connection...'}</div>
       </div>
     );
   }
