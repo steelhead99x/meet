@@ -5,11 +5,6 @@ const nextConfig = {
   images: {
     formats: ['image/webp'],
   },
-  // Turbopack configuration (Next.js 16+)
-  turbopack: {
-    // Enable source maps for debugging
-    moduleIdStrategy: 'deterministic',
-  },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }) => {
     // Important: return the modified config
     config.module.rules.push({
