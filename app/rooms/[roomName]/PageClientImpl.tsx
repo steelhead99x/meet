@@ -200,13 +200,21 @@ function VideoConferenceComponent(props: {
   React.useEffect(() => {
     return () => {
       console.log('Cleaning up room and stopping all tracks...');
-      // Stop all local tracks
-      room.localParticipant.videoTrackPublications.forEach((publication) => {
-        publication.track?.stop();
-      });
-      room.localParticipant.audioTrackPublications.forEach((publication) => {
-        publication.track?.stop();
-      });
+      try {
+        // Stop all local tracks (check if they're still live before stopping)
+        room.localParticipant.videoTrackPublications.forEach((publication) => {
+          if (publication.track && publication.track.readyState === 'live') {
+            publication.track.stop();
+          }
+        });
+        room.localParticipant.audioTrackPublications.forEach((publication) => {
+          if (publication.track && publication.track.readyState === 'live') {
+            publication.track.stop();
+          }
+        });
+      } catch (error) {
+        console.warn('Error stopping tracks during cleanup:', error);
+      }
       // Disconnect the room
       room.disconnect();
     };

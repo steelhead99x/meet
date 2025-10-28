@@ -101,17 +101,25 @@ export function CameraSettings() {
   }, []);
 
   React.useEffect(() => {
-    if (isLocalTrack(cameraTrack?.track)) {
+    const track = cameraTrack?.track;
+    
+    // Only process if track exists, is local, and is in 'live' state
+    if (!isLocalTrack(track) || track.readyState !== 'live') {
+      return;
+    }
+
+    // Wrap in try-catch to handle any state errors gracefully
+    try {
       if (backgroundType === 'blur') {
         // High-quality blur
-        cameraTrack.track?.setProcessor(
+        track.setProcessor(
           BackgroundBlur(15, {
             delegate: 'GPU',
           }),
         );
       } else if (backgroundType === 'image' && virtualBackgroundImagePath) {
         // Virtual background with image
-        cameraTrack.track?.setProcessor(
+        track.setProcessor(
           VirtualBackground(virtualBackgroundImagePath, {
             delegate: 'GPU',
           }),
@@ -119,13 +127,20 @@ export function CameraSettings() {
       } else if (backgroundType === 'gradient' && virtualBackgroundImagePath) {
         // For gradient, we need to create a canvas with the gradient
         const gradientDataUrl = createGradientCanvas(virtualBackgroundImagePath);
-        cameraTrack.track?.setProcessor(
+        track.setProcessor(
           VirtualBackground(gradientDataUrl, {
             delegate: 'GPU',
           }),
         );
       } else {
-        cameraTrack.track?.stopProcessor();
+        track.stopProcessor();
+      }
+    } catch (error) {
+      // Silently handle errors when track is in invalid state
+      if (error instanceof DOMException && error.name === 'InvalidStateError') {
+        console.warn('Track is in invalid state, skipping processor update');
+      } else {
+        console.error('Error setting video processor:', error);
       }
     }
   }, [cameraTrack, backgroundType, virtualBackgroundImagePath, createGradientCanvas]);
