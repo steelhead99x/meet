@@ -1,4 +1,4 @@
-import { videoCodecs } from 'livekit-client';
+import { videoCodecs, type VideoCodec } from 'livekit-client';
 import { VideoConferenceClientImpl } from './VideoConferenceClientImpl';
 import { isVideoCodec } from '@/lib/types';
 
@@ -20,9 +20,12 @@ export default async function CustomRoomConnection(props: {
     return <h2>Invalid codec, if defined it has to be [{videoCodecs.join(', ')}].</h2>;
   }
 
+  // After validation, codec is either undefined or a valid VideoCodec
+  const validatedCodec = codec as VideoCodec | undefined;
+
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
-      <VideoConferenceClientImpl liveKitUrl={liveKitUrl} token={token} codec={codec} />
+      <VideoConferenceClientImpl liveKitUrl={liveKitUrl} token={token} codec={validatedCodec} />
     </main>
   );
 }
