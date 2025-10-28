@@ -6,6 +6,7 @@ import {
   LogLevel,
   Room,
   RoomConnectOptions,
+  RoomEvent,
   RoomOptions,
   VideoPresets,
   type VideoCodec,
@@ -17,6 +18,7 @@ import { SettingsMenu } from '@/lib/SettingsMenu';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useLowCPUOptimizer } from '@/lib/usePerfomanceOptimiser';
 import { isMeetStaging } from '@/lib/client-utils';
+import toast from 'react-hot-toast';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -48,13 +50,15 @@ export function VideoConferenceClientImpl(props: {
     };
   }, [e2eeEnabled, props.codec, keyProvider, worker]);
 
-  const room = useMemo(() => new Room(roomOptions), [roomOptions]);
+  const [room] = useState(() => new Room(roomOptions));
 
   const connectOptions = useMemo((): RoomConnectOptions => {
     return {
       autoSubscribe: true,
     };
   }, []);
+
+  const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected');
 
   useEffect(() => {
     if (e2eeEnabled) {
@@ -68,37 +72,56 @@ export function VideoConferenceClientImpl(props: {
     }
   }, [e2eeEnabled, e2eePassphrase, keyProvider, room, setE2eeSetupComplete]);
 
+  // Event listeners for connection state
   useEffect(() => {
-    if (e2eeSetupComplete) {
-      room.connect(props.liveKitUrl, props.token, connectOptions).catch((error) => {
-        console.error(error);
+    const handleReconnecting = () => setConnectionState('reconnecting');
+    const handleReconnected = () => setConnectionState('connected');
+    const handleDisconnected = () => setConnectionState('disconnected');
+    
+    const handleError = (error: Error) => {
+      console.error('Room error:', error);
+      toast.error(`Error: ${error.message}`, {
+        duration: 5000,
+        position: 'top-center',
       });
-      room.localParticipant.enableCameraAndMicrophone().catch((error) => {
-        console.error(error);
+    };
+
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+    room.on(RoomEvent.MediaDevicesError, handleError);
+
+    return () => {
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+      room.off(RoomEvent.MediaDevicesError, handleError);
+    };
+  }, [room]);
+
+  // Connection logic
+  useEffect(() => {
+    if (!e2eeSetupComplete) return;
+
+    room.connect(props.liveKitUrl, props.token, connectOptions).catch((error) => {
+      console.error('Connection error:', error);
+      toast.error(`Failed to connect: ${error.message}`, {
+        duration: 5000,
+        position: 'top-center',
       });
-    }
+    });
+    room.localParticipant.enableCameraAndMicrophone().catch((error) => {
+      console.error('Media error:', error);
+      toast.error(`Failed to enable camera/microphone: ${error.message}`, {
+        duration: 5000,
+        position: 'top-center',
+      });
+    });
   }, [room, props.liveKitUrl, props.token, connectOptions, e2eeSetupComplete]);
 
-  // Cleanup webcam and disconnect room when component unmounts
+  // Cleanup - let LiveKit handle track cleanup automatically
   useEffect(() => {
     return () => {
-      console.log('Cleaning up room and stopping all tracks...');
-      try {
-        // Stop all local tracks (check if they're still live before stopping)
-        room.localParticipant.videoTrackPublications.forEach((publication) => {
-          if (publication.track && publication.track.mediaStreamTrack?.readyState === 'live') {
-            publication.track.stop();
-          }
-        });
-        room.localParticipant.audioTrackPublications.forEach((publication) => {
-          if (publication.track && publication.track.mediaStreamTrack?.readyState === 'live') {
-            publication.track.stop();
-          }
-        });
-      } catch (error) {
-        console.warn('Error stopping tracks during cleanup:', error);
-      }
-      // Disconnect the room
       room.disconnect();
     };
   }, [room]);
@@ -107,6 +130,25 @@ export function VideoConferenceClientImpl(props: {
 
   return (
     <div className="lk-room-container">
+      {connectionState === 'reconnecting' && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--lk-warning, #f59e0b)',
+            color: 'white',
+            padding: '8px',
+            textAlign: 'center',
+            zIndex: 1000,
+            fontSize: '14px',
+            fontWeight: 500,
+          }}
+        >
+          🔄 Reconnecting to room...
+        </div>
+      )}
       <RoomContext.Provider value={room}>
         <KeyboardShortcuts />
         <VideoConference

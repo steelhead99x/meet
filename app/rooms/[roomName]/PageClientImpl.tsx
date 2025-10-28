@@ -29,6 +29,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useLowCPUOptimizer } from '@/lib/usePerfomanceOptimiser';
+import toast from 'react-hot-toast';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -133,7 +134,7 @@ function VideoConferenceComponent(props: {
     };
   }, [props.userChoices, props.options.hq, props.options.codec]);
 
-  const room = React.useMemo(() => new Room(roomOptions), []);
+  const [room] = React.useState(() => new Room(roomOptions));
 
   React.useEffect(() => {
     if (e2eeEnabled) {
@@ -142,10 +143,14 @@ function VideoConferenceComponent(props: {
         .then(() => {
           room.setE2EEEnabled(true).catch((e) => {
             if (e instanceof DeviceUnsupportedError) {
-              alert(
-                `You're trying to join an encrypted meeting, but your browser does not support it. Please update it to the latest version and try again.`,
+              console.error('E2EE not supported:', e);
+              toast.error(
+                'Your browser does not support encrypted meetings. Please update to the latest version.',
+                {
+                  duration: 8000,
+                  position: 'top-center',
+                }
               );
-              console.error(e);
             } else {
               throw e;
             }
@@ -163,77 +168,81 @@ function VideoConferenceComponent(props: {
     };
   }, []);
 
+  const [connectionState, setConnectionState] = React.useState<'connected' | 'reconnecting' | 'disconnected'>('connected');
+
+  const router = useRouter();
+  const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
+  
+  const handleError = React.useCallback((error: Error) => {
+    console.error(error);
+    toast.error(`Encountered an unexpected error: ${error.message}`, {
+      duration: 5000,
+      position: 'top-center',
+    });
+  }, []);
+  
+  const handleEncryptionError = React.useCallback((error: Error) => {
+    console.error(error);
+    toast.error(`Encryption error: ${error.message}`, {
+      duration: 5000,
+      position: 'top-center',
+    });
+  }, []);
+
+  // Event listeners - separate from connection logic
   React.useEffect(() => {
+    const handleReconnecting = () => setConnectionState('reconnecting');
+    const handleReconnected = () => setConnectionState('connected');
+    const handleDisconnected = () => setConnectionState('disconnected');
+
     room.on(RoomEvent.Disconnected, handleOnLeave);
     room.on(RoomEvent.EncryptionError, handleEncryptionError);
     room.on(RoomEvent.MediaDevicesError, handleError);
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
 
-    if (e2eeSetupComplete) {
-      room
-        .connect(
-          props.connectionDetails.serverUrl,
-          props.connectionDetails.participantToken,
-          connectOptions,
-        )
-        .catch((error) => {
-          handleError(error);
-        });
-      if (props.userChoices.videoEnabled) {
-        room.localParticipant.setCameraEnabled(true).catch((error) => {
-          handleError(error);
-        });
-      }
-      if (props.userChoices.audioEnabled) {
-        room.localParticipant.setMicrophoneEnabled(true).catch((error) => {
-          handleError(error);
-        });
-      }
-    }
     return () => {
       room.off(RoomEvent.Disconnected, handleOnLeave);
       room.off(RoomEvent.EncryptionError, handleEncryptionError);
       room.off(RoomEvent.MediaDevicesError, handleError);
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
     };
-  }, [e2eeSetupComplete, room, props.connectionDetails, props.userChoices]);
+  }, [room, handleOnLeave, handleError, handleEncryptionError]);
 
-  // Cleanup webcam and disconnect room when component unmounts
+  // Connection logic - separate effect
+  React.useEffect(() => {
+    if (!e2eeSetupComplete) return;
+
+    room
+      .connect(
+        props.connectionDetails.serverUrl,
+        props.connectionDetails.participantToken,
+        connectOptions,
+      )
+      .catch((error) => {
+        handleError(error);
+      });
+    if (props.userChoices.videoEnabled) {
+      room.localParticipant.setCameraEnabled(true).catch((error) => {
+        handleError(error);
+      });
+    }
+    if (props.userChoices.audioEnabled) {
+      room.localParticipant.setMicrophoneEnabled(true).catch((error) => {
+        handleError(error);
+      });
+    }
+  }, [e2eeSetupComplete, room, props.connectionDetails, props.userChoices, connectOptions, handleError]);
+
+  // Cleanup - let LiveKit handle track cleanup automatically
   React.useEffect(() => {
     return () => {
-      console.log('Cleaning up room and stopping all tracks...');
-      try {
-        // Stop all local tracks (check if they're still live before stopping)
-        room.localParticipant.videoTrackPublications.forEach((publication) => {
-          if (publication.track && publication.track.mediaStreamTrack?.readyState === 'live') {
-            publication.track.stop();
-          }
-        });
-        room.localParticipant.audioTrackPublications.forEach((publication) => {
-          if (publication.track && publication.track.mediaStreamTrack?.readyState === 'live') {
-            publication.track.stop();
-          }
-        });
-      } catch (error) {
-        console.warn('Error stopping tracks during cleanup:', error);
-      }
-      // Disconnect the room
       room.disconnect();
     };
   }, [room]);
 
   const lowPowerMode = useLowCPUOptimizer(room);
-
-  const router = useRouter();
-  const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
-  const handleError = React.useCallback((error: Error) => {
-    console.error(error);
-    alert(`Encountered an unexpected error, check the console logs for details: ${error.message}`);
-  }, []);
-  const handleEncryptionError = React.useCallback((error: Error) => {
-    console.error(error);
-    alert(
-      `Encountered an unexpected encryption error, check the console logs for details: ${error.message}`,
-    );
-  }, []);
 
   React.useEffect(() => {
     if (lowPowerMode) {
@@ -243,6 +252,25 @@ function VideoConferenceComponent(props: {
 
   return (
     <div className="lk-room-container">
+      {connectionState === 'reconnecting' && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--lk-warning, #f59e0b)',
+            color: 'white',
+            padding: '8px',
+            textAlign: 'center',
+            zIndex: 1000,
+            fontSize: '14px',
+            fontWeight: 500,
+          }}
+        >
+          🔄 Reconnecting to room...
+        </div>
+      )}
       <RoomContext.Provider value={room}>
         <KeyboardShortcuts />
         <VideoConference
