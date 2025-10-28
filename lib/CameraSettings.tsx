@@ -104,7 +104,7 @@ export function CameraSettings() {
     const track = cameraTrack?.track;
     
     // Only process if track exists, is local, and is in 'live' state
-    if (!isLocalTrack(track) || track.readyState !== 'live') {
+    if (!isLocalTrack(track) || track.mediaStreamTrack?.readyState !== 'live') {
       return;
     }
 
