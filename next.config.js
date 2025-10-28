@@ -42,6 +42,24 @@ const nextConfig = {
           },
         ],
       },
+      // Public assets (background images)
+      {
+        source: '/background-images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400',
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless',
+          },
+        ],
+      },
     ];
   },
 };

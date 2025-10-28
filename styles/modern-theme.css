@@ -4,100 +4,127 @@
    Control Bar & Buttons - Modern Design
    =========================================== */
 
-/* Control bar styling */
+/* Control bar styling - Professional */
 .lk-control-bar {
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.85) 100%
-  ) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  padding: 20px 24px !important;
-  gap: 12px !important;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 16px 24px !important;
+  gap: 10px !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Button base styling - Modern rounded look */
-.lk-button,
-.lk-control-bar button {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+/* Control bar buttons - Clean base styling */
+.lk-control-bar .lk-button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 12px !important;
-  padding: 12px 16px !important;
+  padding: 12px 18px !important;
   font-weight: 500 !important;
   font-size: 14px !important;
-  letter-spacing: 0.2px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-  color: white !important;
-  min-height: 48px !important;
+  letter-spacing: 0.3px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  min-height: 44px !important;
 }
 
-.lk-button:hover,
-.lk-control-bar button:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+.lk-control-bar .lk-button:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
-.lk-button:active,
-.lk-control-bar button:active {
+.lk-control-bar .lk-button:active {
   transform: translateY(0) !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Microphone & Camera buttons */
-.lk-button[data-lk-source="microphone"],
-.lk-button[data-lk-source="camera"] {
+/* Microphone & Camera buttons - Circular and professional */
+.lk-control-bar .lk-button[data-lk-source="microphone"],
+.lk-control-bar .lk-button[data-lk-source="camera"] {
   border-radius: 50% !important;
   width: 56px !important;
   height: 56px !important;
+  min-width: 56px !important;
+  min-height: 56px !important;
   padding: 0 !important;
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  position: relative !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Active state - Enabled */
-.lk-button[data-lk-source="microphone"][data-lk-enabled="true"],
-.lk-button[data-lk-source="camera"][data-lk-enabled="true"] {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+.lk-control-bar .lk-button[data-lk-source="microphone"]:hover,
+.lk-control-bar .lk-button[data-lk-source="camera"]:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Disabled state - Muted/Off - Red accent */
-.lk-button[data-lk-source="microphone"][data-lk-enabled="false"],
-.lk-button[data-lk-source="camera"][data-lk-enabled="false"] {
-  background: rgba(220, 38, 38, 0.2) !important;
-  border-color: rgba(220, 38, 38, 0.4) !important;
-  color: #ef4444 !important;
+/* Icon sizing for mic/camera - perfectly centered */
+.lk-control-bar .lk-button[data-lk-source="microphone"] svg,
+.lk-control-bar .lk-button[data-lk-source="camera"] svg {
+  width: 22px !important;
+  height: 22px !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
 }
 
-.lk-button[data-lk-source="microphone"][data-lk-enabled="false"]:hover,
-.lk-button[data-lk-source="camera"][data-lk-enabled="false"]:hover {
-  background: rgba(220, 38, 38, 0.3) !important;
-  border-color: rgba(220, 38, 38, 0.5) !important;
+/* Active state - Enabled (subtle green) */
+.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"],
+.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"] {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Leave/End call button - Prominent red */
-.lk-disconnect-button,
-.lk-button.lk-disconnect-button {
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
-  border-color: rgba(220, 38, 38, 0.8) !important;
+.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"]:hover,
+.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"]:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Disabled state - Muted/Off (professional red) */
+.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"],
+.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"] {
+  background: rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"]:hover,
+.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"]:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Leave/End call button - Professional red */
+.lk-control-bar .lk-disconnect-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  border: 2px solid rgba(239, 68, 68, 0.3) !important;
   color: white !important;
   font-weight: 600 !important;
   min-width: 120px !important;
   padding: 12px 24px !important;
-  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
-.lk-disconnect-button:hover {
-  background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5) !important;
+.lk-control-bar .lk-disconnect-button:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Share screen button - Accent color */
@@ -155,25 +182,21 @@
   transform: scale(1.02) !important;
 }
 
-/* Participant metadata overlay */
+/* Participant metadata overlay - NO blur on metadata bar */
 .lk-participant-metadata {
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
     rgba(0, 0, 0, 0.85) 100%
   ) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
   padding: 16px !important;
   border-radius: 0 0 14px 14px !important;
 }
 
 .lk-participant-metadata-item {
-  background: rgba(0, 0, 0, 0.6) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
   border-radius: 8px !important;
   padding: 6px 12px !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   font-weight: 500 !important;
   font-size: 13px !important;
@@ -367,6 +390,31 @@
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6) !important;
   max-width: 520px !important;
+}
+
+/* Prejoin state colors - professional and subtle */
+.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="true"] {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2) !important;
+}
+
+.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="true"]:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="false"] {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
+}
+
+.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="false"]:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
 }
 
 .lk-prejoin input {
