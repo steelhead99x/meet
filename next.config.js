@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: '/meet',
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
   images: {
