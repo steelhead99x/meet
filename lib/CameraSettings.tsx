@@ -60,31 +60,11 @@ export function CameraSettings() {
     null,
   );
 
-  // Quality setting: higher = smoother edges, less noise/bleed-through (0.0 - 1.0)
-  const [edgeSmoothing, setEdgeSmoothing] = React.useState<number>(0.7);
-  
-  // Debounced version to prevent crashes from rapid updates
-  const [debouncedEdgeSmoothing, setDebouncedEdgeSmoothing] = React.useState<number>(0.7);
-  const [isApplying, setIsApplying] = React.useState<boolean>(false);
-
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
       : undefined;
   }, [localParticipant, cameraTrack]);
-
-  // Debounce the edge smoothing changes to prevent crashes
-  React.useEffect(() => {
-    setIsApplying(true);
-    const timer = setTimeout(() => {
-      setDebouncedEdgeSmoothing(edgeSmoothing);
-      setIsApplying(false);
-    }, 500); // Wait 500ms after user stops adjusting
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [edgeSmoothing]);
 
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
     setBackgroundType(type);
@@ -123,21 +103,17 @@ export function CameraSettings() {
   React.useEffect(() => {
     if (isLocalTrack(cameraTrack?.track)) {
       if (backgroundType === 'blur') {
-        // High-quality blur with better edge detection
+        // High-quality blur
         cameraTrack.track?.setProcessor(
           BackgroundBlur(15, {
-            // Improved segmentation options for better edge detection
             delegate: 'GPU',
-            smoothingLevel: debouncedEdgeSmoothing, // Higher smoothing for cleaner edges (0-1)
           }),
         );
       } else if (backgroundType === 'image' && virtualBackgroundImagePath) {
-        // High-quality virtual background with edge smoothing
+        // Virtual background with image
         cameraTrack.track?.setProcessor(
           VirtualBackground(virtualBackgroundImagePath, {
-            // Improved segmentation options
             delegate: 'GPU',
-            smoothingLevel: debouncedEdgeSmoothing, // Reduces bleed-through and noise
           }),
         );
       } else if (backgroundType === 'gradient' && virtualBackgroundImagePath) {
@@ -145,16 +121,14 @@ export function CameraSettings() {
         const gradientDataUrl = createGradientCanvas(virtualBackgroundImagePath);
         cameraTrack.track?.setProcessor(
           VirtualBackground(gradientDataUrl, {
-            // Improved segmentation options
             delegate: 'GPU',
-            smoothingLevel: debouncedEdgeSmoothing, // Reduces bleed-through and noise
           }),
         );
       } else {
         cameraTrack.track?.stopProcessor();
       }
     }
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, createGradientCanvas, debouncedEdgeSmoothing]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, createGradientCanvas]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -323,65 +297,6 @@ export function CameraSettings() {
             </button>
           ))}
         </div>
-
-        {/* Edge Smoothing Quality Slider - only show when background effect is active */}
-        {backgroundType !== 'none' && (
-          <div style={{ marginTop: '15px', padding: '10px 0' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '8px',
-              }}
-            >
-              <label
-                htmlFor="edge-smoothing"
-                style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}
-              >
-                Edge Quality {isApplying && <span style={{ color: '#0090ff' }}>(applying...)</span>}
-              </label>
-              <span style={{ fontSize: '12px', color: '#666' }}>
-                {Math.round(edgeSmoothing * 100)}%
-              </span>
-            </div>
-            <input
-              id="edge-smoothing"
-              type="range"
-              min="0"
-              max="100"
-              value={edgeSmoothing * 100}
-              onChange={(e) => setEdgeSmoothing(Number(e.target.value) / 100)}
-              style={{
-                width: '100%',
-                cursor: 'pointer',
-                accentColor: '#0090ff',
-              }}
-            />
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '11px',
-                color: '#999',
-                marginTop: '4px',
-              }}
-            >
-              <span>Fast</span>
-              <span>Quality</span>
-            </div>
-            <p
-              style={{
-                fontSize: '12px',
-                color: '#666',
-                marginTop: '8px',
-                lineHeight: '1.4',
-              }}
-            >
-              Higher quality reduces noise and bleed-through but uses more CPU
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
