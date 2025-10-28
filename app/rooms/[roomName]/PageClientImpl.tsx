@@ -33,8 +33,10 @@ import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 
+// Base path for the application (configured in next.config.js)
+const BASE_PATH = '/meet';
 const CONN_DETAILS_ENDPOINT =
-  process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
+  process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? `${BASE_PATH}/api/connection-details`;
 const SHOW_SETTINGS_MENU = process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU == 'true';
 
 export function PageClientImpl(props: {

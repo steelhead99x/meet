@@ -11,6 +11,10 @@ import {
 import styles from '../styles/SettingsMenu.module.css';
 import { CameraSettings } from './CameraSettings';
 import { MicrophoneSettings } from './MicrophoneSettings';
+
+// Base path for the application (configured in next.config.js)
+const BASE_PATH = '/meet';
+
 /**
  * @alpha
  */
@@ -22,7 +26,13 @@ export interface SettingsMenuProps extends React.HTMLAttributes<HTMLDivElement> 
 export function SettingsMenu(props: SettingsMenuProps) {
   const layoutContext = useMaybeLayoutContext();
   const room = useRoomContext();
-  const recordingEndpoint = process.env.NEXT_PUBLIC_LK_RECORD_ENDPOINT;
+  const rawRecordingEndpoint = process.env.NEXT_PUBLIC_LK_RECORD_ENDPOINT;
+  // If recording endpoint is set and is a relative path, prepend the base path
+  const recordingEndpoint = rawRecordingEndpoint 
+    ? (rawRecordingEndpoint.startsWith('/') && !rawRecordingEndpoint.startsWith(BASE_PATH)
+        ? `${BASE_PATH}${rawRecordingEndpoint}`
+        : rawRecordingEndpoint)
+    : undefined;
 
   const settings = React.useMemo(() => {
     return {
