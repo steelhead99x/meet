@@ -203,12 +203,12 @@ function VideoConferenceComponent(props: {
       try {
         // Stop all local tracks (check if they're still live before stopping)
         room.localParticipant.videoTrackPublications.forEach((publication) => {
-          if (publication.track && publication.track.readyState === 'live') {
+          if (publication.track && publication.track.mediaStreamTrack?.readyState === 'live') {
             publication.track.stop();
           }
         });
         room.localParticipant.audioTrackPublications.forEach((publication) => {
-          if (publication.track && publication.track.readyState === 'live') {
+          if (publication.track && publication.track.mediaStreamTrack?.readyState === 'live') {
             publication.track.stop();
           }
         });
