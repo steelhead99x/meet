@@ -64,12 +64,29 @@ export function CameraSettings() {
 
   // Quality setting: higher = smoother edges, less noise/bleed-through (0.0 - 1.0)
   const [edgeSmoothing, setEdgeSmoothing] = React.useState<number>(0.7);
+  
+  // Debounced version to prevent crashes from rapid updates
+  const [debouncedEdgeSmoothing, setDebouncedEdgeSmoothing] = React.useState<number>(0.7);
+  const [isApplying, setIsApplying] = React.useState<boolean>(false);
 
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
       : undefined;
   }, [localParticipant, cameraTrack]);
+
+  // Debounce the edge smoothing changes to prevent crashes
+  React.useEffect(() => {
+    setIsApplying(true);
+    const timer = setTimeout(() => {
+      setDebouncedEdgeSmoothing(edgeSmoothing);
+      setIsApplying(false);
+    }, 500); // Wait 500ms after user stops adjusting
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [edgeSmoothing]);
 
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
     setBackgroundType(type);
@@ -113,7 +130,7 @@ export function CameraSettings() {
           BackgroundBlur(15, {
             // Improved segmentation options for better edge detection
             delegate: 'GPU',
-            smoothingLevel: edgeSmoothing, // Higher smoothing for cleaner edges (0-1)
+            smoothingLevel: debouncedEdgeSmoothing, // Higher smoothing for cleaner edges (0-1)
           }),
         );
       } else if (backgroundType === 'image' && virtualBackgroundImagePath) {
@@ -122,7 +139,7 @@ export function CameraSettings() {
           VirtualBackground(virtualBackgroundImagePath, {
             // Improved segmentation options
             delegate: 'GPU',
-            smoothingLevel: edgeSmoothing, // Reduces bleed-through and noise
+            smoothingLevel: debouncedEdgeSmoothing, // Reduces bleed-through and noise
           }),
         );
       } else if (backgroundType === 'gradient' && virtualBackgroundImagePath) {
@@ -132,14 +149,14 @@ export function CameraSettings() {
           VirtualBackground(gradientDataUrl, {
             // Improved segmentation options
             delegate: 'GPU',
-            smoothingLevel: edgeSmoothing, // Reduces bleed-through and noise
+            smoothingLevel: debouncedEdgeSmoothing, // Reduces bleed-through and noise
           }),
         );
       } else {
         cameraTrack.track?.stopProcessor();
       }
     }
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, createGradientCanvas, edgeSmoothing]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, createGradientCanvas, debouncedEdgeSmoothing]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -324,7 +341,7 @@ export function CameraSettings() {
                 htmlFor="edge-smoothing"
                 style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}
               >
-                Edge Quality
+                Edge Quality {isApplying && <span style={{ color: '#0090ff' }}>(applying...)</span>}
               </label>
               <span style={{ fontSize: '12px', color: '#666' }}>
                 {Math.round(edgeSmoothing * 100)}%
