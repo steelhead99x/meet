@@ -2,8 +2,12 @@
 const nextConfig = {
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
+  outputFileTracing: true,
   images: {
     formats: ['image/webp'],
+  },
+  experimental: {
+    serverComponentsHmrCache: false,
   },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }) => {
     // Important: return the modified config
