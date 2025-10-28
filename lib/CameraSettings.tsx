@@ -6,8 +6,8 @@ import {
   useLocalParticipant,
   VideoTrack,
 } from '@livekit/components-react';
-import { BackgroundBlur, VirtualBackground } from '@livekit/track-processors';
-import { isLocalTrack, LocalTrackPublication, Track } from 'livekit-client';
+import { BackgroundBlur, VirtualBackground, ProcessorWrapper } from '@livekit/track-processors';
+import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent } from 'livekit-client';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -46,6 +46,32 @@ const GRADIENT_BACKGROUNDS = [
 // Background options
 type BackgroundType = 'none' | 'blur' | 'image' | 'gradient';
 
+// Helper function to create a canvas with gradient for VirtualBackground
+// Placed outside component to avoid recreation
+const createGradientCanvas = (gradient: string): string => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Parse gradient string and create gradient
+    const gradientObj = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    
+    // Extract colors from gradient string (simplified parser)
+    if (gradient.includes('linear-gradient')) {
+      const colors = gradient.match(/#[0-9a-fA-F]{6}/g);
+      if (colors && colors.length >= 2) {
+        gradientObj.addColorStop(0, colors[0]);
+        gradientObj.addColorStop(1, colors[1]);
+      }
+    }
+    
+    ctx.fillStyle = gradientObj;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  return canvas.toDataURL();
+};
+
 export function CameraSettings() {
   const { cameraTrack, localParticipant } = useLocalParticipant();
   const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(
@@ -60,13 +86,67 @@ export function CameraSettings() {
     null,
   );
 
+  // Cache processor instances to avoid recreating them
+  const processorCacheRef = React.useRef<{
+    blur?: ProcessorWrapper<Record<string, unknown>>;
+    virtualBackground?: Map<string, ProcessorWrapper<Record<string, unknown>>>;
+  }>({
+    virtualBackground: new Map(),
+  });
+
+  // Track the currently applied processor configuration to avoid reapplying the same one
+  const currentProcessorRef = React.useRef<{
+    type: BackgroundType;
+    path: string | null;
+  }>({ type: 'none', path: null });
+
+  // Debounce timer ref
+  const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Track CPU constraint state
+  const [cpuConstrained, setCpuConstrained] = React.useState(false);
+
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
       : undefined;
   }, [localParticipant, cameraTrack]);
 
+  // Monitor CPU constraints and auto-disable effects if needed
+  React.useEffect(() => {
+    if (!localParticipant) return;
+
+    const handleCpuConstrained = async () => {
+      console.warn('CPU constrained detected - disabling background effects');
+      setCpuConstrained(true);
+      
+      // Auto-disable background effects when CPU constrained
+      if (backgroundType !== 'none') {
+        const track = cameraTrack?.track;
+        if (isLocalTrack(track)) {
+          try {
+            await track.stopProcessor();
+            currentProcessorRef.current = { type: 'none', path: null };
+          } catch (err) {
+            console.error('Failed to stop processor on CPU constraint:', err);
+          }
+        }
+      }
+    };
+
+    localParticipant.on(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
+
+    return () => {
+      localParticipant.off(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
+    };
+  }, [localParticipant, cameraTrack, backgroundType]);
+
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
+    // Warn if trying to enable effects when CPU constrained
+    if (cpuConstrained && type !== 'none') {
+      console.warn('CPU constrained - background effects may cause performance issues');
+    }
+    
     setBackgroundType(type);
     if ((type === 'image' || type === 'gradient') && imagePath) {
       setVirtualBackgroundImagePath(imagePath);
@@ -75,31 +155,7 @@ export function CameraSettings() {
     }
   };
 
-  // Helper function to create a canvas with gradient for VirtualBackground
-  const createGradientCanvas = React.useCallback((gradient: string): string => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1920;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      // Parse gradient string and create gradient
-      const gradientObj = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      
-      // Extract colors from gradient string (simplified parser)
-      if (gradient.includes('linear-gradient')) {
-        const colors = gradient.match(/#[0-9a-fA-F]{6}/g);
-        if (colors && colors.length >= 2) {
-          gradientObj.addColorStop(0, colors[0]);
-          gradientObj.addColorStop(1, colors[1]);
-        }
-      }
-      
-      ctx.fillStyle = gradientObj;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    return canvas.toDataURL();
-  }, []);
-
+  // Effect to apply processors with debouncing and caching
   React.useEffect(() => {
     const track = cameraTrack?.track;
     
@@ -108,42 +164,99 @@ export function CameraSettings() {
       return;
     }
 
-    // Wrap in try-catch to handle any state errors gracefully
-    try {
-      if (backgroundType === 'blur') {
-        // High-quality blur
-        track.setProcessor(
-          BackgroundBlur(15, {
-            delegate: 'GPU',
-          }),
-        );
-      } else if (backgroundType === 'image' && virtualBackgroundImagePath) {
-        // Virtual background with image
-        track.setProcessor(
-          VirtualBackground(virtualBackgroundImagePath, {
-            delegate: 'GPU',
-          }),
-        );
-      } else if (backgroundType === 'gradient' && virtualBackgroundImagePath) {
-        // For gradient, we need to create a canvas with the gradient
-        const gradientDataUrl = createGradientCanvas(virtualBackgroundImagePath);
-        track.setProcessor(
-          VirtualBackground(gradientDataUrl, {
-            delegate: 'GPU',
-          }),
-        );
-      } else {
-        track.stopProcessor();
-      }
-    } catch (error) {
-      // Silently handle errors when track is in invalid state
-      if (error instanceof DOMException && error.name === 'InvalidStateError') {
-        console.warn('Track is in invalid state, skipping processor update');
-      } else {
-        console.error('Error setting video processor:', error);
-      }
+    // Check if we're already using this processor configuration
+    if (
+      currentProcessorRef.current.type === backgroundType &&
+      currentProcessorRef.current.path === virtualBackgroundImagePath
+    ) {
+      return; // Already applied, skip
     }
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, createGradientCanvas]);
+
+    // Clear any pending debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce processor changes to prevent rapid reapplication
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        if (backgroundType === 'blur') {
+          // Reuse cached blur processor if available
+          let blurProcessor = processorCacheRef.current.blur;
+          if (!blurProcessor) {
+            // Create and cache blur processor with optimized settings
+            blurProcessor = BackgroundBlur(10, { // Reduced from 15 to 10 for better performance
+              delegate: 'GPU',
+            });
+            processorCacheRef.current.blur = blurProcessor;
+          }
+          
+          await track.setProcessor(blurProcessor);
+          currentProcessorRef.current = { type: 'blur', path: null };
+          
+        } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
+          // Generate cache key
+          const cacheKey = `${backgroundType}:${virtualBackgroundImagePath}`;
+          
+          // Get or create virtual background processor
+          let virtualBgProcessor = processorCacheRef.current.virtualBackground?.get(cacheKey);
+          if (!virtualBgProcessor) {
+            let imagePath = virtualBackgroundImagePath;
+            
+            // For gradient, generate the canvas data URL
+            if (backgroundType === 'gradient') {
+              imagePath = createGradientCanvas(virtualBackgroundImagePath);
+            }
+            
+            virtualBgProcessor = VirtualBackground(imagePath, {
+              delegate: 'GPU',
+            });
+            processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
+          }
+          
+          await track.setProcessor(virtualBgProcessor);
+          currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath };
+          
+        } else {
+          // No effect - stop processor
+          await track.stopProcessor();
+          currentProcessorRef.current = { type: 'none', path: null };
+        }
+      } catch (error) {
+        // Handle errors gracefully
+        if (error instanceof DOMException && error.name === 'InvalidStateError') {
+          console.warn('Track is in invalid state, skipping processor update');
+        } else {
+          console.error('Error setting video processor:', error);
+        }
+      }
+    }, 300); // 300ms debounce
+
+    // Cleanup function
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath]);
+
+  // Cleanup processors on unmount
+  React.useEffect(() => {
+    return () => {
+      const track = cameraTrack?.track;
+      if (isLocalTrack(track)) {
+        track.stopProcessor().catch((err) => {
+          console.warn('Error stopping processor on cleanup:', err);
+        });
+      }
+      
+      // Clear processor cache
+      processorCacheRef.current = {
+        virtualBackground: new Map(),
+      };
+      currentProcessorRef.current = { type: 'none', path: null };
+    };
+  }, [cameraTrack]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -175,7 +288,22 @@ export function CameraSettings() {
             marginBottom: '8px',
           }}
         >
-          <div style={{ fontWeight: '500' }}>Background Effects</div>
+          <div style={{ fontWeight: '500' }}>
+            Background Effects
+            {cpuConstrained && (
+              <span
+                style={{
+                  marginLeft: '8px',
+                  fontSize: '12px',
+                  color: '#f59e0b',
+                  fontWeight: 'normal',
+                }}
+                title="CPU constraints detected - effects may impact performance"
+              >
+                ⚠️ Limited Performance
+              </span>
+            )}
+          </div>
           <div
             title="Tips for best results:&#10;• Use good front lighting&#10;• Avoid backlighting&#10;• Keep background simple&#10;• Adjust Edge Quality slider"
             style={{

@@ -1,149 +1,250 @@
 /* Modern Video Conference Theme */
 
 /* ===========================================
-   Control Bar & Buttons - Modern Design
+   Control Bar & Buttons - Enhanced Modern Design
    =========================================== */
 
-/* Control bar styling - Professional */
+/* Control bar styling - Premium glassmorphism */
 .lk-control-bar {
-  background: rgba(0, 0, 0, 0.75) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  padding: 16px 24px !important;
-  gap: 10px !important;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.95) 100%
+  ) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  padding: 20px 32px !important;
+  gap: 14px !important;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6),
+              0 -2px 8px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 88px !important;
 }
 
-/* Control bar buttons - Clean base styling */
+/* Control bar buttons - Enhanced base styling */
 .lk-control-bar .lk-button {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 12px !important;
-  padding: 12px 18px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 13px 20px !important;
   font-weight: 500 !important;
   font-size: 14px !important;
-  letter-spacing: 0.3px !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  letter-spacing: 0.4px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+              0 2px 4px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
   color: rgba(255, 255, 255, 0.95) !important;
-  min-height: 44px !important;
+  min-height: 48px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Subtle shine effect on buttons */
+.lk-control-bar .lk-button::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  ) !important;
+  transition: left 0.5s ease !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.lk-control-bar .lk-button:hover::before {
+  left: 100% !important;
 }
 
 .lk-control-bar .lk-button:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
+              0 3px 8px rgba(0, 0, 0, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
 .lk-control-bar .lk-button:active {
-  transform: translateY(0) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3),
+              inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.1s ease !important;
 }
 
-/* Microphone & Camera buttons - Circular and professional */
+/* Microphone & Camera buttons - Enhanced circular design */
 .lk-control-bar .lk-button[data-lk-source="microphone"],
 .lk-control-bar .lk-button[data-lk-source="camera"] {
   border-radius: 50% !important;
-  width: 56px !important;
-  height: 56px !important;
-  min-width: 56px !important;
-  min-height: 56px !important;
+  width: 60px !important;
+  height: 60px !important;
+  min-width: 60px !important;
+  min-height: 60px !important;
   padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
+  overflow: visible !important;
 }
 
 .lk-control-bar .lk-button[data-lk-source="microphone"]:hover,
 .lk-control-bar .lk-button[data-lk-source="camera"]:hover {
-  background: rgba(255, 255, 255, 0.14) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Icon sizing for mic/camera - perfectly centered */
+/* Icon sizing for mic/camera - perfectly centered and larger */
 .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
 .lk-control-bar .lk-button[data-lk-source="camera"] svg {
-  width: 22px !important;
-  height: 22px !important;
+  width: 24px !important;
+  height: 24px !important;
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   flex-shrink: 0 !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+  z-index: 2 !important;
 }
 
-/* Active state - Enabled (subtle green) */
+/* Active state - Enabled (vibrant green with glow) */
 .lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"],
 .lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"] {
-  background: rgba(16, 185, 129, 0.15) !important;
-  border-color: rgba(16, 185, 129, 0.35) !important;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3),
+              0 0 24px rgba(16, 185, 129, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
 }
 
 .lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"]:hover,
 .lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"]:hover {
-  background: rgba(16, 185, 129, 0.2) !important;
-  border-color: rgba(16, 185, 129, 0.45) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.3) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4),
+              0 0 32px rgba(16, 185, 129, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Disabled state - Muted/Off (professional red) */
+/* Disabled state - Muted/Off (prominent red with glow) */
 .lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"],
 .lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"] {
-  background: rgba(239, 68, 68, 0.18) !important;
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.25) 100%) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3),
+              0 0 24px rgba(239, 68, 68, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
 .lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"]:hover,
 .lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"]:hover {
-  background: rgba(239, 68, 68, 0.25) !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.3) 100%) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4),
+              0 0 32px rgba(239, 68, 68, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.12),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Leave/End call button - Professional red */
+/* Leave/End call button - Prominent and unmistakable */
 .lk-control-bar .lk-disconnect-button {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  border: 2px solid rgba(239, 68, 68, 0.3) !important;
+  border: 2px solid rgba(239, 68, 68, 0.4) !important;
   color: white !important;
   font-weight: 600 !important;
-  min-width: 120px !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  min-width: 130px !important;
+  padding: 14px 28px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4),
+              0 2px 6px rgba(239, 68, 68, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  font-size: 13px !important;
 }
 
 .lk-control-bar .lk-disconnect-button:hover {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.5),
+              0 3px 10px rgba(239, 68, 68, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Share screen button - Accent color */
+/* Share screen button - Enhanced blue accent */
 .lk-button[data-lk-source="screen_share"] {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: rgba(59, 130, 246, 0.3) !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+  position: relative !important;
+}
+
+.lk-button[data-lk-source="screen_share"]::after {
+  content: "" !important;
+  position: absolute !important;
+  top: -2px !important;
+  left: -2px !important;
+  right: -2px !important;
+  bottom: -2px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.2)) !important;
+  z-index: -1 !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
 }
 
 .lk-button[data-lk-source="screen_share"]:hover {
-  background: rgba(59, 130, 246, 0.25) !important;
+  background: rgba(59, 130, 246, 0.2) !important;
   border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+.lk-button[data-lk-source="screen_share"]:hover::after {
+  opacity: 1 !important;
 }
 
 .lk-button[data-lk-source="screen_share"][data-lk-enabled="true"] {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-  border-color: rgba(59, 130, 246, 0.8) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4),
+              0 0 24px rgba(59, 130, 246, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Chat button with badge */
+.lk-button[data-lk-source="screen_share"][data-lk-enabled="true"]:hover {
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5),
+              0 0 32px rgba(59, 130, 246, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Chat button with enhanced badge */
 .lk-chat-toggle {
   position: relative !important;
 }
@@ -151,16 +252,38 @@
 .lk-chat-toggle .lk-unread-indicator {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
   border-radius: 50% !important;
-  border: 2px solid rgba(0, 0, 0, 0.9) !important;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6) !important;
+  border: 2px solid rgba(0, 0, 0, 0.95) !important;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.7),
+              0 0 20px rgba(239, 68, 68, 0.4) !important;
+  animation: pulse-notification 2s ease-in-out infinite !important;
 }
 
-/* Settings button */
+@keyframes pulse-notification {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+/* Settings button - Circular with icon emphasis */
 .lk-settings-menu-toggle {
   border-radius: 50% !important;
-  width: 48px !important;
-  height: 48px !important;
+  width: 52px !important;
+  height: 52px !important;
   padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.lk-settings-menu-toggle svg {
+  width: 22px !important;
+  height: 22px !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
 }
 
 /* ===========================================
@@ -572,6 +695,102 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ===========================================
+   Responsive Design - Mobile & Tablet
+   =========================================== */
+
+@media (max-width: 768px) {
+  .lk-control-bar {
+    padding: 16px 16px !important;
+    gap: 10px !important;
+    min-height: 76px !important;
+  }
+
+  .lk-control-bar .lk-button {
+    padding: 12px 16px !important;
+    font-size: 13px !important;
+    min-height: 44px !important;
+    border-radius: 12px !important;
+  }
+
+  .lk-control-bar .lk-button[data-lk-source="microphone"],
+  .lk-control-bar .lk-button[data-lk-source="camera"] {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+  }
+
+  .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
+  .lk-control-bar .lk-button[data-lk-source="camera"] svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .lk-control-bar .lk-disconnect-button {
+    min-width: 100px !important;
+    padding: 12px 20px !important;
+    font-size: 12px !important;
+  }
+
+  .lk-settings-menu-toggle {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .lk-settings-menu-toggle svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .lk-control-bar {
+    padding: 12px 12px !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    min-height: auto !important;
+    justify-content: space-around !important;
+  }
+
+  .lk-control-bar .lk-button {
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .lk-control-bar .lk-button[data-lk-source="microphone"],
+  .lk-control-bar .lk-button[data-lk-source="camera"] {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
+  .lk-control-bar .lk-button[data-lk-source="camera"] svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .lk-control-bar .lk-disconnect-button {
+    min-width: 90px !important;
+    padding: 10px 16px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .lk-settings-menu-toggle {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .lk-settings-menu-toggle svg {
+    width: 18px !important;
+    height: 18px !important;
   }
 }
 

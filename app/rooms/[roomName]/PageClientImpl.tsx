@@ -197,17 +197,23 @@ function VideoConferenceComponent(props: {
   const router = useRouter();
   const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
   
-  const handleError = React.useCallback((error: Error) => {
+  const handleError = React.useCallback((error: Error | unknown) => {
     console.error(error);
-    toast.error(`Encountered an unexpected error: ${error.message}`, {
+    const errorMessage = error instanceof Error && error.message 
+      ? error.message 
+      : 'An unexpected error occurred';
+    toast.error(`Encountered an unexpected error: ${errorMessage}`, {
       duration: 5000,
       position: 'top-center',
     });
   }, []);
   
-  const handleEncryptionError = React.useCallback((error: Error) => {
+  const handleEncryptionError = React.useCallback((error: Error | unknown) => {
     console.error(error);
-    toast.error(`Encryption error: ${error.message}`, {
+    const errorMessage = error instanceof Error && error.message 
+      ? error.message 
+      : 'Encryption setup failed';
+    toast.error(`Encryption error: ${errorMessage}`, {
       duration: 5000,
       position: 'top-center',
     });

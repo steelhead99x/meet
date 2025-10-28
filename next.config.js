@@ -18,9 +18,10 @@ const nextConfig = {
   },
   headers: async () => {
     return [
-      // Apply security headers to HTML pages (needed for SharedArrayBuffer/E2EE)
+      // Apply security headers to HTML pages only (needed for SharedArrayBuffer/E2EE)
+      // Exclude _next and api routes to avoid breaking static assets
       {
-        source: '/:path*',
+        source: '/((?!_next|api).*)',
         headers: [
           {
             key: 'Cross-Origin-Opener-Policy',
