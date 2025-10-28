@@ -1,0 +1,27 @@
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 0.5rem;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.tab[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
