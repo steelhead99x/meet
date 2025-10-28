@@ -56,15 +56,13 @@ A modern video conferencing application built with LiveKit, Next.js, and React. 
    pnpm dev
    ```
    
-   Open [http://localhost:3000/meet](http://localhost:3000/meet) in your browser.
-
-   ⚠️ **Important**: The app runs on `/meet` path, not root!
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 📦 Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start development server at http://localhost:3000/meet |
+| `pnpm dev` | Start development server at http://localhost:3000 |
 | `pnpm build` | Build for production |
 | `pnpm start` | Start production server |
 | `pnpm lint` | Run ESLint |
@@ -74,24 +72,6 @@ A modern video conferencing application built with LiveKit, Next.js, and React. 
 | `pnpm format:write` | Auto-format code |
 
 ## 🔧 Configuration
-
-### Base Path
-
-This application is configured to run on the `/meet` base path. This is set in `next.config.js`:
-
-```javascript
-basePath: '/meet',
-assetPrefix: '/meet',
-```
-
-**What this means:**
-- Development: Access at `http://localhost:3000/meet`
-- Production: Deploy to `https://yourdomain.com/meet`
-- All routes are prefixed with `/meet`
-- All assets are served from `/meet/_next/...`
-
-**Important for API Routes:**
-The application automatically handles the base path for API routes. The connection details endpoint is configured as `/meet/api/connection-details`. If you're deploying behind a reverse proxy, ensure the proxy forwards requests to `/meet` correctly.
 
 ### Environment Variables
 
@@ -117,7 +97,7 @@ The application automatically handles the base path for API routes. The connecti
 
 3. **Access the application**
    
-   Navigate to `http://localhost:3000/meet`
+   Navigate to `http://localhost:3000`
 
 ## 🌐 Deployment
 

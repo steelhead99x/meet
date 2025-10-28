@@ -30,8 +30,8 @@ export const metadata: Metadata = {
     siteName: 'LiveKit Meet',
   },
   icons: {
-    icon: '/meet/favicon.ico',
-    apple: '/meet/images/livekit-apple-touch.png',
+    icon: '/favicon.ico',
+    apple: '/images/livekit-apple-touch.png',
   },
 };
 
