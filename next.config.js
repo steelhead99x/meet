@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // basePath and assetPrefix removed - the reverse proxy handles /meet routing
+  // and forwards requests with the path intact to this Next.js app
+  trailingSlash: false,
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
   images: {
