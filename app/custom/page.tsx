@@ -3,6 +3,9 @@ import { VideoConferenceClientImpl } from './VideoConferenceClientImpl';
 import { isVideoCodec } from '@/lib/types';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 
+// Force dynamic rendering to avoid static generation issues
+export const dynamic = 'force-dynamic';
+
 export default async function CustomRoomConnection(props: {
   searchParams: Promise<{
     liveKitUrl?: string;

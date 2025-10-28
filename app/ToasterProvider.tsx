@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 const Toaster = dynamic(
@@ -8,6 +9,16 @@ const Toaster = dynamic(
 );
 
 export function ToasterProvider() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
   return <Toaster />;
 }
 
