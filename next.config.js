@@ -11,6 +11,7 @@ const nextConfig = {
       test: /\.mjs$/,
       enforce: 'pre',
       use: ['source-map-loader'],
+      exclude: [/@mediapipe\/tasks-vision/],
     });
 
     return config;
