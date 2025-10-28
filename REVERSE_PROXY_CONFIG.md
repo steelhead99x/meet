@@ -1,6 +1,14 @@
 # Reverse Proxy Configuration for /meet
 
-## The Problem
+## ⚠️ UPDATE: This app no longer uses basePath
+
+**This file is kept for reference only.** The app has been restructured to work at `/meet` without using `basePath` in Next.js config.
+
+See `RESTRUCTURE_SUMMARY.md` and `DIGITALOCEAN_APP_PLATFORM.md` for current deployment instructions.
+
+---
+
+## The Original Problem (When Using basePath)
 
 When you use `basePath: '/meet'` in Next.js, the reverse proxy **MUST STRIP** the `/meet` prefix before forwarding requests to the Next.js app.
 

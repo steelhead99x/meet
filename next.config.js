@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // basePath tells Next.js that all routes are under /meet
-  // Your reverse proxy MUST strip /meet before forwarding to Next.js
-  // Example: nginx location /meet/ { proxy_pass http://nextjs:3000/; }
-  basePath: '/meet',
-  assetPrefix: '/meet',
+  // Note: basePath removed for DigitalOcean App Platform deployment
+  // Run this app at meet.artist-space.com instead of artist-space.com/meet
   trailingSlash: false,
   reactStrictMode: false,
   productionBrowserSourceMaps: true,

@@ -37,7 +37,7 @@ import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
 
 const CONN_DETAILS_ENDPOINT =
-  process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
+  process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/meet/api/connection-details';
 const SHOW_SETTINGS_MENU = process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU == 'true';
 
 export function PageClientImpl(props: {
@@ -296,7 +296,7 @@ function VideoConferenceComponent(props: {
   }, []);
 
   const router = useRouter();
-  const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
+  const handleOnLeave = React.useCallback(() => router.push('/meet'), [router]);
   
   const handleError = React.useCallback((error: Error | unknown) => {
     console.error(error);
