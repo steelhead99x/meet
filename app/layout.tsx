@@ -1,7 +1,8 @@
 import '../styles/globals.css';
+import '@livekit/components-styles';
+import '@livekit/components-styles/prefabs';
 import type { Metadata, Viewport } from 'next';
 import { ToasterProvider } from './ToasterProvider';
-import { StylesProvider } from './StylesProvider';
 
 export const metadata: Metadata = {
   title: {
@@ -41,10 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body data-lk-theme="default">
-        <StylesProvider>
-          <ToasterProvider />
-          {children}
-        </StylesProvider>
+        <ToasterProvider />
+        {children}
       </body>
     </html>
   );
