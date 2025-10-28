@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
@@ -11,7 +11,12 @@ export const dynamic = 'force-dynamic';
 export default function Page() {
   const router = useRouter();
   const [e2ee, setE2ee] = useState(false);
-  const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
+  const [sharedPassphrase, setSharedPassphrase] = useState('');
+  
+  // Generate passphrase on client side only to avoid hydration mismatch
+  useEffect(() => {
+    setSharedPassphrase(randomString(64));
+  }, []);
   
   const startMeeting = () => {
     if (e2ee) {

@@ -59,15 +59,38 @@ export function PageClientImpl(props: {
 
   const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
     setPreJoinChoices(values);
-    const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
-    url.searchParams.append('roomName', props.roomName);
-    url.searchParams.append('participantName', values.username);
-    if (props.region) {
-      url.searchParams.append('region', props.region);
+    try {
+      const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
+      url.searchParams.append('roomName', props.roomName);
+      url.searchParams.append('participantName', values.username);
+      if (props.region) {
+        url.searchParams.append('region', props.region);
+      }
+      const connectionDetailsResp = await fetch(url.toString());
+      
+      if (!connectionDetailsResp.ok) {
+        const errorText = await connectionDetailsResp.text();
+        let errorMessage = 'Failed to get connection details';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const connectionDetailsData = await connectionDetailsResp.json();
+      setConnectionDetails(connectionDetailsData);
+    } catch (error) {
+      console.error('Connection details error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to connect to the room';
+      toast.error(message, {
+        duration: 5000,
+        position: 'top-center',
+      });
+      setPreJoinChoices(undefined);
     }
-    const connectionDetailsResp = await fetch(url.toString());
-    const connectionDetailsData = await connectionDetailsResp.json();
-    setConnectionDetails(connectionDetailsData);
   }, [props.roomName, props.region]);
   
   const handlePreJoinValidate = React.useCallback((values: LocalUserChoices) => {
@@ -156,7 +179,7 @@ function VideoConferenceComponent(props: {
       e2ee: keyProvider && worker && e2eeEnabled ? { keyProvider, worker } : undefined,
       singlePeerConnection: isMeetStaging(),
     };
-  }, [props.userChoices, props.options.hq, props.options.codec]);
+  }, [props.userChoices, props.options.hq, props.options.codec, e2eeEnabled, keyProvider, worker]);
 
   const [room] = React.useState(() => new Room(roomOptions));
 
@@ -165,22 +188,34 @@ function VideoConferenceComponent(props: {
       keyProvider
         .setKey(decodePassphrase(e2eePassphrase))
         .then(() => {
-          room.setE2EEEnabled(true).catch((e) => {
-            if (e instanceof DeviceUnsupportedError) {
-              console.error('E2EE not supported:', e);
-              toast.error(
-                'Your browser does not support encrypted meetings. Please update to the latest version.',
-                {
-                  duration: 8000,
-                  position: 'top-center',
-                }
-              );
-            } else {
-              throw e;
-            }
-          });
+          return room.setE2EEEnabled(true);
         })
-        .then(() => setE2eeSetupComplete(true));
+        .then(() => {
+          setE2eeSetupComplete(true);
+        })
+        .catch((e) => {
+          if (e instanceof DeviceUnsupportedError) {
+            console.error('E2EE not supported:', e);
+            toast.error(
+              'Your browser does not support encrypted meetings. Please update to the latest version.',
+              {
+                duration: 8000,
+                position: 'top-center',
+              }
+            );
+          } else {
+            console.error('E2EE setup error:', e);
+            toast.error(
+              'End-to-end encryption could not be enabled. Joining without encryption.',
+              {
+                duration: 6000,
+                position: 'top-center',
+              }
+            );
+          }
+          // Continue without E2EE if it fails
+          setE2eeSetupComplete(true);
+        });
     } else {
       setE2eeSetupComplete(true);
     }

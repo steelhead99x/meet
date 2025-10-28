@@ -61,8 +61,15 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Error) {
-      return new NextResponse(error.message, { status: 500 });
+      return new NextResponse(JSON.stringify({ error: error.message }), { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
+    return new NextResponse(JSON.stringify({ error: 'An unknown error occurred' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
