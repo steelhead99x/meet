@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
       hasApiKey: !!process.env.LIVEKIT_API_KEY,
     },
     config: {
-      basePath: '/meet',
-      assetPrefix: '/meet',
+      basePath: '/',
+      assetPrefix: '/',
     },
   }, {
     headers: {
@@ -33,4 +33,5 @@ export async function GET(request: NextRequest) {
     },
   });
 }
+
 
