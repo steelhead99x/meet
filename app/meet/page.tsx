@@ -67,7 +67,7 @@ export default function Page() {
           </div>
         </div>
       </main>
-      <footer className={styles.footer} data-lk-theme="default">
+      <footer className={styles.footer} data-lk-theme="default" suppressHydrationWarning>
         <a href="https://artist-space.com" rel="noopener" target="_blank">
           artist-space.com
         </a>
