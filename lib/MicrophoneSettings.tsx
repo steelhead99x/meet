@@ -24,7 +24,7 @@ export function MicrophoneSettings() {
   React.useEffect(() => {
     // enable Krisp by default on non-low power devices
     setNoiseFilterEnabled(!isLowPowerDevice());
-  }, []);
+  }, [setNoiseFilterEnabled]);
   return (
     <div
       style={{
@@ -36,7 +36,7 @@ export function MicrophoneSettings() {
       }}
     >
       <section className="lk-button-group">
-        <TrackToggle source={Track.Source.Microphone}>Microphone</TrackToggle>
+        <TrackToggle aria-label="Toggle microphone" source={Track.Source.Microphone} />
         <div className="lk-button-group-menu">
           <MediaDeviceMenu kind="audioinput" />
         </div>

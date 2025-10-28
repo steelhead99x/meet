@@ -180,6 +180,12 @@ export function CameraSettings() {
     // Debounce processor changes to prevent rapid reapplication
     debounceTimerRef.current = setTimeout(async () => {
       try {
+        // Re-check track state after debounce delay to prevent race conditions
+        if (!isLocalTrack(track) || track.mediaStreamTrack?.readyState !== 'live') {
+          console.warn('Track is no longer valid after debounce, skipping processor update');
+          return;
+        }
+
         if (backgroundType === 'blur') {
           // Reuse cached blur processor if available
           let blurProcessor = processorCacheRef.current.blur;
@@ -273,7 +279,7 @@ export function CameraSettings() {
       )}
 
       <section className="lk-button-group">
-        <TrackToggle source={Track.Source.Camera}>Camera</TrackToggle>
+        <TrackToggle aria-label="Toggle camera" source={Track.Source.Camera} />
         <div className="lk-button-group-menu">
           <MediaDeviceMenu kind="videoinput" />
         </div>

@@ -50,10 +50,14 @@ const defaultOptions: LowCPUOptimizerOptions = {
  * }
  * ```
  */
-export function useLowCPUOptimizer(room: Room, options: Partial<LowCPUOptimizerOptions> = {}): boolean {
+export function useLowCPUOptimizer(room: Room | null, options: Partial<LowCPUOptimizerOptions> = {}): boolean {
   const [lowPowerMode, setLowPowerMode] = React.useState(false);
   const opts = React.useMemo(() => ({ ...defaultOptions, ...options }), [options]);
   React.useEffect(() => {
+    if (!room) {
+      return;
+    }
+    console.log('[PERF OPTIMIZER v4] Setting up with room:', !!room, 'localParticipant:', !!room?.localParticipant);
     const handleCpuConstrained = async (track: LocalVideoTrack) => {
       setLowPowerMode(true);
       console.warn('Local track CPU constrained', track);
@@ -72,22 +76,48 @@ export function useLowCPUOptimizer(room: Room, options: Partial<LowCPUOptimizerO
       }
     };
 
-    room.localParticipant.on(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
-    return () => {
-      room.localParticipant.off(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
+    // Wait for localParticipant to be available
+    const setupListener = () => {
+      if (!room || !room.localParticipant) {
+        return;
+      }
+      try {
+        room.localParticipant.on(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
+      } catch (error) {
+        console.warn('Failed to setup CPU optimizer listener:', error);
+      }
     };
-  }, [room, opts.reducePublisherVideoQuality, opts.reduceSubscriberVideoQuality]);
+
+    // Try to setup immediately
+    setupListener();
+
+    // If not available yet, wait for room to be connected
+    const handleConnected = () => {
+      setupListener();
+    };
+
+    room.on(RoomEvent.Connected, handleConnected);
+
+    return () => {
+      room.off(RoomEvent.Connected, handleConnected);
+      if (room.localParticipant) {
+        room.localParticipant.off(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
+      }
+    };
+  }, [room, opts.reducePublisherVideoQuality, opts.reduceSubscriberVideoQuality, opts.disableVideoProcessing]);
 
   React.useEffect(() => {
     const lowerQuality = (_: RemoteTrack, publication: RemoteTrackPublication) => {
       publication.setVideoQuality(VideoQuality.LOW);
     };
-    if (lowPowerMode && opts.reduceSubscriberVideoQuality) {
+    if (lowPowerMode && opts.reduceSubscriberVideoQuality && room) {
       room.on(RoomEvent.TrackSubscribed, lowerQuality);
     }
 
     return () => {
-      room.off(RoomEvent.TrackSubscribed, lowerQuality);
+      if (room) {
+        room.off(RoomEvent.TrackSubscribed, lowerQuality);
+      }
     };
   }, [lowPowerMode, room, opts.reduceSubscriberVideoQuality]);
 

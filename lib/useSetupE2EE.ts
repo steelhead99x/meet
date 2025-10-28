@@ -21,13 +21,24 @@ import { decodePassphrase } from './client-utils';
  * ```
  */
 export function useSetupE2EE(): { worker: Worker | undefined; e2eePassphrase: string | undefined } {
-  const e2eePassphrase =
-    typeof window !== 'undefined' ? decodePassphrase(location.hash.substring(1)) : undefined;
+  const e2eePassphrase = React.useMemo(() => 
+    typeof window !== 'undefined' ? decodePassphrase(location.hash.substring(1)) : undefined,
+    []
+  );
 
-  const worker: Worker | undefined =
-    typeof window !== 'undefined' && e2eePassphrase
-      ? new Worker(new URL('livekit-client/e2ee-worker', import.meta.url))
-      : undefined;
+  const worker = React.useMemo(() => {
+    if (typeof window === 'undefined' || !e2eePassphrase) {
+      return undefined;
+    }
+    
+    try {
+      // Load worker from public directory for reliable Next.js compatibility
+      return new Worker('/livekit-e2ee-worker.mjs', { type: 'module' });
+    } catch (error) {
+      console.error('Failed to create E2EE worker:', error);
+      return undefined;
+    }
+  }, [e2eePassphrase]);
 
   return { worker, e2eePassphrase };
 }

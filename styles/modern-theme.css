@@ -11,8 +11,6 @@
     rgba(0, 0, 0, 0.85) 0%,
     rgba(0, 0, 0, 0.95) 100%
   ) !important;
-  backdrop-filter: blur(32px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
   padding: 20px 32px !important;
   gap: 14px !important;
@@ -40,8 +38,6 @@
               inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
   color: rgba(255, 255, 255, 0.95) !important;
   min-height: 48px !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
   position: relative !important;
   overflow: hidden !important;
 }
@@ -103,6 +99,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   transition: all 0.2s ease !important;
   overflow: visible !important;
+  /* Hide labels to make these icon-only */
+  font-size: 0 !important;
 }
 
 .lk-control-bar .lk-button[data-lk-source="microphone"]:hover,
@@ -120,6 +118,14 @@
   height: 22px !important;
   color: #ffffff !important;
   fill: currentColor !important;
+}
+
+/* Explicitly hide inner spans/labels for icon-only mic/camera buttons */
+.lk-control-bar .lk-button[data-lk-source="microphone"] > span,
+.lk-control-bar .lk-button[data-lk-source="camera"] > span,
+.lk-control-bar .lk-button[data-lk-source="microphone"] .lk-button-label,
+.lk-control-bar .lk-button[data-lk-source="camera"] .lk-button-label {
+  display: none !important;
 }
 
 /* Active state - Enabled (clean green) */
@@ -290,14 +296,21 @@
   overflow: hidden !important;
   border: 2px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+  /* GPU acceleration for smooth video rendering */
+  will-change: border-color, box-shadow !important;
+  contain: layout style paint !important;
+  transform: translateZ(0) !important; /* Force GPU layer */
+  backface-visibility: hidden !important;
+  -webkit-font-smoothing: subpixel-antialiased !important;
 }
 
 .lk-participant-tile:hover {
   border-color: rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5) !important;
-  transform: scale(1.02) !important;
+  /* Removed transform scale to prevent video blinking */
 }
 
 /* Participant metadata overlay - NO blur on metadata bar */
@@ -371,8 +384,6 @@
 
 .lk-chat {
   background: rgba(0, 0, 0, 0.85) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4) !important;
 }
@@ -441,8 +452,6 @@
 
 .lk-settings-menu {
   background: rgba(0, 0, 0, 0.95) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   border-radius: 20px !important;
   padding: 24px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -469,8 +478,6 @@
 /* Device selection menus */
 .lk-button-group-menu {
   background: rgba(0, 0, 0, 0.95) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
   border-radius: 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5) !important;
@@ -501,13 +508,39 @@
 
 .lk-prejoin {
   background: rgba(0, 0, 0, 0.85) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   border-radius: 24px !important;
   padding: 40px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6) !important;
   max-width: 520px !important;
+}
+
+/* Pre-join: icon-only mic/camera buttons */
+.lk-prejoin .lk-button[data-lk-source="microphone"],
+.lk-prejoin .lk-button[data-lk-source="camera"] {
+  border-radius: 50% !important;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0 !important; /* hide label text visually */
+}
+
+.lk-prejoin .lk-button[data-lk-source="microphone"] > span,
+.lk-prejoin .lk-button[data-lk-source="camera"] > span,
+.lk-prejoin .lk-button[data-lk-source="microphone"] .lk-button-label,
+.lk-prejoin .lk-button[data-lk-source="camera"] .lk-button-label {
+  display: none !important;
+}
+
+.lk-prejoin .lk-button[data-lk-source="microphone"] svg,
+.lk-prejoin .lk-button[data-lk-source="camera"] svg {
+  width: 20px !important;
+  height: 20px !important;
 }
 
 /* Prejoin state colors - professional and subtle */
@@ -578,8 +611,6 @@
 
 .lk-connection-quality {
   background: rgba(0, 0, 0, 0.6) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
   border-radius: 8px !important;
   padding: 6px 10px !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -607,8 +638,6 @@
 
 .lk-tooltip {
   background: rgba(0, 0, 0, 0.95) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   font-size: 13px !important;
@@ -784,6 +813,21 @@
   }
 
   .lk-settings-menu-toggle svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Pre-join: smaller icon-only mic/camera buttons on very small screens */
+  .lk-prejoin .lk-button[data-lk-source="microphone"],
+  .lk-prejoin .lk-button[data-lk-source="camera"] {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .lk-prejoin .lk-button[data-lk-source="microphone"] svg,
+  .lk-prejoin .lk-button[data-lk-source="camera"] svg {
     width: 18px !important;
     height: 18px !important;
   }

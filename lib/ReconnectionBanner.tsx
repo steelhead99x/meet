@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useConnectionState } from '@livekit/components-react';
+import { ConnectionState } from 'livekit-client';
 
-interface ReconnectionBannerProps {
-  connectionState: 'connected' | 'reconnecting' | 'disconnected';
-}
+export function ReconnectionBanner() {
+  const connectionState = useConnectionState();
 
-export function ReconnectionBanner({ connectionState }: ReconnectionBannerProps) {
-  if (connectionState === 'connected') {
+  if (connectionState === ConnectionState.Connected) {
     return null;
   }
 
@@ -22,7 +22,7 @@ export function ReconnectionBanner({ connectionState }: ReconnectionBannerProps)
         animation: 'slideDown 0.3s ease-out',
       }}
     >
-      {connectionState === 'reconnecting' && (
+      {connectionState === ConnectionState.Reconnecting && (
         <div
           style={{
             background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
@@ -37,7 +37,6 @@ export function ReconnectionBanner({ connectionState }: ReconnectionBannerProps)
             justifyContent: 'center',
             gap: '12px',
             boxShadow: '0 4px 16px rgba(245, 158, 11, 0.4)',
-            backdropFilter: 'blur(12px)',
           }}
         >
           <span
@@ -53,7 +52,7 @@ export function ReconnectionBanner({ connectionState }: ReconnectionBannerProps)
           <span>Reconnecting to the room...</span>
         </div>
       )}
-      {connectionState === 'disconnected' && (
+      {connectionState === ConnectionState.Disconnected && (
         <div
           style={{
             background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
@@ -68,7 +67,6 @@ export function ReconnectionBanner({ connectionState }: ReconnectionBannerProps)
             justifyContent: 'center',
             gap: '12px',
             boxShadow: '0 4px 16px rgba(239, 68, 68, 0.4)',
-            backdropFilter: 'blur(12px)',
           }}
         >
           <span style={{ fontSize: '18px' }}>⚠️</span>

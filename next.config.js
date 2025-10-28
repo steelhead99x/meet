@@ -14,26 +14,24 @@ const nextConfig = {
       exclude: [/@mediapipe\/tasks-vision/],
     });
 
+    // Handle E2EE worker files from livekit-client
+    if (!isServer) {
+      config.module.rules.push({
+        test: /livekit-client.*\.worker\.(js|mjs)$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'static/worker/[name].[hash][ext]',
+        },
+      });
+    }
+
     return config;
   },
+  // Note: COOP/COEP headers are now handled in middleware.ts
+  // This allows proper control over which requests get the headers
   headers: async () => {
     return [
-      // Apply security headers to HTML pages only (needed for SharedArrayBuffer/E2EE)
-      // Exclude _next and api routes to avoid breaking static assets
-      {
-        source: '/((?!_next|api).*)',
-        headers: [
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless',
-          },
-        ],
-      },
-      // Ensure proper MIME types and caching for static assets
+      // Ensure proper caching for static assets
       {
         source: '/_next/static/:path*',
         headers: [
@@ -50,14 +48,6 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400',
-          },
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless',
           },
         ],
       },
