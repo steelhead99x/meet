@@ -160,15 +160,9 @@
 }
 
 .footer {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
   padding: 1rem;
   text-align: center;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(15px);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
-  z-index: 10;
 }
 
 .footer a {

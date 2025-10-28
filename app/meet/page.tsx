@@ -68,9 +68,8 @@ export default function Page() {
         </div>
       </main>
       <footer className={styles.footer} data-lk-theme="default">
-        Powered by{' '}
-        <a href="https://livekit.io" rel="noopener" target="_blank">
-          LiveKit
+        <a href="https://artist-space.com" rel="noopener" target="_blank">
+          artist-space.com
         </a>
       </footer>
     </>
