@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // basePath and assetPrefix removed - the reverse proxy handles /meet routing
-  // and forwards requests with the path intact to this Next.js app
+  // basePath tells Next.js that all routes are under /meet
+  // Your reverse proxy MUST strip /meet before forwarding to Next.js
+  // Example: nginx location /meet/ { proxy_pass http://nextjs:3000/; }
+  basePath: '/meet',
+  assetPrefix: '/meet',
   trailingSlash: false,
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
