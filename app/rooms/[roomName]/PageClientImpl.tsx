@@ -28,8 +28,9 @@ import {
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
-import { useLowCPUOptimizer } from '@/lib/usePerfomanceOptimiser';
+import { useLowCPUOptimizer } from '@/lib/usePerformanceOptimizer';
 import toast from 'react-hot-toast';
+import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -66,8 +67,27 @@ export function PageClientImpl(props: {
     const connectionDetailsResp = await fetch(url.toString());
     const connectionDetailsData = await connectionDetailsResp.json();
     setConnectionDetails(connectionDetailsData);
+  }, [props.roomName, props.region]);
+  
+  const handlePreJoinValidate = React.useCallback((values: LocalUserChoices) => {
+    if (!values.username || values.username.trim().length === 0) {
+      return false;
+    }
+    if (values.username.length > 50) {
+      return false;
+    }
+    if (!/^[a-zA-Z0-9\s._-]+$/.test(values.username)) {
+      return false;
+    }
+    return true;
   }, []);
-  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
+  const handlePreJoinError = React.useCallback((e: any) => {
+    console.error('PreJoin error:', e);
+    toast.error('Failed to initialize devices. Please check permissions.', {
+      duration: 5000,
+      position: 'top-center',
+    });
+  }, []);
 
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
@@ -76,15 +96,18 @@ export function PageClientImpl(props: {
           <PreJoin
             defaults={preJoinDefaults}
             onSubmit={handlePreJoinSubmit}
+            onValidate={handlePreJoinValidate}
             onError={handlePreJoinError}
           />
         </div>
       ) : (
-        <VideoConferenceComponent
-          connectionDetails={connectionDetails}
-          userChoices={preJoinChoices}
-          options={{ codec: props.codec, hq: props.hq }}
-        />
+        <RoomErrorBoundary>
+          <VideoConferenceComponent
+            connectionDetails={connectionDetails}
+            userChoices={preJoinChoices}
+            options={{ codec: props.codec, hq: props.hq }}
+          />
+        </RoomErrorBoundary>
       )}
     </main>
   );
@@ -114,7 +137,7 @@ function VideoConferenceComponent(props: {
       resolution: props.options.hq ? VideoPresets.h2160 : VideoPresets.h720,
     };
     const publishDefaults: TrackPublishDefaults = {
-      dtx: false,
+      dtx: true, // Enable discontinuous transmission for bandwidth savings during silence
       videoSimulcastLayers: props.options.hq
         ? [VideoPresets.h1080, VideoPresets.h720]
         : [VideoPresets.h540, VideoPresets.h216],

@@ -1,6 +1,7 @@
 import { videoCodecs, type VideoCodec } from 'livekit-client';
 import { VideoConferenceClientImpl } from './VideoConferenceClientImpl';
 import { isVideoCodec } from '@/lib/types';
+import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 
 export default async function CustomRoomConnection(props: {
   searchParams: Promise<{
@@ -25,7 +26,9 @@ export default async function CustomRoomConnection(props: {
 
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
-      <VideoConferenceClientImpl liveKitUrl={liveKitUrl} token={token} codec={validatedCodec} />
+      <RoomErrorBoundary>
+        <VideoConferenceClientImpl liveKitUrl={liveKitUrl} token={token} codec={validatedCodec} />
+      </RoomErrorBoundary>
     </main>
   );
 }

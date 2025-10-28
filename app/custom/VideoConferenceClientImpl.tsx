@@ -16,9 +16,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
-import { useLowCPUOptimizer } from '@/lib/usePerfomanceOptimiser';
+import { useLowCPUOptimizer } from '@/lib/usePerformanceOptimizer';
 import { isMeetStaging } from '@/lib/client-utils';
 import toast from 'react-hot-toast';
+import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;

@@ -23,10 +23,34 @@ const defaultOptions: LowCPUOptimizerOptions = {
 } as const;
 
 /**
- * This hook ensures that on devices with low CPU, the performance is optimised when needed.
- * This is done by primarily reducing the video quality to low when the CPU is constrained.
+ * Optimizes room performance on low-power devices by reducing video quality
+ * when CPU constraints are detected.
+ * 
+ * This hook monitors CPU usage and automatically adjusts video quality settings
+ * when the device is under CPU stress. It can reduce both published and subscribed
+ * video quality, and optionally disable video processing.
+ * 
+ * @param room - The LiveKit Room instance to optimize
+ * @param options - Configuration options for optimization behavior
+ * @param options.reducePublisherVideoQuality - Reduce outgoing video quality (default: true)
+ * @param options.reduceSubscriberVideoQuality - Reduce incoming video quality (default: true)
+ * @param options.disableVideoProcessing - Disable video processors like background blur (default: false)
+ * @returns Boolean indicating if low power mode is currently active
+ * 
+ * @example
+ * ```tsx
+ * const lowPowerMode = useLowCPUOptimizer(room, {
+ *   reducePublisherVideoQuality: true,
+ *   reduceSubscriberVideoQuality: true,
+ *   disableVideoProcessing: true,
+ * });
+ * 
+ * if (lowPowerMode) {
+ *   // Show notification to user
+ * }
+ * ```
  */
-export function useLowCPUOptimizer(room: Room, options: Partial<LowCPUOptimizerOptions> = {}) {
+export function useLowCPUOptimizer(room: Room, options: Partial<LowCPUOptimizerOptions> = {}): boolean {
   const [lowPowerMode, setLowPowerMode] = React.useState(false);
   const opts = React.useMemo(() => ({ ...defaultOptions, ...options }), [options]);
   React.useEffect(() => {
