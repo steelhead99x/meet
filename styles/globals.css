@@ -32,3 +32,9 @@ textarea {
   font-family: inherit;
   font-size: inherit;
 }
+
+/* Hide the global E2EE status indicator - encryption status shown on video tiles instead */
+button[title*="encrypted" i],
+button[title*="encryption" i] {
+  display: none !important;
+}

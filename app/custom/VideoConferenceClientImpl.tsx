@@ -21,8 +21,8 @@ import { isMeetStaging } from '@/lib/client-utils';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
-import { E2EEStatusIndicator } from '@/lib/E2EEStatusIndicator';
 import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
+import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -199,6 +199,17 @@ export function VideoConferenceClientImpl(props: {
 
   useLowCPUOptimizer(room);
 
+  // Debug logging for chat functionality
+  useEffect(() => {
+    if (room) {
+      console.log('Room connected (Custom):', {
+        isConnected: room.state,
+        localParticipant: room.localParticipant?.identity,
+        permissions: room.localParticipant?.permissions,
+      });
+    }
+  }, [room]);
+
   // Show loading state while room is being created
   if (!room) {
     return (
@@ -211,13 +222,13 @@ export function VideoConferenceClientImpl(props: {
   return (
     <div className="lk-room-container">
       <RoomContext.Provider value={room}>
-        <E2EEStatusIndicator />
         <ReconnectionBanner />
         <KeyboardShortcuts />
+        <KeyboardShortcutsHelp />
         <VideoConference
           chatMessageFormatter={formatChatMessageLinks}
-          chatMessageEncoder={createE2EEMessageEncoder(worker, room.localParticipant.identity)}
-          chatMessageDecoder={createE2EEMessageDecoder(worker, room.localParticipant.identity)}
+          chatMessageEncoder={createE2EEMessageEncoder(worker, room.localParticipant?.identity)}
+          chatMessageDecoder={createE2EEMessageDecoder(worker, room.localParticipant?.identity)}
           SettingsComponent={
             process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
           }

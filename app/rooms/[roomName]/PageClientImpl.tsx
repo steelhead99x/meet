@@ -6,7 +6,6 @@ import { DebugMode } from '@/lib/Debug';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { SettingsMenu } from '@/lib/SettingsMenu';
-import { E2EEStatusIndicator } from '@/lib/E2EEStatusIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import {
   formatChatMessageLinks,
@@ -35,6 +34,7 @@ import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
+import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -406,6 +406,17 @@ function VideoConferenceComponent(props: {
     }
   }, [lowPowerMode]);
 
+  // Debug logging for chat functionality
+  React.useEffect(() => {
+    if (room) {
+      console.log('Room connected:', {
+        isConnected: room.state,
+        localParticipant: room.localParticipant?.identity,
+        permissions: room.localParticipant?.permissions,
+      });
+    }
+  }, [room]);
+
   // Show loading state while room is being created
   if (!room) {
     return (
@@ -418,13 +429,13 @@ function VideoConferenceComponent(props: {
   return (
     <div className="lk-room-container">
       <RoomContext.Provider value={room}>
-        <E2EEStatusIndicator />
         <ReconnectionBanner />
         <KeyboardShortcuts />
+        <KeyboardShortcutsHelp />
         <VideoConference
           chatMessageFormatter={formatChatMessageLinks}
-          chatMessageEncoder={createE2EEMessageEncoder(worker, room.localParticipant.identity)}
-          chatMessageDecoder={createE2EEMessageDecoder(worker, room.localParticipant.identity)}
+          chatMessageEncoder={createE2EEMessageEncoder(worker, room.localParticipant?.identity)}
+          chatMessageDecoder={createE2EEMessageDecoder(worker, room.localParticipant?.identity)}
           SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         />
         <RoomAudioRenderer />

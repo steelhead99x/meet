@@ -14,8 +14,8 @@
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-  padding: 20px 24px !important;
-  gap: 12px !important;
+  padding: 16px 20px !important;
+  gap: 10px !important;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6),
               0 -2px 8px rgba(0, 0, 0, 0.4),
               inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
@@ -24,16 +24,24 @@
   flex-wrap: wrap !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 88px !important;
+  min-height: 80px !important;
   position: relative !important;
   width: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .lk-control-bar {
+    padding: 12px 12px !important;
+    min-height: 72px !important;
+    gap: 8px !important;
+  }
 }
 
 /* Constrain control bar content on large screens */
 @media (min-width: 1024px) {
   .lk-control-bar {
-    padding-left: max(24px, calc((100vw - 1000px) / 2)) !important;
-    padding-right: max(24px, calc((100vw - 1000px) / 2)) !important;
+    padding-left: max(20px, calc((100vw - 1200px) / 2)) !important;
+    padding-right: max(20px, calc((100vw - 1200px) / 2)) !important;
   }
 }
 
@@ -351,7 +359,7 @@
               inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Chat button with enhanced badge and fixed sizing */
+/* Chat button with enhanced badge and fixed sizing - IMPROVED VISIBILITY */
 .lk-chat-toggle,
 .lk-control-bar button[aria-label*="Chat"],
 .lk-control-bar button[aria-label*="chat"] {
@@ -364,10 +372,13 @@
   width: auto !important;
   min-width: 95px !important;
   max-width: 95px !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
   flex-shrink: 0 !important;
   white-space: nowrap !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .lk-chat-toggle svg,
@@ -383,8 +394,11 @@
 .lk-chat-toggle:hover,
 .lk-control-bar button[aria-label*="Chat"]:hover,
 .lk-control-bar button[aria-label*="chat"]:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3),
+              0 2px 6px rgba(16, 185, 129, 0.2) !important;
 }
 
 .lk-chat-toggle .lk-unread-indicator {
@@ -531,6 +545,22 @@
   transform: translateZ(0) !important; /* Force GPU layer */
   backface-visibility: hidden !important;
   -webkit-font-smoothing: subpixel-antialiased !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure video elements fill the participant tile completely */
+.lk-participant-tile video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Ensure participant tile placeholder/container fills properly */
+.lk-participant-tile > div {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .lk-participant-tile:hover {
@@ -579,12 +609,34 @@
   }
 }
 
+/* E2EE encryption indicator on participant tiles */
+.lk-participant-tile[data-lk-encrypted="true"]::after {
+  content: "🔒";
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 10 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0, 40, 20, 0.9) !important;
+  border: 2px solid rgba(34, 197, 94, 0.6) !important;
+  border-radius: 50% !important;
+  font-size: 14px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4),
+              0 0 12px rgba(34, 197, 94, 0.3) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
 /* Pinned participant indicator */
 .lk-participant-tile[data-lk-pinned="true"]::before {
   content: "📌";
   position: absolute !important;
   top: 12px !important;
-  right: 12px !important;
+  left: 12px !important;
   z-index: 10 !important;
   font-size: 20px !important;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6)) !important;
@@ -612,6 +664,10 @@
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
+  width: 360px !important;
+  max-width: 360px !important;
+  min-width: 320px !important;
+  flex-shrink: 0 !important;
   background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%) !important;
   border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5) !important;
@@ -619,101 +675,262 @@
   -webkit-backdrop-filter: blur(10px) !important;
 }
 
+/* Responsive chat width */
+@media (min-width: 1440px) {
+  .lk-chat {
+    width: 400px !important;
+    max-width: 400px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .lk-chat {
+    width: 340px !important;
+    max-width: 340px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .lk-chat {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+  }
+}
+
 /* Chat header */
 .lk-chat-header {
-  padding: 20px 20px 16px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 20px !important;
+  gap: 16px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+  flex-shrink: 0 !important;
+  min-height: 64px !important;
+}
+
+.lk-chat-header h3,
+.lk-chat-header-title,
+.lk-chat-header > *:first-child {
+  flex: 1 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  margin: 0 !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Chat close button in header - Hide the button completely */
+.lk-chat-header button,
+.lk-close-button {
+  display: none !important;
+}
+
+.lk-chat-header button svg,
+.lk-close-button svg {
+  display: none !important;
+}
+
+/* Chat toggle button in control bar - proper sizing - FORCE VISIBLE */
+.lk-control-bar .lk-chat-toggle,
+.lk-control-bar .lk-button.lk-chat-toggle,
+button[aria-label="Chat"],
+.lk-control-bar button[data-lk-chat-toggle],
+[data-lk-source="chat"] {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
+  border-radius: 14px !important;
+  padding: 12px 20px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.4px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2),
+              0 1px 3px rgba(16, 185, 129, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 48px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.lk-control-bar .lk-chat-toggle:hover,
+.lk-control-bar .lk-button.lk-chat-toggle:hover,
+button[aria-label="Chat"]:hover,
+.lk-control-bar button[data-lk-chat-toggle]:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35),
+              0 2px 6px rgba(16, 185, 129, 0.25) !important;
+}
+
+.lk-control-bar .lk-chat-toggle[aria-pressed="true"],
+.lk-control-bar .lk-button.lk-chat-toggle[aria-pressed="true"] {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.4) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.7) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4),
+              0 1px 3px rgba(16, 185, 129, 0.3),
+              inset 0 1px 0 rgba(16, 185, 129, 0.2) !important;
+  color: #10b981 !important;
+}
+
+.lk-control-bar .lk-chat-toggle svg,
+.lk-control-bar .lk-button.lk-chat-toggle svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .lk-control-bar .lk-chat-toggle,
+  .lk-control-bar .lk-button.lk-chat-toggle {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    min-height: 44px !important;
+  }
 }
 
 /* Chat messages container */
 .lk-chat-messages {
   flex: 1 !important;
   overflow-y: auto !important;
-  padding: 16px !important;
+  overflow-x: hidden !important;
+  padding: 20px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 12px !important;
+  gap: 16px !important;
+  min-height: 0 !important;
 }
 
 /* Individual message styling */
 .lk-chat-message {
   background: rgba(255, 255, 255, 0.06) !important;
-  border-radius: 16px !important;
-  padding: 12px 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 18px !important;
+  padding: 14px 18px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  max-width: 85% !important;
+  max-width: 80% !important;
   word-wrap: break-word !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  word-break: break-word !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
   margin-bottom: 0 !important;
-}
-
-.lk-chat-message:hover {
-  background: rgba(255, 255, 255, 0.09) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-}
-
-/* Local (your own) messages */
-.lk-chat-message.lk-chat-message-local {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.25) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.4) !important;
-  margin-left: auto !important;
-  border-radius: 16px 16px 4px 16px !important;
-}
-
-.lk-chat-message.lk-chat-message-local:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.3) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
-}
-
-/* Remote (other users') messages */
-.lk-chat-message:not(.lk-chat-message-local) {
-  margin-right: auto !important;
-  border-radius: 16px 16px 16px 4px !important;
-}
-
-/* Message author name */
-.lk-chat-message-author {
-  font-weight: 600 !important;
-  font-size: 13px !important;
-  margin-bottom: 6px !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  letter-spacing: 0.3px !important;
-}
-
-/* Message text */
-.lk-chat-message-body {
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* Message timestamp */
-.lk-chat-message-timestamp {
-  font-size: 11px !important;
-  color: rgba(255, 255, 255, 0.45) !important;
-  margin-top: 6px !important;
-  text-align: right !important;
-}
-
-/* Chat input form */
-.lk-chat-form {
-  background: rgba(0, 0, 0, 0.5) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  padding: 20px !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
 }
 
+.lk-chat-message:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Local (your own) messages */
+.lk-chat-message.lk-chat-message-local {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.3) 100%) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  border-radius: 18px 18px 4px 18px !important;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.2),
+              0 0 0 1px rgba(59, 130, 246, 0.1) inset !important;
+}
+
+.lk-chat-message.lk-chat-message-local:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.35) 100%) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3),
+              0 0 0 1px rgba(59, 130, 246, 0.15) inset !important;
+}
+
+/* Remote (other users') messages */
+.lk-chat-message:not(.lk-chat-message-local) {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  border-radius: 18px 18px 18px 4px !important;
+}
+
+/* Message header (author + timestamp) */
+.lk-chat-message > div:first-child,
+.lk-chat-message-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Message author name */
+.lk-chat-message-author,
+.lk-chat-message strong {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  letter-spacing: 0.4px !important;
+  margin: 0 !important;
+}
+
+/* Message timestamp */
+.lk-chat-message-timestamp,
+.lk-chat-message > div:first-child > div:last-child {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+}
+
+/* Message text */
+.lk-chat-message-body,
+.lk-chat-message > div:last-child {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin: 0 !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Chat input form */
+.lk-chat-form {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  padding: 20px !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.lk-chat-form > form,
 .lk-chat-form-input {
   display: flex !important;
   gap: 12px !important;
   align-items: flex-end !important;
+  width: 100% !important;
 }
 
-.lk-chat-form input {
+.lk-chat-form input,
+.lk-chat-form textarea {
   flex: 1 !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border: 2px solid rgba(255, 255, 255, 0.12) !important;
@@ -725,14 +942,20 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   line-height: 1.4 !important;
   min-height: 48px !important;
+  max-height: 48px !important;
+  height: 48px !important;
+  resize: none !important;
+  overflow: hidden !important;
 }
 
-.lk-chat-form input::placeholder {
+.lk-chat-form input::placeholder,
+.lk-chat-form textarea::placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
   font-weight: 400 !important;
 }
 
-.lk-chat-form input:focus {
+.lk-chat-form input:focus,
+.lk-chat-form textarea:focus {
   background: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(59, 130, 246, 0.6) !important;
   outline: none !important;
@@ -740,6 +963,7 @@
 }
 
 .lk-chat-form button {
+  flex-shrink: 0 !important;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
   border: none !important;
   border-radius: 14px !important;
@@ -753,6 +977,9 @@
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   min-height: 48px !important;
+  max-height: 48px !important;
+  height: 48px !important;
+  white-space: nowrap !important;
 }
 
 .lk-chat-form button:hover:not(:disabled) {

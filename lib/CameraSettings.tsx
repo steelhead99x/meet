@@ -6,7 +6,7 @@ import {
   useLocalParticipant,
   VideoTrack,
 } from '@livekit/components-react';
-import { BackgroundBlur, VirtualBackground, ProcessorWrapper } from '@livekit/track-processors';
+import { BackgroundBlur, BackgroundProcessor, VirtualBackground, ProcessorWrapper } from '@livekit/track-processors';
 import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent } from 'livekit-client';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
@@ -156,12 +156,16 @@ export function CameraSettings() {
           // Reuse cached blur processor if available
           let blurProcessor = processorCacheRef.current.blur;
           if (!blurProcessor) {
-            // Create and cache blur processor with MAXIMUM quality settings
-            // Using high blur radius (25+) for the strongest, most professional blur effect
-            // GPU delegation ensures hardware acceleration for best performance
-            blurProcessor = BackgroundBlur(30, { // Maximum quality blur - increased from 10 to 30
-              delegate: 'GPU', // Force GPU acceleration for best quality processing
-            });
+            // Create blur processor with EXTREME quality settings to mask edge imperfections
+            // ULTRA-HIGH blur radius (50) helps hide segmentation jitter and edge inconsistencies
+            // GPU delegation ensures maximum processing quality without performance concerns
+            blurProcessor = BackgroundProcessor({
+              blurRadius: 50, // EXTREME blur - increased from 30 to 50 to better hide edge jitter
+              segmenterOptions: {
+                delegate: 'GPU', // Force GPU acceleration for best quality processing
+                // Use all available GPU resources for highest quality segmentation
+              },
+            }, 'background-blur');
             processorCacheRef.current.blur = blurProcessor;
           }
           
@@ -204,7 +208,7 @@ export function CameraSettings() {
           console.error('Error setting video processor:', error);
         }
       }
-    }, 300); // 300ms debounce
+    }, 150); // 150ms debounce - reduced for faster responsiveness and less perceived jitter
 
     // Cleanup function
     return () => {
