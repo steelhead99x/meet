@@ -47,10 +47,90 @@ export function randomString(length: number): string {
 }
 
 /**
+ * Device capability information
+ */
+export interface DeviceCapabilities {
+  /** Number of logical CPU cores */
+  cpuCores: number;
+  /** Estimated device memory in GB (if available) */
+  deviceMemoryGB: number | null;
+  /** Whether the device has GPU acceleration available */
+  hasGPU: boolean;
+  /** Device type classification */
+  deviceType: 'mobile' | 'tablet' | 'desktop';
+  /** Overall power classification */
+  powerLevel: 'low' | 'medium' | 'high';
+}
+
+/**
+ * Detects comprehensive device capabilities including CPU, GPU, memory, and device type.
+ * This provides detailed information for adaptive performance optimization.
+ * 
+ * @returns DeviceCapabilities object with detailed device information
+ */
+export function detectDeviceCapabilities(): DeviceCapabilities {
+  // CPU cores detection
+  const cpuCores = navigator.hardwareConcurrency || 4; // Default to 4 if unavailable
+  
+  // Memory detection (Chrome only feature)
+  // @ts-ignore - deviceMemory is not in standard TS types
+  const deviceMemoryGB = navigator.deviceMemory || null;
+  
+  // GPU detection - check for WebGL support as a proxy for GPU capability
+  let hasGPU = false;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    hasGPU = !!gl;
+  } catch (e) {
+    hasGPU = false;
+  }
+  
+  // Device type detection based on screen size and user agent
+  let deviceType: 'mobile' | 'tablet' | 'desktop' = 'desktop';
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isMobile = /iphone|ipod|android.*mobile/.test(userAgent);
+  const isTablet = /ipad|android(?!.*mobile)/.test(userAgent);
+  
+  if (isMobile) {
+    deviceType = 'mobile';
+  } else if (isTablet) {
+    deviceType = 'tablet';
+  } else {
+    deviceType = 'desktop';
+  }
+  
+  // Determine overall power level
+  let powerLevel: 'low' | 'medium' | 'high' = 'medium';
+  
+  // High power: Desktop with 8+ cores, GPU, and 8GB+ RAM
+  if (deviceType === 'desktop' && cpuCores >= 8 && hasGPU && (deviceMemoryGB === null || deviceMemoryGB >= 8)) {
+    powerLevel = 'high';
+  }
+  // Low power: Mobile devices, or any device with <4 cores or <4GB RAM
+  else if (deviceType === 'mobile' || cpuCores < 4 || (deviceMemoryGB !== null && deviceMemoryGB < 4)) {
+    powerLevel = 'low';
+  }
+  // Medium power: Everything else (tablets, laptops, mid-range desktops)
+  else {
+    powerLevel = 'medium';
+  }
+  
+  return {
+    cpuCores,
+    deviceMemoryGB,
+    hasGPU,
+    deviceType,
+    powerLevel,
+  };
+}
+
+/**
  * Detects if the current device has limited CPU resources.
  * Uses hardware concurrency (CPU cores) to determine low-power status.
  * 
  * @returns true if device has fewer than 6 CPU cores
+ * @deprecated Use detectDeviceCapabilities() for more comprehensive detection
  */
 export function isLowPowerDevice(): boolean {
   return navigator.hardwareConcurrency < 6;

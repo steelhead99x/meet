@@ -297,9 +297,17 @@ export function CameraSettings() {
             style={{
               border: backgroundType === 'none' ? '2px solid #3b82f6' : '2px solid rgba(255, 255, 255, 0.15)',
               background: 'rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '60px',
+              minHeight: '60px',
+              padding: '0',
             }}
           >
-            <span className="lk-button-visual-label">None</span>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 3L21 21M3 21L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
           </button>
 
           <button
@@ -312,6 +320,12 @@ export function CameraSettings() {
               backgroundColor: '#e0e0e0',
               position: 'relative',
               overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '60px',
+              minHeight: '60px',
+              padding: '0',
             }}
           >
             <div
@@ -326,7 +340,13 @@ export function CameraSettings() {
                 zIndex: 0,
               }}
             />
-            <span className="lk-button-visual-label">Blur</span>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 1 }}>
+              <circle cx="12" cy="12" r="4" fill="#666" opacity="0.3"/>
+              <circle cx="8" cy="8" r="3" fill="#999" opacity="0.4"/>
+              <circle cx="16" cy="9" r="2.5" fill="#999" opacity="0.4"/>
+              <circle cx="9" cy="16" r="2" fill="#999" opacity="0.4"/>
+              <circle cx="16" cy="15" r="2.5" fill="#999" opacity="0.4"/>
+            </svg>
           </button>
 
           {GRADIENT_BACKGROUNDS.map((gradientBg) => (
@@ -344,9 +364,11 @@ export function CameraSettings() {
                   backgroundType === 'gradient' && virtualBackgroundImagePath === gradientBg.gradient
                     ? '2px solid #3b82f6'
                     : '2px solid rgba(255, 255, 255, 0.15)',
+                minWidth: '60px',
+                minHeight: '60px',
+                padding: '0',
               }}
             >
-              <span className="lk-button-visual-label">{gradientBg.name}</span>
             </button>
           ))}
 
@@ -367,9 +389,11 @@ export function CameraSettings() {
                   backgroundType === 'image' && virtualBackgroundImagePath === image.path
                     ? '2px solid #3b82f6'
                     : '2px solid rgba(255, 255, 255, 0.15)',
+                minWidth: '60px',
+                minHeight: '60px',
+                padding: '0',
               }}
             >
-              <span className="lk-button-visual-label">{image.name}</span>
             </button>
           ))}
         </div>
