@@ -1,5 +1,4 @@
 import * as React from 'react';
-import '@/styles/hide-videoconference-chat.css';
 import { PageClientImpl } from './PageClientImpl';
 import { isVideoCodec } from '@/lib/types';
 

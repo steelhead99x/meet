@@ -35,9 +35,6 @@ import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 // Note: LiveKit v2 chat uses native sendChatMessage() API
 // E2EE only applies to media tracks, not chat messages
-import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
-import { ChatPanel } from '@/lib/ChatPanel';
-import { ChatToggleButton } from '@/lib/ChatToggleButton';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -430,31 +427,18 @@ function VideoConferenceComponent(props: {
 
 // Separate component for room content to isolate hooks
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
-  // Chat toggle state
-  const [isChatOpen, setIsChatOpen] = React.useState(false);
-
-  // Toggle chat handler
-  const toggleChat = React.useCallback(() => {
-    setIsChatOpen(prev => !prev);
-  }, []);
 
   return (
     <RoomContext.Provider value={room}>
+      <KeyboardShortcuts />
       <ReconnectionBanner />
-      <KeyboardShortcuts onToggleChat={toggleChat} />
-      <KeyboardShortcutsHelp />
       <VideoConference
         SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
+        chatMessageFormatter={formatChatMessageLinks}
       />
       <RoomAudioRenderer />
       <DebugMode />
       <RecordingIndicator />
-      <ChatPanel
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        messageFormatter={formatChatMessageLinks}
-      />
-      <ChatToggleButton isOpen={isChatOpen} onToggle={toggleChat} />
     </RoomContext.Provider>
   );
 }

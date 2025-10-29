@@ -12,7 +12,7 @@ import {
   type VideoCodec,
 } from 'livekit-client';
 import { DebugMode } from '@/lib/Debug';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
@@ -21,11 +21,6 @@ import { isMeetStaging } from '@/lib/client-utils';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
-// Note: LiveKit v2 chat uses native sendChatMessage() API
-// E2EE only applies to media tracks, not chat messages
-import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
-import { ChatPanel } from '@/lib/ChatPanel';
-import { ChatToggleButton } from '@/lib/ChatToggleButton';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -213,14 +208,6 @@ export function VideoConferenceClientImpl(props: {
 
   useLowCPUOptimizer(room);
 
-  // Chat toggle state
-  const [isChatOpen, setIsChatOpen] = useState(false);
-
-  // Toggle chat handler
-  const toggleChat = useCallback(() => {
-    setIsChatOpen(prev => !prev);
-  }, []);
-
   // Use conditional rendering instead of early return to avoid hook order issues
   return (
     <div className="lk-room-container">
@@ -230,22 +217,16 @@ export function VideoConferenceClientImpl(props: {
         </div>
       ) : (
         <RoomContext.Provider value={room}>
+          <KeyboardShortcuts />
           <ReconnectionBanner />
-          <KeyboardShortcuts onToggleChat={toggleChat} />
-          <KeyboardShortcutsHelp />
           <VideoConference
             SettingsComponent={
               process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
             }
+            chatMessageFormatter={formatChatMessageLinks}
           />
           <RoomAudioRenderer />
           <DebugMode logLevel={LogLevel.debug} />
-          <ChatPanel
-            isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-            messageFormatter={formatChatMessageLinks}
-          />
-          <ChatToggleButton isOpen={isChatOpen} onToggle={toggleChat} />
         </RoomContext.Provider>
       )}
     </div>
