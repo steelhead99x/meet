@@ -8,6 +8,8 @@ import {
 } from '@livekit/components-react';
 import { BackgroundBlur, BackgroundProcessor, VirtualBackground, ProcessorWrapper } from '@livekit/track-processors';
 import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent } from 'livekit-client';
+import { detectDeviceCapabilities } from './client-utils';
+import { getBlurConfig, getRecommendedBlurQuality, BlurQuality } from './BlurConfig';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -86,11 +88,31 @@ export function CameraSettings() {
     null,
   );
 
+  // Detect device capabilities and determine recommended blur quality
+  const [blurQuality, setBlurQuality] = React.useState<BlurQuality>(() => {
+    if (typeof window === 'undefined') return 'medium';
+    
+    // Check for stored preference
+    const stored = localStorage.getItem('blurQuality');
+    if (stored && ['low', 'medium', 'high', 'ultra'].includes(stored)) {
+      return stored as BlurQuality;
+    }
+    
+    // Auto-detect based on device capabilities
+    const capabilities = detectDeviceCapabilities();
+    const recommended = getRecommendedBlurQuality(capabilities);
+    console.log('[BlurConfig] Device capabilities:', capabilities);
+    console.log('[BlurConfig] Recommended blur quality:', recommended);
+    return recommended;
+  });
+
   // Cache processor instances to avoid recreating them
+  // Map blur quality to processor instance
   const processorCacheRef = React.useRef<{
-    blur?: ProcessorWrapper<Record<string, unknown>>;
+    blur?: Map<BlurQuality, ProcessorWrapper<Record<string, unknown>>>;
     virtualBackground?: Map<string, ProcessorWrapper<Record<string, unknown>>>;
   }>({
+    blur: new Map(),
     virtualBackground: new Map(),
   });
 
@@ -98,7 +120,8 @@ export function CameraSettings() {
   const currentProcessorRef = React.useRef<{
     type: BackgroundType;
     path: string | null;
-  }>({ type: 'none', path: null });
+    quality: BlurQuality | null;
+  }>({ type: 'none', path: null, quality: null });
 
   // Debounce timer ref
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -109,8 +132,24 @@ export function CameraSettings() {
       : undefined;
   }, [localParticipant, cameraTrack]);
 
-  // CPU constraint monitoring REMOVED - prioritizing quality over performance
-  // No auto-disable of effects to maintain maximum blur quality at all times
+  // Expose blur quality setter for SettingsMenu
+  React.useEffect(() => {
+    // @ts-ignore - Attach to window for SettingsMenu access
+    window.__setBlurQuality = (quality: BlurQuality) => {
+      setBlurQuality(quality);
+      localStorage.setItem('blurQuality', quality);
+      console.log('[BlurConfig] Blur quality changed to:', quality);
+    };
+    // @ts-ignore
+    window.__getBlurQuality = () => blurQuality;
+    
+    return () => {
+      // @ts-ignore
+      delete window.__setBlurQuality;
+      // @ts-ignore
+      delete window.__getBlurQuality;
+    };
+  }, [blurQuality]);
 
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
     setBackgroundType(type);
@@ -133,7 +172,8 @@ export function CameraSettings() {
     // Check if we're already using this processor configuration
     if (
       currentProcessorRef.current.type === backgroundType &&
-      currentProcessorRef.current.path === virtualBackgroundImagePath
+      currentProcessorRef.current.path === virtualBackgroundImagePath &&
+      currentProcessorRef.current.quality === blurQuality
     ) {
       return; // Already applied, skip
     }
@@ -153,24 +193,26 @@ export function CameraSettings() {
         }
 
         if (backgroundType === 'blur') {
-          // Reuse cached blur processor if available
-          let blurProcessor = processorCacheRef.current.blur;
+          // Get or create blur processor for current quality level
+          let blurProcessor = processorCacheRef.current.blur?.get(blurQuality);
           if (!blurProcessor) {
-            // Create blur processor with EXTREME quality settings to mask edge imperfections
-            // ULTRA-HIGH blur radius (50) helps hide segmentation jitter and edge inconsistencies
-            // GPU delegation ensures maximum processing quality without performance concerns
+            // Get advanced blur configuration based on quality level
+            const config = getBlurConfig(blurQuality);
+            console.log(`[BlurConfig] Creating ${blurQuality} quality blur processor:`, config);
+            
+            // Create blur processor with quality-specific settings
             blurProcessor = BackgroundProcessor({
-              blurRadius: 50, // EXTREME blur - increased from 30 to 50 to better hide edge jitter
+              blurRadius: config.blurRadius,
               segmenterOptions: {
-                delegate: 'GPU', // Force GPU acceleration for best quality processing
-                // Use all available GPU resources for highest quality segmentation
+                delegate: config.segmenterOptions.delegate,
               },
             }, 'background-blur');
-            processorCacheRef.current.blur = blurProcessor;
+            
+            processorCacheRef.current.blur?.set(blurQuality, blurProcessor);
           }
           
           await track.setProcessor(blurProcessor);
-          currentProcessorRef.current = { type: 'blur', path: null };
+          currentProcessorRef.current = { type: 'blur', path: null, quality: blurQuality };
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
           // Generate cache key
@@ -193,12 +235,12 @@ export function CameraSettings() {
           }
           
           await track.setProcessor(virtualBgProcessor);
-          currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath };
+          currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null };
           
         } else {
           // No effect - stop processor
           await track.stopProcessor();
-          currentProcessorRef.current = { type: 'none', path: null };
+          currentProcessorRef.current = { type: 'none', path: null, quality: null };
         }
       } catch (error) {
         // Handle errors gracefully
@@ -216,7 +258,7 @@ export function CameraSettings() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality]);
 
   // Cleanup processors on unmount
   React.useEffect(() => {
@@ -230,9 +272,10 @@ export function CameraSettings() {
       
       // Clear processor cache
       processorCacheRef.current = {
+        blur: new Map(),
         virtualBackground: new Map(),
       };
-      currentProcessorRef.current = { type: 'none', path: null };
+      currentProcessorRef.current = { type: 'none', path: null, quality: null };
     };
   }, [cameraTrack]);
 

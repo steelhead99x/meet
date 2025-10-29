@@ -11,6 +11,8 @@ import {
 import styles from '../styles/SettingsMenu.module.css';
 import { CameraSettings } from './CameraSettings';
 import { MicrophoneSettings } from './MicrophoneSettings';
+import { BlurQuality, getBlurQualityDescription, getPerformanceImpact } from './BlurConfig';
+import { detectDeviceCapabilities } from './client-utils';
 /**
  * @alpha
  */
@@ -40,6 +42,32 @@ export function SettingsMenu(props: SettingsMenuProps) {
   const isRecording = useIsRecording();
   const [initialRecStatus, setInitialRecStatus] = React.useState(isRecording);
   const [processingRecRequest, setProcessingRecRequest] = React.useState(false);
+
+  // Blur quality control state
+  const [blurQuality, setBlurQuality] = React.useState<BlurQuality>('medium');
+  const [deviceInfo, setDeviceInfo] = React.useState<ReturnType<typeof detectDeviceCapabilities> | null>(null);
+
+  // Initialize blur quality and device info
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const capabilities = detectDeviceCapabilities();
+      setDeviceInfo(capabilities);
+      
+      // @ts-ignore - Get current quality from CameraSettings via window
+      const currentQuality = window.__getBlurQuality?.();
+      if (currentQuality) {
+        setBlurQuality(currentQuality);
+      }
+    }
+  }, []);
+
+  const handleBlurQualityChange = (quality: BlurQuality) => {
+    setBlurQuality(quality);
+    // @ts-ignore - Call CameraSettings via window
+    if (window.__setBlurQuality) {
+      window.__setBlurQuality(quality);
+    }
+  };
 
   React.useEffect(() => {
     if (initialRecStatus !== isRecording) {
@@ -120,6 +148,103 @@ export function SettingsMenu(props: SettingsMenuProps) {
                 <h3>Camera</h3>
                 <section>
                   <CameraSettings />
+                </section>
+                
+                {/* Blur Quality Control */}
+                <h3 style={{ marginTop: '20px' }}>Background Blur Quality</h3>
+                <section>
+                  {deviceInfo && (
+                    <div style={{ 
+                      marginBottom: '12px', 
+                      padding: '10px', 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>Device Info</div>
+                      <div>CPU Cores: {deviceInfo.cpuCores}</div>
+                      {deviceInfo.deviceMemoryGB && <div>Memory: {deviceInfo.deviceMemoryGB} GB</div>}
+                      <div>GPU: {deviceInfo.hasGPU ? '✓ Available' : '✗ Not detected'}</div>
+                      <div>Type: {deviceInfo.deviceType}</div>
+                      <div>Power Level: <span style={{ 
+                        color: deviceInfo.powerLevel === 'high' ? '#10b981' : 
+                               deviceInfo.powerLevel === 'medium' ? '#f59e0b' : '#ef4444',
+                        fontWeight: 'bold'
+                      }}>{deviceInfo.powerLevel.toUpperCase()}</span></div>
+                    </div>
+                  )}
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {(['low', 'medium', 'high', 'ultra'] as BlurQuality[]).map((quality) => {
+                      const impact = getPerformanceImpact(quality);
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleBlurQualityChange(quality)}
+                          className="lk-button"
+                          aria-pressed={blurQuality === quality}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            padding: '12px',
+                            border: blurQuality === quality 
+                              ? '2px solid #3b82f6' 
+                              : '2px solid rgba(255, 255, 255, 0.15)',
+                            background: blurQuality === quality 
+                              ? 'rgba(59, 130, 246, 0.1)' 
+                              : 'rgba(255, 255, 255, 0.05)',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            width: '100%',
+                            alignItems: 'center',
+                            marginBottom: '4px',
+                          }}>
+                            <strong style={{ fontSize: '15px', textTransform: 'capitalize' }}>
+                              {quality}
+                            </strong>
+                            {blurQuality === quality && (
+                              <span style={{ color: '#3b82f6', fontSize: '18px' }}>✓</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '6px' }}>
+                            {getBlurQualityDescription(quality).split(' - ')[1]}
+                          </div>
+                          <div style={{ 
+                            fontSize: '11px', 
+                            opacity: 0.7,
+                            display: 'flex',
+                            gap: '12px',
+                          }}>
+                            <span>CPU: {impact.cpuUsage}</span>
+                            <span>GPU: {impact.gpuUsage}</span>
+                            <span>Memory: {impact.memoryUsage}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '10px', 
+                    background: 'rgba(59, 130, 246, 0.1)', 
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                  }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#60a5fa' }}>
+                      💡 Pro Tip
+                    </div>
+                    <div style={{ lineHeight: '1.5' }}>
+                      Higher quality settings provide stronger blur and smoother edges around your person,
+                      but use more CPU/GPU resources. Your device was detected as <strong>{deviceInfo?.powerLevel}</strong> power.
+                    </div>
+                  </div>
                 </section>
               </>
             )}

@@ -66,23 +66,56 @@
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* Base button styling */
+/* Base button styling - circular icon buttons only */
 [data-lk-theme] .lk-control-bar .lk-button {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 12px 18px;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  padding: 0 !important;
   color: white;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
   cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
 }
 
 [data-lk-theme] .lk-control-bar .lk-button:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
+}
+
+/* Hide all text in control bar buttons, show only icons */
+[data-lk-theme] .lk-control-bar .lk-button {
+  font-size: 0 !important;
+  /* Don't use color: transparent - it makes SVG icons invisible */
+}
+
+[data-lk-theme] .lk-control-bar .lk-button *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-control-bar .lk-button svg {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 22px !important; /* Reset font-size for SVG */
+  color: white !important; /* Ensure SVG icons are visible */
 }
 
 /* ===========================================
@@ -217,17 +250,22 @@
   color: #ef4444;
 }
 
-/* Leave button - Red and prominent */
+/* Leave button - Red and prominent, icon only */
 [data-lk-theme] .lk-control-bar .lk-disconnect-button,
 [data-lk-theme] .lk-control-bar button[aria-label*="Leave"] {
   background: #dc2626;
   border: none;
   color: white;
   font-weight: 600;
-  padding: 12px 24px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 13px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
 }
 
 [data-lk-theme] .lk-control-bar .lk-disconnect-button:hover,
@@ -235,9 +273,41 @@
   background: #b91c1c;
 }
 
-/* Screen share button */
+/* Hide text in leave button, show only icon */
+[data-lk-theme] .lk-control-bar .lk-disconnect-button,
+[data-lk-theme] .lk-control-bar button[aria-label*="Leave"] {
+  font-size: 0 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+[data-lk-theme] .lk-control-bar .lk-disconnect-button *:not(svg),
+[data-lk-theme] .lk-control-bar button[aria-label*="Leave"] *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-control-bar .lk-disconnect-button svg,
+[data-lk-theme] .lk-control-bar button[aria-label*="Leave"] svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Screen share button - circular icon only */
 [data-lk-theme] .lk-button[data-lk-source="screen_share"] {
-  padding: 12px 18px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
 }
 
 [data-lk-theme] .lk-button[data-lk-source="screen_share"][data-lk-enabled="true"] {
@@ -245,11 +315,35 @@
   border-color: #3b82f6;
 }
 
-/* Chat toggle button */
+/* Hide text in screen share button, show only icon */
+[data-lk-theme] .lk-button[data-lk-source="screen_share"] *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-button[data-lk-source="screen_share"] svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Chat toggle button - circular icon only */
 [data-lk-theme] .lk-chat-toggle,
 [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.3);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
 }
 
 [data-lk-theme] .lk-chat-toggle[aria-pressed="true"],
@@ -258,9 +352,52 @@
   border-color: rgba(59, 130, 246, 0.5);
 }
 
-/* Settings button */
-[data-lk-theme] .lk-settings-menu-toggle {
-  padding: 12px 18px;
+/* Hide text in chat button, show only icon */
+[data-lk-theme] .lk-chat-toggle *:not(svg),
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-chat-toggle svg,
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Settings button - circular icon only */
+[data-lk-theme] .lk-settings-menu-toggle,
+[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hide text in settings button, show only icon */
+[data-lk-theme] .lk-settings-menu-toggle *:not(svg),
+[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-settings-menu-toggle svg,
+[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* Button groups (device selectors) */
@@ -271,29 +408,55 @@
   flex-wrap: wrap;
 }
 
+/* All buttons in button groups - icon only */
+[data-lk-theme] .lk-button-group .lk-button,
+[data-lk-theme] .lk-button-group > span.lk-button,
+[data-lk-theme] .lk-button-group > button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0;
+}
+
 /* Dropdown toggle buttons - small icons */
 [data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child) {
   width: 32px;
   height: 32px;
   padding: 0;
   border-radius: 8px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* First button in group (label) - allow flexible width */
-[data-lk-theme] .lk-button-group > .lk-button:first-child:not([data-lk-source]) {
-  min-width: auto;
-  width: auto;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* First button in group - icon only, circular */
+[data-lk-theme] .lk-button-group > .lk-button:first-child:not([data-lk-source]),
+[data-lk-theme] .lk-button-group > span.lk-button:first-child,
+[data-lk-theme] .lk-button-group > button:first-child {
+  width: 48px;
+  height: 48px;
+  padding: 0 !important;
+  border-radius: 50%;
+}
+
+/* Hide text in all button group buttons, show only icons */
+[data-lk-theme] .lk-button-group .lk-button,
+[data-lk-theme] .lk-button-group > span.lk-button,
+[data-lk-theme] .lk-button-group > button {
+  font-size: 0 !important;
+}
+
+[data-lk-theme] .lk-button-group .lk-button *:not(svg),
+[data-lk-theme] .lk-button-group > span.lk-button *:not(svg),
+[data-lk-theme] .lk-button-group > button *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-button-group .lk-button svg,
+[data-lk-theme] .lk-button-group > span.lk-button svg,
+[data-lk-theme] .lk-button-group > button svg {
+  flex-shrink: 0;
+  font-size: 16px !important; /* Reset font-size for SVG */
+  min-width: 16px !important;
+  min-height: 16px !important;
+  color: white !important;
 }
 
 /* ===========================================
@@ -660,14 +823,18 @@
 [data-lk-theme] .lk-chat-form button {
   background: #3b82f6;
   border: none;
-  border-radius: 10px;
-  padding: 12px 20px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
   color: white;
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0;
 }
 
 [data-lk-theme] .lk-chat-form button:hover {
@@ -677,6 +844,25 @@
 [data-lk-theme] .lk-chat-form button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Hide text in chat send button, show only icon */
+[data-lk-theme] .lk-chat-form button {
+  font-size: 0 !important;
+}
+
+[data-lk-theme] .lk-chat-form button *:not(svg) {
+  display: none !important;
+}
+
+[data-lk-theme] .lk-chat-form button svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  flex-shrink: 0;
+  font-size: 20px !important; /* Reset font-size for SVG */
+  color: white !important;
 }
 
 /* ===========================================
@@ -709,18 +895,39 @@
 [data-lk-theme] .lk-prejoin button[type="submit"] {
   background: #3b82f6;
   border: none;
-  border-radius: 10px;
-  padding: 14px 28px;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  padding: 0 !important;
   color: white;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
-  width: 100%;
-  margin-top: 16px;
+  margin: 24px auto 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 [data-lk-theme] .lk-prejoin button[type="submit"]:hover {
   background: #2563eb;
+  transform: scale(1.05);
+}
+
+/* Hide text in prejoin submit button, show only icon */
+[data-lk-theme] .lk-prejoin button[type="submit"] {
+  font-size: 0 !important;
+  overflow: hidden;
+}
+
+[data-lk-theme] .lk-prejoin button[type="submit"] svg {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  flex-shrink: 0;
+  font-size: 28px !important; /* Reset font-size for SVG */
+  color: white !important;
 }
 
 /* PreJoin mic/camera buttons */
@@ -738,15 +945,17 @@
   overflow: hidden;
 }
 
-[data-lk-theme] .lk-prejoin .lk-button[data-lk-source="microphone"] *:not(svg),
-[data-lk-theme] .lk-prejoin .lk-button[data-lk-source="camera"] *:not(svg) {
-  display: none !important;
+[data-lk-theme] .lk-prejoin .lk-button[data-lk-source="microphone"],
+[data-lk-theme] .lk-prejoin .lk-button[data-lk-source="camera"] {
+  font-size: 0 !important;
 }
 
 [data-lk-theme] .lk-prejoin .lk-button[data-lk-source="microphone"] svg,
 [data-lk-theme] .lk-prejoin .lk-button[data-lk-source="camera"] svg {
   width: 20px !important;
   height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -754,6 +963,8 @@
   transform: translate(-50%, -50%);
   margin: 0 !important;
   padding: 0 !important;
+  font-size: 20px !important;
+  color: white !important;
 }
 
 /* ===========================================
@@ -786,14 +997,13 @@
     gap: 8px;
   }
 
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
+  /* All control bar buttons smaller on mobile */
+  [data-lk-theme] .lk-control-bar .lk-button {
     width: 48px;
     height: 48px;
   }
 
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] svg {
+  [data-lk-theme] .lk-control-bar .lk-button svg {
     width: 20px !important;
     height: 20px !important;
   }
@@ -843,26 +1053,16 @@
   [data-lk-theme] .lk-button {
     font-size: var(--font-size-sm);
   }
-  
-  [data-lk-theme] .lk-control-bar .lk-button {
-    padding: 10px 16px;
-  }
 }
 
 @media (max-width: 480px) {
+  /* All control bar buttons even smaller on very small screens */
   [data-lk-theme] .lk-control-bar .lk-button {
-    padding: 10px 14px;
-    font-size: 13px;
-  }
-
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
     width: 44px;
     height: 44px;
   }
 
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
-  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] svg {
+  [data-lk-theme] .lk-control-bar .lk-button svg {
     width: 18px !important;
     height: 18px !important;
   }

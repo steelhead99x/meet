@@ -1,7 +1,7 @@
-# Button Icons Update - Summary
+# Button Icons Update - Complete Summary
 
 ## Overview
-All buttons in the application have been updated to remove text labels and use well-centered SVG icons instead. This provides a cleaner, more modern UI with better visual consistency.
+**ALL** buttons in the application have been updated to remove text labels and use well-centered SVG icons instead. This includes custom components and LiveKit's built-in control bar buttons. This provides a cleaner, more modern UI with better visual consistency.
 
 ## Changes Made
 
@@ -32,6 +32,22 @@ All buttons in the application have been updated to remove text labels and use w
 ### 5. **ErrorBoundary.tsx** (`/app/ErrorBoundary.tsx`)
 - **Reload Page Button**: Replaced "Reload Page" text with refresh/reload circular arrows icon
 - **Go Home Button**: Replaced "Go Home" text with house icon
+
+### 6. **LiveKit Control Bar Buttons** (`/styles/modern-theme.css`)
+- **ALL Control Bar Buttons**: Updated CSS to hide text and show only icons
+  - Buttons are now circular (52px on desktop, 48px on tablet, 44px on mobile)
+  - Text is hidden with `display: none !important`
+  - SVG icons are centered and sized appropriately
+- **Leave Button**: Red circular button with icon only (previously had "LEAVE" text)
+- **Chat Button**: Blue circular button with chat icon only
+- **Screen Share Button**: Circular button with screen icon only
+- **Settings Button**: Circular button with settings icon only
+- **Microphone/Camera**: Already had icons, improved consistency
+
+### 7. **PreJoin & Chat Buttons** (`/styles/modern-theme.css`)
+- **PreJoin Submit Button**: Large circular button (64px) with icon only (previously had "Join" text)
+- **Chat Send Button**: Circular button (40px) with icon only (previously had "Send" text)
+- **Button Groups**: All device selector buttons now icon-only (circular 48px for main button, 32px for dropdown)
 
 ## Design Principles Applied
 
@@ -72,16 +88,52 @@ All buttons in the application have been updated to remove text labels and use w
 
 ## Files Modified
 
-1. `/lib/SettingsMenu.tsx`
-2. `/lib/CameraSettings.tsx`
-3. `/lib/MicrophoneSettings.tsx`
-4. `/app/page.tsx`
-5. `/app/ErrorBoundary.tsx`
+1. `/lib/SettingsMenu.tsx` - Custom settings buttons
+2. `/lib/CameraSettings.tsx` - Background effect buttons
+3. `/lib/MicrophoneSettings.tsx` - Noise cancellation button
+4. `/app/page.tsx` - Start meeting button
+5. `/app/ErrorBoundary.tsx` - Error recovery buttons
+6. `/styles/modern-theme.css` - **Major CSS overhaul for ALL LiveKit control bar buttons**
+
+## CSS Changes Details
+
+### Control Bar Base Styles
+```css
+/* All control bar buttons are now circular */
+[data-lk-theme] .lk-control-bar .lk-button {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0 !important;
+}
+
+/* Hide ALL text content, show only SVG icons */
+[data-lk-theme] .lk-control-bar .lk-button *:not(svg) {
+  display: none !important;
+}
+
+/* Center all SVG icons */
+[data-lk-theme] .lk-control-bar .lk-button svg {
+  width: 22px !important;
+  height: 22px !important;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+### Responsive Sizing
+- **Desktop**: 52px × 52px buttons, 22px icons
+- **Tablet (≤768px)**: 48px × 48px buttons, 20px icons
+- **Mobile (≤480px)**: 44px × 44px buttons, 18px icons
 
 ## Notes
 
-- LiveKit's built-in `TrackToggle` components already use icons by default (camera/microphone)
-- Background effect buttons now rely purely on visual previews (gradients/images) with no text overlay
+- **All buttons** in the entire app now use icons only (no text)
+- LiveKit's built-in control bar buttons (Leave, Chat, Screen Share, Settings) are now circular and icon-only via CSS
+- Background effect buttons rely purely on visual previews (gradients/images)
 - All changes maintain backward compatibility with existing CSS classes
 - The `.lk-button-visual-label` CSS class remains in the stylesheet but is no longer used
+- Accessibility maintained through proper ARIA labels
 
