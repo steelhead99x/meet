@@ -141,22 +141,26 @@ export function VideoConferenceClientImpl(props: {
     };
   }, [e2eeEnabled, e2eePassphrase, keyProvider, worker, props.codec]);
 
-  // Event listeners for errors
-  useEffect(() => {
-    if (!room) return;
-
-    const handleError = (error: Error) => {
+  // Event listeners for errors - use ref for stable handler
+  const handlersRef = useRef({
+    handleError: (error: Error) => {
       console.error('Room error:', error);
       toast.error(`Error: ${error.message}`, {
         duration: 5000,
         position: 'top-center',
       });
-    };
+    },
+  });
 
-    room.on(RoomEvent.MediaDevicesError, handleError);
+  useEffect(() => {
+    if (!room) return;
+
+    const onMediaDevicesError = (error: Error) => handlersRef.current.handleError(error);
+
+    room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
 
     return () => {
-      room.off(RoomEvent.MediaDevicesError, handleError);
+      room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
     };
   }, [room]);
 
@@ -166,10 +170,12 @@ export function VideoConferenceClientImpl(props: {
     if (!room || !e2eeSetupComplete || hasConnectedRef.current) return;
 
     hasConnectedRef.current = true;
-    room
-      .connect(props.liveKitUrl, props.token, connectOptions)
-      .then(() => room.localParticipant.enableCameraAndMicrophone())
-      .then(async () => {
+    
+    const connectToRoom = async () => {
+      try {
+        await room.connect(props.liveKitUrl, props.token, connectOptions);
+        await room.localParticipant.enableCameraAndMicrophone();
+        
         // Reassert E2EE key after connection to ensure worker picks up keys for local participant
         if (e2eeEnabled) {
           try {
@@ -178,14 +184,19 @@ export function VideoConferenceClientImpl(props: {
             console.error('Encryption error after connect:', err);
           }
         }
-      })
-      .catch((error) => {
-        console.error('Connection/Media error:', error);
-        toast.error(`Failed to connect: ${error.message}`, {
-          duration: 5000,
-          position: 'top-center',
+        
+        // Log successful connection once
+        console.log('Room connected (Custom):', {
+          isConnected: room.state,
+          localParticipant: room.localParticipant?.identity,
+          permissions: room.localParticipant?.permissions,
         });
-      });
+      } catch (error) {
+        handlersRef.current.handleError(error instanceof Error ? error : new Error('Connection failed'));
+      }
+    };
+    
+    connectToRoom();
   }, [room, e2eeSetupComplete, connectOptions, props.liveKitUrl, props.token, e2eeEnabled, keyProvider, e2eePassphrase]);
 
   // Cleanup - let LiveKit handle track cleanup automatically
@@ -199,43 +210,28 @@ export function VideoConferenceClientImpl(props: {
 
   useLowCPUOptimizer(room);
 
-  // Debug logging for chat functionality
-  useEffect(() => {
-    if (room) {
-      console.log('Room connected (Custom):', {
-        isConnected: room.state,
-        localParticipant: room.localParticipant?.identity,
-        permissions: room.localParticipant?.permissions,
-      });
-    }
-  }, [room]);
-
-  // Show loading state while room is being created
-  if (!room) {
-    return (
-      <div className="lk-room-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Setting up encrypted connection...</div>
-      </div>
-    );
-  }
-
+  // Use conditional rendering instead of early return to avoid hook order issues
   return (
     <div className="lk-room-container">
-      <RoomContext.Provider value={room}>
-        <ReconnectionBanner />
-        <KeyboardShortcuts />
-        <KeyboardShortcutsHelp />
-        <VideoConference
-          chatMessageFormatter={formatChatMessageLinks}
-          chatMessageEncoder={createE2EEMessageEncoder(worker, room.localParticipant?.identity)}
-          chatMessageDecoder={createE2EEMessageDecoder(worker, room.localParticipant?.identity)}
-          SettingsComponent={
-            process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
-          }
-        />
-        <RoomAudioRenderer />
-        <DebugMode logLevel={LogLevel.debug} />
-      </RoomContext.Provider>
+      {!room ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>Setting up encrypted connection...</div>
+        </div>
+      ) : (
+        <RoomContext.Provider value={room}>
+          <ReconnectionBanner />
+          <KeyboardShortcuts />
+          <KeyboardShortcutsHelp />
+          <VideoConference
+            chatMessageFormatter={formatChatMessageLinks}
+            SettingsComponent={
+              process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
+            }
+          />
+          <RoomAudioRenderer />
+          <DebugMode logLevel={LogLevel.debug} />
+        </RoomContext.Provider>
+      )}
     </div>
   );
 }

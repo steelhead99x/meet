@@ -8,23 +8,23 @@
 .lk-control-bar {
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.85) 0%,
-    rgba(0, 0, 0, 0.95) 100%
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.98) 100%
   ) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-  padding: 16px 20px !important;
-  gap: 10px !important;
+  backdrop-filter: blur(32px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 18px 24px !important;
+  gap: 12px !important;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6),
-              0 -2px 8px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+              0 -4px 12px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 80px !important;
+  min-height: 88px !important;
   position: relative !important;
   width: 100% !important;
 }
@@ -359,76 +359,59 @@
               inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Chat button with enhanced badge and fixed sizing - IMPROVED VISIBILITY */
+/* Chat button - hidden since chat is always visible */
+/* Chat toggle button - Professional styling */
 .lk-chat-toggle,
 .lk-control-bar button[aria-label*="Chat"],
 .lk-control-bar button[aria-label*="chat"] {
-  position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
-  padding: 12px 18px !important;
-  width: auto !important;
-  min-width: 95px !important;
-  max-width: 95px !important;
-  background: rgba(16, 185, 129, 0.12) !important;
-  border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
-  flex-shrink: 0 !important;
-  white-space: nowrap !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 13px 20px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.4px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+              0 2px 4px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   cursor: pointer !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.lk-chat-toggle svg,
-.lk-control-bar button[aria-label*="Chat"] svg,
-.lk-control-bar button[aria-label*="chat"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  flex-shrink: 0 !important;
-  stroke-width: 1.8 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
 .lk-chat-toggle:hover,
 .lk-control-bar button[aria-label*="Chat"]:hover,
 .lk-control-bar button[aria-label*="chat"]:hover {
-  background: rgba(16, 185, 129, 0.2) !important;
-  border-color: rgba(16, 185, 129, 0.5) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3),
-              0 2px 6px rgba(16, 185, 129, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
+              0 3px 8px rgba(0, 0, 0, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-.lk-chat-toggle .lk-unread-indicator {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  border-radius: 50% !important;
-  border: 2px solid rgba(0, 0, 0, 0.95) !important;
-  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.7),
-              0 0 20px rgba(239, 68, 68, 0.4) !important;
-  animation: pulse-notification 2s ease-in-out infinite !important;
-  position: absolute !important;
-  top: 4px !important;
-  right: 4px !important;
-  min-width: 18px !important;
-  min-height: 18px !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+/* Active state when chat is open */
+.lk-chat-toggle[aria-pressed="true"],
+.lk-control-bar button[aria-label*="Chat"][aria-pressed="true"] {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.3) 100%) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3),
+              0 2px 4px rgba(59, 130, 246, 0.2),
+              inset 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
 }
 
-@keyframes pulse-notification {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.9;
-  }
+.lk-chat-toggle svg,
+.lk-control-bar button[aria-label*="Chat"] svg {
+  width: 20px !important;
+  height: 20px !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
 }
 
 /* Dropdown/Menu buttons next to mic/camera */
@@ -547,6 +530,9 @@
   -webkit-font-smoothing: subpixel-antialiased !important;
   width: 100% !important;
   height: 100% !important;
+  /* Minimum size constraints - always at least 360p */
+  min-width: 640px !important;
+  min-height: 360px !important;
 }
 
 /* Ensure video elements fill the participant tile completely */
@@ -555,12 +541,58 @@
   height: 100% !important;
   object-fit: cover !important;
   display: block !important;
+  /* Prevent layout shifts and ensure crisp rendering */
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
 }
 
 /* Ensure participant tile placeholder/container fills properly */
 .lk-participant-tile > div {
   width: 100% !important;
   height: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Video track container - ensure proper sizing */
+.lk-video-track,
+.lk-participant-tile .lk-video {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+/* Dark overlay styling - ensure full coverage with no gaps */
+.lk-participant-tile .dark-overlay,
+.lk-participant-tile [class*="overlay"],
+.lk-participant-tile [class*="Overlay"] {
+  position: absolute !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Semi-transparent dark overlay example */
+.dark-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure screen share tiles don't have gaps */
+.lk-focus-layout-wrapper,
+.lk-grid-layout-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .lk-participant-tile:hover {
@@ -569,25 +601,80 @@
   /* Removed transform scale to prevent video blinking */
 }
 
-/* Participant metadata overlay - NO blur on metadata bar */
-.lk-participant-metadata {
+/* Participant metadata overlay - Positioned at bottom with compact design */
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata {
+  position: absolute !important;
+  bottom: 0px !important;
+  left: 0px !important;
+  right: 0px !important;
+  width: 100% !important;
+  height: auto !important; /* Let content determine height */
+  max-height: 70px !important; /* Limit height so it doesn't cover whole video */
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.85) 100%
+    rgba(0, 0, 0, 0.92) 100%
   ) !important;
-  padding: 16px !important;
+  padding: 12px 16px !important;
   border-radius: 0 0 14px 14px !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Force override the top property from LiveKit's default styles */
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata {
+  top: unset !important;
+  inset-block-start: unset !important;
 }
 
 .lk-participant-metadata-item {
-  background: rgba(0, 0, 0, 0.8) !important;
+  background: rgba(0, 0, 0, 0.85) !important;
   border-radius: 8px !important;
   padding: 6px 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   font-weight: 500 !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   letter-spacing: 0.3px !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Participant name styling */
+.lk-participant-name {
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  max-width: 200px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Connection quality indicator styling */
+[data-lk-theme] .lk-participant-metadata .lk-connection-quality {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: auto !important;
+  padding: 6px 10px !important;
+  opacity: 1 !important; /* Make sure it's visible */
+}
+
+[data-lk-theme] .lk-participant-metadata .lk-connection-quality svg {
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 1 !important;
 }
 
 /* Speaking indicator - Modern pulse animation */
@@ -609,26 +696,9 @@
   }
 }
 
-/* E2EE encryption indicator on participant tiles */
+/* E2EE encryption indicator on participant tiles - Hidden since lock icon is in metadata bar */
 .lk-participant-tile[data-lk-encrypted="true"]::after {
-  content: "🔒";
-  position: absolute !important;
-  top: 10px !important;
-  right: 10px !important;
-  z-index: 10 !important;
-  width: 32px !important;
-  height: 32px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: rgba(0, 40, 20, 0.9) !important;
-  border: 2px solid rgba(34, 197, 94, 0.6) !important;
-  border-radius: 50% !important;
-  font-size: 14px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4),
-              0 0 12px rgba(34, 197, 94, 0.3) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  display: none !important;
 }
 
 /* Pinned participant indicator */
@@ -664,15 +734,36 @@
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
-  width: 360px !important;
-  max-width: 360px !important;
+  width: 380px !important;
+  max-width: 380px !important;
   min-width: 320px !important;
   flex-shrink: 0 !important;
   background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%) !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6),
+              -2px 0 8px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+/* Chat hidden state */
+.lk-chat[data-lk-chat-open="false"],
+.lk-chat[aria-hidden="true"] {
+  transform: translateX(100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Chat visible state */
+.lk-chat[data-lk-chat-open="true"],
+.lk-chat:not([aria-hidden="true"]) {
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 /* Responsive chat width */
@@ -709,12 +800,15 @@
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 20px !important;
+  padding: 24px !important;
   gap: 16px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   flex-shrink: 0 !important;
-  min-height: 64px !important;
+  min-height: 72px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
 .lk-chat-header h3,
@@ -729,84 +823,58 @@
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  /* Hide original text and replace with "Chat" */
+  visibility: hidden !important;
+  position: relative !important;
 }
 
-/* Chat close button in header - Hide the button completely */
+.lk-chat-header h3::after,
+.lk-chat-header-title::after,
+.lk-chat-header > *:first-child::after {
+  content: "Chat" !important;
+  visibility: visible !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Chat close button in header - Professional styling */
 .lk-chat-header button,
 .lk-close-button {
-  display: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  flex-shrink: 0 !important;
+}
+
+.lk-chat-header button:hover,
+.lk-close-button:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 1) !important;
+  transform: scale(1.05) !important;
 }
 
 .lk-chat-header button svg,
 .lk-close-button svg {
-  display: none !important;
-}
-
-/* Chat toggle button in control bar - proper sizing - FORCE VISIBLE */
-.lk-control-bar .lk-chat-toggle,
-.lk-control-bar .lk-button.lk-chat-toggle,
-button[aria-label="Chat"],
-.lk-control-bar button[data-lk-chat-toggle],
-[data-lk-source="chat"] {
-  background: rgba(16, 185, 129, 0.12) !important;
-  border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
-  border-radius: 14px !important;
-  padding: 12px 20px !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  letter-spacing: 0.4px !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2),
-              0 1px 3px rgba(16, 185, 129, 0.15) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  min-height: 48px !important;
-  cursor: pointer !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-.lk-control-bar .lk-chat-toggle:hover,
-.lk-control-bar .lk-button.lk-chat-toggle:hover,
-button[aria-label="Chat"]:hover,
-.lk-control-bar button[data-lk-chat-toggle]:hover {
-  background: rgba(16, 185, 129, 0.2) !important;
-  border-color: rgba(16, 185, 129, 0.5) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35),
-              0 2px 6px rgba(16, 185, 129, 0.25) !important;
-}
-
-.lk-control-bar .lk-chat-toggle[aria-pressed="true"],
-.lk-control-bar .lk-button.lk-chat-toggle[aria-pressed="true"] {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.4) 100%) !important;
-  border-color: rgba(16, 185, 129, 0.7) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4),
-              0 1px 3px rgba(16, 185, 129, 0.3),
-              inset 0 1px 0 rgba(16, 185, 129, 0.2) !important;
-  color: #10b981 !important;
-}
-
-.lk-control-bar .lk-chat-toggle svg,
-.lk-control-bar .lk-button.lk-chat-toggle svg {
   width: 18px !important;
   height: 18px !important;
-  flex-shrink: 0 !important;
-}
-
-@media (max-width: 768px) {
-  .lk-control-bar .lk-chat-toggle,
-  .lk-control-bar .lk-button.lk-chat-toggle {
-    padding: 10px 16px !important;
-    font-size: 13px !important;
-    min-height: 44px !important;
-  }
+  stroke-width: 2.5 !important;
 }
 
 /* Chat messages container */
@@ -823,43 +891,61 @@ button[aria-label="Chat"]:hover,
 
 /* Individual message styling */
 .lk-chat-message {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-radius: 18px !important;
-  padding: 14px 18px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  max-width: 80% !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-radius: 16px !important;
+  padding: 16px 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  max-width: 85% !important;
   word-wrap: break-word !important;
   word-break: break-word !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25),
+              0 1px 3px rgba(0, 0, 0, 0.2) !important;
   margin-bottom: 0 !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  position: relative !important;
+}
+
+.lk-chat-message::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%) !important;
+  pointer-events: none !important;
 }
 
 .lk-chat-message:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
-  transform: translateY(-1px) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+              0 2px 6px rgba(0, 0, 0, 0.25) !important;
+  transform: translateY(-2px) !important;
 }
 
 /* Local (your own) messages */
 .lk-chat-message.lk-chat-message-local {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.3) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.28) 0%, rgba(37, 99, 235, 0.32) 100%) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
   margin-left: auto !important;
   margin-right: 0 !important;
-  border-radius: 18px 18px 4px 18px !important;
-  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.2),
-              0 0 0 1px rgba(59, 130, 246, 0.1) inset !important;
+  border-radius: 16px 16px 4px 16px !important;
+  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.25),
+              0 1px 4px rgba(59, 130, 246, 0.15),
+              0 0 0 1px rgba(59, 130, 246, 0.15) inset !important;
+}
+
+.lk-chat-message.lk-chat-message-local::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%) !important;
 }
 
 .lk-chat-message.lk-chat-message-local:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.35) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.6) !important;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3),
-              0 0 0 1px rgba(59, 130, 246, 0.15) inset !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35) 0%, rgba(37, 99, 235, 0.4) 100%) !important;
+  border-color: rgba(59, 130, 246, 0.7) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35),
+              0 2px 8px rgba(59, 130, 246, 0.2),
+              0 0 0 1px rgba(59, 130, 246, 0.2) inset !important;
 }
 
 /* Remote (other users') messages */
@@ -910,42 +996,49 @@ button[aria-label="Chat"]:hover,
   overflow-wrap: break-word !important;
 }
 
-/* Chat input form */
+/* Chat input form - Fixed size for consistent layout */
 .lk-chat-form {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-  padding: 20px !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.7) 100%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 20px 24px !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
   flex-shrink: 0 !important;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4),
+              0 -2px 8px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  min-height: 92px !important;
+  max-height: 92px !important;
+  height: 92px !important;
 }
 
 .lk-chat-form > form,
 .lk-chat-form-input {
   display: flex !important;
-  gap: 12px !important;
-  align-items: flex-end !important;
+  gap: 10px !important;
+  align-items: center !important;
   width: 100% !important;
+  height: 100% !important;
 }
 
 .lk-chat-form input,
 .lk-chat-form textarea {
   flex: 1 !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 2px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 14px !important;
   padding: 14px 18px !important;
   color: white !important;
   font-size: 14px !important;
   font-weight: 500 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   line-height: 1.4 !important;
   min-height: 48px !important;
   max-height: 48px !important;
   height: 48px !important;
   resize: none !important;
   overflow: hidden !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 .lk-chat-form input::placeholder,
@@ -975,11 +1068,12 @@ button[aria-label="Chat"]:hover,
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important;
   cursor: pointer !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  min-height: 48px !important;
-  max-height: 48px !important;
-  height: 48px !important;
+  letter-spacing: 0.6px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  height: 44px !important;
   white-space: nowrap !important;
+  min-width: 80px !important;
 }
 
 .lk-chat-form button:hover:not(:disabled) {
@@ -1341,6 +1435,12 @@ button[aria-label="Chat"]:hover,
     width: 20px !important;
     height: 20px !important;
   }
+
+  /* Adjust participant tile minimum size for tablets */
+  .lk-participant-tile {
+    min-width: 480px !important;
+    min-height: 270px !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1402,6 +1502,12 @@ button[aria-label="Chat"]:hover,
   .lk-prejoin .lk-button[data-lk-source="camera"] svg {
     width: 18px !important;
     height: 18px !important;
+  }
+
+  /* Adjust participant tile minimum size for mobile phones */
+  .lk-participant-tile {
+    min-width: 320px !important;
+    min-height: 180px !important;
   }
 }
 

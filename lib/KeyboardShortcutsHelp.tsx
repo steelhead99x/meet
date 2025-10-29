@@ -6,23 +6,24 @@ import styles from '../styles/KeyboardShortcutsHelp.module.css';
 export function KeyboardShortcutsHelp() {
   const [isVisible, setIsVisible] = React.useState(false);
 
-  React.useEffect(() => {
-    function handleKeyPress(event: KeyboardEvent) {
-      // Show shortcuts help with Shift + ?
-      if (event.key === '?' && event.shiftKey) {
-        event.preventDefault();
-        setIsVisible((prev) => !prev);
-      }
-      // Hide with Escape
-      if (event.key === 'Escape' && isVisible) {
-        event.preventDefault();
-        setIsVisible(false);
-      }
+  // Memoize the event handler to prevent re-creating on every render
+  const handleKeyPress = React.useCallback((event: KeyboardEvent) => {
+    // Show shortcuts help with Shift + ?
+    if (event.key === '?' && event.shiftKey) {
+      event.preventDefault();
+      setIsVisible((prev) => !prev);
     }
+    // Hide with Escape
+    if (event.key === 'Escape' && isVisible) {
+      event.preventDefault();
+      setIsVisible(false);
+    }
+  }, [isVisible]);
 
+  React.useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isVisible]);
+  }, [handleKeyPress]);
 
   if (!isVisible) {
     return (
@@ -58,10 +59,6 @@ export function KeyboardShortcutsHelp() {
           <div className={styles.shortcut}>
             <kbd>Cmd/Ctrl</kbd> + <kbd>V</kbd>
             <span>Toggle Camera</span>
-          </div>
-          <div className={styles.shortcut}>
-            <kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
-            <span>Toggle Chat</span>
           </div>
           <div className={styles.shortcut}>
             <kbd>Shift</kbd> + <kbd>?</kbd>

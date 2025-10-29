@@ -144,7 +144,9 @@ export function PageClientImpl(props: {
           <VideoConferenceComponent
             connectionDetails={connectionDetails}
             userChoices={preJoinChoices}
-            options={{ codec: props.codec, hq: props.hq, useEncryption }}
+            codec={props.codec}
+            hq={props.hq}
+            useEncryption={useEncryption}
           />
         </RoomErrorBoundary>
       )}
@@ -155,20 +157,22 @@ export function PageClientImpl(props: {
 function VideoConferenceComponent(props: {
   userChoices: LocalUserChoices;
   connectionDetails: ConnectionDetails;
-  options: {
-    hq: boolean;
-    codec: VideoCodec;
-    useEncryption: boolean;
-  };
+  codec: VideoCodec;
+  hq: boolean;
+  useEncryption: boolean;
 }) {
   const keyProvider = React.useMemo(() => new ExternalE2EEKeyProvider(), []);
   const { worker, e2eePassphrase, isResolved } = useSetupE2EE();
-  const e2eeEnabled = !!(props.options.useEncryption && e2eePassphrase && worker);
+  const e2eeEnabled = !!(props.useEncryption && e2eePassphrase && worker);
 
   const [room, setRoom] = React.useState<Room | null>(null);
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
 
-  // Set up E2EE and create room
+  // Extract specific values from userChoices to avoid object reference issues
+  const videoDeviceId = props.userChoices.videoDeviceId;
+  const audioDeviceId = props.userChoices.audioDeviceId;
+
+  // Set up E2EE and create room - only recreate when essential config changes
   React.useEffect(() => {
     let cancelled = false;
 
@@ -193,19 +197,19 @@ function VideoConferenceComponent(props: {
         if (cancelled) return;
 
         // Step 2: Create room options with E2EE config
-        let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
+        let videoCodec: VideoCodec | undefined = props.codec ? props.codec : 'vp9';
         if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
           videoCodec = undefined;
         }
 
         const videoCaptureDefaults: VideoCaptureOptions = {
-          deviceId: props.userChoices.videoDeviceId ?? undefined,
-          resolution: props.options.hq ? VideoPresets.h2160 : VideoPresets.h720,
+          deviceId: videoDeviceId ?? undefined,
+          resolution: props.hq ? VideoPresets.h2160 : VideoPresets.h720,
         };
 
         const publishDefaults: TrackPublishDefaults = {
           dtx: true,
-          videoSimulcastLayers: props.options.hq
+          videoSimulcastLayers: props.hq
             ? [VideoPresets.h1080, VideoPresets.h720]
             : [VideoPresets.h540, VideoPresets.h216],
           red: !e2eeEnabled,
@@ -216,7 +220,7 @@ function VideoConferenceComponent(props: {
           videoCaptureDefaults,
           publishDefaults,
           audioCaptureDefaults: {
-            deviceId: props.userChoices.audioDeviceId ?? undefined,
+            deviceId: audioDeviceId ?? undefined,
           },
           adaptiveStream: true,
           dynacast: true,
@@ -272,19 +276,19 @@ function VideoConferenceComponent(props: {
         // Create room without E2EE
         const roomOptions: RoomOptions = {
           videoCaptureDefaults: {
-            deviceId: props.userChoices.videoDeviceId ?? undefined,
-            resolution: props.options.hq ? VideoPresets.h2160 : VideoPresets.h720,
+            deviceId: videoDeviceId ?? undefined,
+            resolution: props.hq ? VideoPresets.h2160 : VideoPresets.h720,
           },
           publishDefaults: {
             dtx: true,
-            videoSimulcastLayers: props.options.hq
+            videoSimulcastLayers: props.hq
               ? [VideoPresets.h1080, VideoPresets.h720]
               : [VideoPresets.h540, VideoPresets.h216],
             red: true,
-            videoCodec: props.options.codec,
+            videoCodec: props.codec,
           },
           audioCaptureDefaults: {
-            deviceId: props.userChoices.audioDeviceId ?? undefined,
+            deviceId: audioDeviceId ?? undefined,
           },
           adaptiveStream: true,
           dynacast: true,
@@ -304,7 +308,8 @@ function VideoConferenceComponent(props: {
     return () => {
       cancelled = true;
     };
-  }, [isResolved, e2eeEnabled, e2eePassphrase, keyProvider, worker, props.options.hq, props.options.codec, props.userChoices]);
+    // Only recreate room when these specific values change, not when userChoices object reference changes
+  }, [isResolved, e2eeEnabled, e2eePassphrase, keyProvider, worker, props.hq, props.codec, videoDeviceId, audioDeviceId]);
 
   const connectOptions = React.useMemo((): RoomConnectOptions => {
     return {
@@ -313,44 +318,61 @@ function VideoConferenceComponent(props: {
   }, []);
 
   const router = useRouter();
-  const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
   
-  const handleError = React.useCallback((error: Error | unknown) => {
-    console.error(error);
-    const errorMessage = error instanceof Error && error.message 
-      ? error.message 
-      : 'An unexpected error occurred';
-    toast.error(`Encountered an unexpected error: ${errorMessage}`, {
-      duration: 5000,
-      position: 'top-center',
-    });
-  }, []);
-  
-  const handleEncryptionError = React.useCallback((error: Error | unknown) => {
-    console.error(error);
-    const errorMessage = error instanceof Error && error.message 
-      ? error.message 
-      : 'Encryption setup failed';
-    toast.error(`Encryption error: ${errorMessage}`, {
-      duration: 5000,
-      position: 'top-center',
-    });
-  }, []);
+  // Use refs for handlers to avoid recreating event listeners
+  const handlersRef = React.useRef({
+    handleOnLeave: () => router.push('/'),
+    handleError: (error: Error | unknown) => {
+      console.error(error);
+      const errorMessage = error instanceof Error && error.message 
+        ? error.message 
+        : 'An unexpected error occurred';
+      toast.error(`Encountered an unexpected error: ${errorMessage}`, {
+        duration: 5000,
+        position: 'top-center',
+      });
+    },
+    handleEncryptionError: (error: Error | unknown) => {
+      console.error(error);
+      const errorMessage = error instanceof Error && error.message 
+        ? error.message 
+        : 'Encryption setup failed';
+      toast.error(`Encryption error: ${errorMessage}`, {
+        duration: 5000,
+        position: 'top-center',
+      });
+    },
+  });
 
-  // Event listeners - separate from connection logic
+  // Keep handlers up to date without triggering effect dependencies
+  React.useEffect(() => {
+    handlersRef.current.handleOnLeave = () => router.push('/');
+  }, [router]);
+
+  // Event listeners - stable references prevent unnecessary re-attachment
   React.useEffect(() => {
     if (!room) return;
 
-    room.on(RoomEvent.Disconnected, handleOnLeave);
-    room.on(RoomEvent.EncryptionError, handleEncryptionError);
-    room.on(RoomEvent.MediaDevicesError, handleError);
+    const onDisconnected = () => handlersRef.current.handleOnLeave();
+    const onEncryptionError = (error: Error) => handlersRef.current.handleEncryptionError(error);
+    const onMediaDevicesError = (error: Error) => handlersRef.current.handleError(error);
+
+    room.on(RoomEvent.Disconnected, onDisconnected);
+    room.on(RoomEvent.EncryptionError, onEncryptionError);
+    room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
 
     return () => {
-      room.off(RoomEvent.Disconnected, handleOnLeave);
-      room.off(RoomEvent.EncryptionError, handleEncryptionError);
-      room.off(RoomEvent.MediaDevicesError, handleError);
+      room.off(RoomEvent.Disconnected, onDisconnected);
+      room.off(RoomEvent.EncryptionError, onEncryptionError);
+      room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
     };
-  }, [room, handleOnLeave, handleError, handleEncryptionError]);
+  }, [room]);
+
+  // Extract connection values to avoid object reference dependency issues
+  const serverUrl = props.connectionDetails.serverUrl;
+  const participantToken = props.connectionDetails.participantToken;
+  const videoEnabled = props.userChoices.videoEnabled;
+  const audioEnabled = props.userChoices.audioEnabled;
 
   // Ensure we only connect once to avoid blinks on unrelated state changes
   const hasConnectedRef = React.useRef(false);
@@ -358,36 +380,41 @@ function VideoConferenceComponent(props: {
     if (!room || !e2eeSetupComplete || hasConnectedRef.current) return;
 
     hasConnectedRef.current = true;
-    room
-      .connect(
-        props.connectionDetails.serverUrl,
-        props.connectionDetails.participantToken,
-        connectOptions,
-      )
-      .then(() => {
-        if (props.userChoices.videoEnabled) {
-          return room.localParticipant.setCameraEnabled(true);
+    
+    const connectToRoom = async () => {
+      try {
+        await room.connect(serverUrl, participantToken, connectOptions);
+        
+        if (videoEnabled) {
+          await room.localParticipant.setCameraEnabled(true);
         }
-      })
-      .then(() => {
-        if (props.userChoices.audioEnabled) {
-          return room.localParticipant.setMicrophoneEnabled(true);
+        
+        if (audioEnabled) {
+          await room.localParticipant.setMicrophoneEnabled(true);
         }
-      })
-      .then(async () => {
+        
         // Reassert E2EE key after connection to ensure worker picks up keys for local participant
         if (e2eeEnabled) {
           try {
             await keyProvider.setKey(e2eePassphrase);
           } catch (err) {
-            handleEncryptionError(err);
+            handlersRef.current.handleEncryptionError(err);
           }
         }
-      })
-      .catch((error) => {
-        handleError(error);
-      });
-  }, [room, e2eeSetupComplete, connectOptions, handleError, handleEncryptionError, e2eeEnabled, keyProvider, e2eePassphrase, props.connectionDetails.serverUrl, props.connectionDetails.participantToken, props.userChoices.audioEnabled, props.userChoices.videoEnabled]);
+        
+        // Log successful connection once
+        console.log('Room connected:', {
+          isConnected: room.state,
+          localParticipant: room.localParticipant?.identity,
+          permissions: room.localParticipant?.permissions,
+        });
+      } catch (error) {
+        handlersRef.current.handleError(error);
+      }
+    };
+    
+    connectToRoom();
+  }, [room, e2eeSetupComplete, connectOptions, e2eeEnabled, keyProvider, e2eePassphrase, serverUrl, participantToken, videoEnabled, audioEnabled]);
 
   // Cleanup - let LiveKit handle track cleanup automatically
   React.useEffect(() => {
@@ -398,51 +425,62 @@ function VideoConferenceComponent(props: {
     };
   }, [room]);
 
-  const lowPowerMode = useLowCPUOptimizer(room);
+  // Must call hooks before any conditional rendering
+  useLowCPUOptimizer(room ?? undefined);
 
-  React.useEffect(() => {
-    if (lowPowerMode) {
-      console.warn('Low power mode enabled');
-    }
-  }, [lowPowerMode]);
-
-  // Debug logging for chat functionality
-  React.useEffect(() => {
-    if (room) {
-      console.log('Room connected:', {
-        isConnected: room.state,
-        localParticipant: room.localParticipant?.identity,
-        permissions: room.localParticipant?.permissions,
-      });
-    }
-  }, [room]);
-
-  // Show loading state while room is being created
-  if (!room) {
-    return (
-      <div className="lk-room-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>{e2eeEnabled ? 'Setting up encrypted connection...' : 'Preparing connection...'}</div>
-      </div>
-    );
-  }
-
+  // Render loading state or room content
   return (
     <div className="lk-room-container">
-      <RoomContext.Provider value={room}>
-        <ReconnectionBanner />
-        <KeyboardShortcuts />
-        <KeyboardShortcutsHelp />
-        <VideoConference
-          chatMessageFormatter={formatChatMessageLinks}
-          chatMessageEncoder={createE2EEMessageEncoder(worker, room.localParticipant?.identity)}
-          chatMessageDecoder={createE2EEMessageDecoder(worker, room.localParticipant?.identity)}
-          SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
-        />
-        <RoomAudioRenderer />
-        <DebugMode />
-        <RecordingIndicator />
-      </RoomContext.Provider>
+      {!room ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>{e2eeEnabled ? 'Setting up encrypted connection...' : 'Preparing connection...'}</div>
+        </div>
+      ) : (
+        <RoomContent room={room} worker={worker} />
+      )}
     </div>
+  );
+}
+
+// Separate component for room content to isolate hooks
+function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
+  // Memoize the local participant identity to prevent unnecessary re-renders
+  const [localIdentity, setLocalIdentity] = React.useState<string | undefined>(
+    room.localParticipant?.identity
+  );
+
+  React.useEffect(() => {
+    if (room.localParticipant?.identity) {
+      setLocalIdentity(room.localParticipant.identity);
+    }
+  }, [room.localParticipant?.identity]);
+
+  // Memoize encoder and decoder to prevent recreation on every render
+  const chatMessageEncoder = React.useMemo(
+    () => createE2EEMessageEncoder(worker, localIdentity),
+    [worker, localIdentity]
+  );
+
+  const chatMessageDecoder = React.useMemo(
+    () => createE2EEMessageDecoder(worker, localIdentity),
+    [worker, localIdentity]
+  );
+
+  return (
+    <RoomContext.Provider value={room}>
+      <ReconnectionBanner />
+      <KeyboardShortcuts />
+      <KeyboardShortcutsHelp />
+      <VideoConference
+        chatMessageFormatter={formatChatMessageLinks}
+        chatMessageEncoder={chatMessageEncoder}
+        chatMessageDecoder={chatMessageDecoder}
+        SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
+      />
+      <RoomAudioRenderer />
+      <DebugMode />
+      <RecordingIndicator />
+    </RoomContext.Provider>
   );
 }
 
