@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import Image from 'next/image';
 import styles from '../styles/Home.module.css';
 // Single-room app: always join the Ruha Meetup room
 const RUHA_ROOM_NAME = 'Ruha Meetup';
@@ -20,7 +21,7 @@ export default function Page() {
     <>
       <main className={styles.main} data-lk-theme="default">
         <div className={styles.header}>
-          <img src="/images/ruha-logo.jpg" alt="Ruha logo" style={{ width: 96, height: 96, borderRadius: 16, objectFit: 'cover' }} />
+          <Image src="/images/ruha-logo.jpg" alt="Ruha logo" width={96} height={96} style={{ borderRadius: 16, objectFit: 'cover' }} />
           <h1 className={styles.title}>Ruha Meetup</h1>
           <p className={styles.subtitle}>Welcome to the Ruha Meetup room.</p>
         </div>
