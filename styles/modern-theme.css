@@ -1,6 +1,48 @@
 /* Clean, Modern Video Conference Theme - Optimized & Simplified */
 
 /* ===========================================
+   DESIGN SYSTEM VARIABLES
+   =========================================== */
+
+:root {
+  /* Button Heights */
+  --btn-height-sm: 32px;
+  --btn-height-md: 44px;
+  --btn-height-lg: 52px;
+  
+  /* Button Padding */
+  --btn-padding-sm: 8px 12px;
+  --btn-padding-md: 12px 20px;
+  --btn-padding-lg: 16px 32px;
+  
+  /* Typography */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  
+  --line-height-tight: 1.25;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* Spacing */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-full: 50%;
+}
+
+/* ===========================================
    GLOBAL SETTINGS
    =========================================== */
 
@@ -41,6 +83,57 @@
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
+}
+
+/* ===========================================
+   BUTTON UTILITY CLASSES
+   =========================================== */
+
+/* Button Size Variants */
+[data-lk-theme] .lk-button-sm {
+  padding: var(--btn-padding-sm);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+  min-height: var(--btn-height-sm);
+}
+
+[data-lk-theme] .lk-button-md {
+  padding: var(--btn-padding-md);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-lg);
+  min-height: var(--btn-height-md);
+}
+
+[data-lk-theme] .lk-button-lg {
+  padding: var(--btn-padding-lg);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-xl);
+  min-height: var(--btn-height-lg);
+}
+
+/* Prevent text overflow in all buttons */
+[data-lk-theme] .lk-button {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Allow wrapping for specific buttons */
+[data-lk-theme] .lk-button-wrap {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+  height: auto;
+}
+
+/* Visual/Icon buttons with fixed aspect ratio */
+[data-lk-theme] .lk-button-visual {
+  width: 80px;
+  height: 60px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 /* Microphone & Camera - Circular buttons */
@@ -252,12 +345,22 @@
 
 /* ===========================================
    CHAT PANEL - Clean & Functional
+   =========================================== 
+   
+   Minimum Size Specifications:
+   - Desktop width: 320px - 500px (resizable)
+   - Desktop height: 480px minimum
+   - Mobile: Full screen (100%)
+   - Header: 68px fixed
+   - Form: 68px fixed
+   - Messages: 200px minimum (flex grows)
    =========================================== */
 
 [data-lk-theme] .lk-chat {
   width: 360px;
   max-width: 500px;
   min-width: 320px;
+  min-height: 480px; /* Minimum height for clean layout */
   background: rgba(15, 15, 20, 0.95);
   backdrop-filter: blur(20px);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
@@ -266,6 +369,8 @@
   height: 100%;
   resize: horizontal;
   overflow: auto;
+  /* Ensure resize respects minimum constraints */
+  max-height: 100vh;
 }
 
 [data-lk-theme] .lk-chat[data-lk-chat-open="false"],
@@ -286,6 +391,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0; /* Prevent header from shrinking */
+  min-height: 68px; /* Fixed header height */
 }
 
 [data-lk-theme] .lk-chat-header h3 {
@@ -320,6 +427,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 200px; /* Ensure messages area has reasonable height */
 }
 
 /* Scrollbar */
@@ -428,6 +536,8 @@
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.3);
+  flex-shrink: 0; /* Prevent input form from shrinking */
+  min-height: 68px; /* Fixed form height */
 }
 
 [data-lk-theme] .lk-chat-form form {
@@ -579,8 +689,35 @@
     left: 0;
     width: 100%;
     max-width: 100%;
+    min-width: 100%;
+    min-height: 100%; /* Full height on mobile */
     z-index: 400; /* Mobile chat panel */
     resize: none;
+  }
+}
+
+/* Tablet breakpoint - ensure chat has proper sizing */
+@media (min-width: 769px) and (max-width: 1024px) {
+  [data-lk-theme] .lk-chat {
+    width: 340px;
+    min-width: 300px;
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Large phones landscape and portrait */
+  [data-lk-theme] .lk-button-visual {
+    width: 70px;
+    height: 52px;
+  }
+  
+  [data-lk-theme] .lk-button {
+    font-size: var(--font-size-sm);
+  }
+  
+  [data-lk-theme] .lk-control-bar .lk-button {
+    padding: 10px 16px;
   }
 }
 
@@ -594,6 +731,17 @@
   [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
     width: 44px;
     height: 44px;
+  }
+  
+  /* Make visual buttons even smaller on very small screens */
+  [data-lk-theme] .lk-button-visual {
+    width: 60px;
+    height: 45px;
+  }
+  
+  [data-lk-theme] .lk-button-visual span {
+    font-size: 10px !important;
+    padding: 2px 4px !important;
   }
 }
 

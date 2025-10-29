@@ -47,8 +47,16 @@ export function MicrophoneSettings() {
         onClick={() => setNoiseFilterEnabled(!isNoiseFilterEnabled)}
         disabled={isNoiseFilterPending}
         aria-pressed={isNoiseFilterEnabled}
+        style={{ 
+          maxWidth: '220px',
+          whiteSpace: 'normal',
+          textAlign: 'center',
+          lineHeight: '1.3',
+          height: 'auto',
+          minHeight: '44px'
+        }}
       >
-        {isNoiseFilterEnabled ? 'Disable' : 'Enable'} Enhanced Noise Cancellation
+        {isNoiseFilterEnabled ? 'Disable' : 'Enable'} Noise Cancellation
       </button>
     </div>
   );

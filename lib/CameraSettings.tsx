@@ -294,8 +294,12 @@ export function CameraSettings() {
             className="lk-button"
             aria-pressed={backgroundType === 'none'}
             style={{
-              border: backgroundType === 'none' ? '2px solid #0090ff' : '1px solid #d1d1d1',
-              minWidth: '80px',
+              border: backgroundType === 'none' ? '2px solid #0090ff' : '2px solid #d1d1d1',
+              width: '80px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             None
@@ -304,14 +308,15 @@ export function CameraSettings() {
           <button
             onClick={() => selectBackground('blur')}
             className="lk-button"
+            aria-label="Blur background effect"
             aria-pressed={backgroundType === 'blur'}
             style={{
-              border: backgroundType === 'blur' ? '2px solid #0090ff' : '1px solid #d1d1d1',
-              minWidth: '80px',
+              border: backgroundType === 'blur' ? '2px solid #0090ff' : '2px solid #d1d1d1',
+              width: '80px',
+              height: '60px',
               backgroundColor: '#f0f0f0',
               position: 'relative',
               overflow: 'hidden',
-              height: '60px',
             }}
           >
             <div
@@ -330,10 +335,11 @@ export function CameraSettings() {
               style={{
                 position: 'relative',
                 zIndex: 1,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                padding: '2px 5px',
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                padding: '4px 8px',
                 borderRadius: '4px',
                 fontSize: '12px',
+                color: 'white',
               }}
             >
               Blur
@@ -345,6 +351,7 @@ export function CameraSettings() {
               key={gradientBg.name}
               onClick={() => selectBackground('gradient', gradientBg.gradient)}
               className="lk-button"
+              aria-label={`${gradientBg.name} gradient background`}
               aria-pressed={
                 backgroundType === 'gradient' && virtualBackgroundImagePath === gradientBg.gradient
               }
@@ -355,7 +362,7 @@ export function CameraSettings() {
                 border:
                   backgroundType === 'gradient' && virtualBackgroundImagePath === gradientBg.gradient
                     ? '2px solid #0090ff'
-                    : '1px solid #d1d1d1',
+                    : '2px solid transparent',
               }}
             >
               <span
@@ -377,6 +384,7 @@ export function CameraSettings() {
               key={image.path}
               onClick={() => selectBackground('image', image.path)}
               className="lk-button"
+              aria-label={`${image.name} background image`}
               aria-pressed={
                 backgroundType === 'image' && virtualBackgroundImagePath === image.path
               }
@@ -389,7 +397,7 @@ export function CameraSettings() {
                 border:
                   backgroundType === 'image' && virtualBackgroundImagePath === image.path
                     ? '2px solid #0090ff'
-                    : '1px solid #d1d1d1',
+                    : '2px solid transparent',
               }}
             >
               <span
@@ -398,6 +406,7 @@ export function CameraSettings() {
                   padding: '2px 5px',
                   borderRadius: '4px',
                   fontSize: '12px',
+                  color: 'white',
                 }}
               >
                 {image.name}

@@ -74,9 +74,9 @@
 }
 
 .startButton {
-  font-size: 1.25rem;
-  padding: 1rem 3rem !important;
-  border-radius: 8px;
+  font-size: 1.125rem; /* 18px - aligned with design system */
+  padding: 14px 32px !important; /* Aligned with 8px grid: 14px and 32px are multiples */
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.95);
   color: #667eea;
   font-weight: 600;
@@ -84,6 +84,7 @@
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  min-height: 52px;
 }
 
 .startButton:hover {
