@@ -1108,10 +1108,13 @@
   flex-direction: column;
   gap: 12px;
   padding: 12px;
+  flex: 1; /* Take available space in the video container */
+  overflow: hidden;
 }
 
 [data-lk-theme] .lk-focus-layout > div:first-child {
   flex: 1;
+  min-height: 0; /* Allow proper shrinking */
 }
 
 [data-lk-theme] .lk-focus-layout > div:last-child {
@@ -1119,6 +1122,7 @@
   gap: 8px;
   overflow-x: auto;
   max-height: 140px;
+  flex-shrink: 0; /* Don't shrink the participant thumbnails */
 }
 
 /* ===========================================
@@ -1639,27 +1643,48 @@
     grid-template-columns: 1fr;
   }
 
+  /* On mobile, chat should overlay instead of split view */
   [data-lk-theme] .lk-chat {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
-    height: 100%;
-    max-height: 100%; /* Full height on mobile */
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important; /* Full height on mobile */
     z-index: 400; /* Mobile chat panel */
     resize: none;
+    transform: translateX(0);
+    border-left: none;
+  }
+  
+  /* Mobile chat closed state */
+  [data-lk-theme] .lk-chat[data-lk-chat-open="false"],
+  [data-lk-theme] .lk-chat[aria-hidden="true"] {
+    transform: translateX(100%) !important;
+    width: 100% !important;
+  }
+  
+  /* Mobile video conference - stack vertically when chat overlay */
+  [data-lk-theme] .lk-video-conference {
+    flex-direction: column;
   }
 }
 
-/* Tablet breakpoint - ensure chat has proper sizing */
+/* Tablet breakpoint - narrower chat for split view */
 @media (min-width: 769px) and (max-width: 1024px) {
   [data-lk-theme] .lk-chat {
-    width: 340px;
-    min-width: 300px;
+    width: 300px !important;
+    min-width: 280px !important;
+    max-width: 340px !important;
+  }
+  
+  /* Reduce min-width for video grid on tablets */
+  [data-lk-theme] .lk-grid-layout {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 

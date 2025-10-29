@@ -1,0 +1,36 @@
+feat: Add default blur and user preferences persistence
+
+Implemented two major features to improve user experience:
+
+1. Background Blur Enabled by Default
+   - All users now have background blur automatically enabled on first use
+   - Blur quality auto-detects based on device capabilities (low/medium/high/ultra)
+   - Provides privacy protection out of the box
+
+2. User Preferences Local Storage
+   - All settings now persist across browser sessions
+   - Saved preferences include:
+     * Video/audio enabled state
+     * Selected camera/microphone devices
+     * Background effect type and selection
+     * Blur quality level
+     * Noise cancellation state
+     * Username
+   - Seamless rejoin experience with no reconfiguration needed
+
+Technical Changes:
+- Created lib/userPreferences.ts for centralized preferences management
+- Updated CameraSettings.tsx to default to blur and save background prefs
+- Updated MicrophoneSettings.tsx to save noise filter preferences
+- Updated CustomPreJoin.tsx to load/save all prejoin preferences
+- Added comprehensive documentation and testing guides
+
+Build Status: ✅ All tests pass, no errors
+
+Documentation:
+- IMPLEMENTATION_SUMMARY.md - Full technical details
+- USER_PREFERENCES_IMPLEMENTATION.md - API reference
+- TESTING_GUIDE.md - Test cases and debugging
+- QUICK_START.md - Quick reference guide
+
+
