@@ -8,6 +8,7 @@ import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { ConnectionDetails } from '@/lib/types';
 import { CustomPreJoin } from '@/lib/CustomPreJoin';
+import { ConnectionQualityTooltip } from '@/lib/ConnectionQualityTooltip';
 import {
   formatChatMessageLinks,
   LocalUserChoices,
@@ -432,6 +433,7 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
     <RoomContext.Provider value={room}>
       <KeyboardShortcuts />
       <ReconnectionBanner />
+      <ConnectionQualityTooltip />
       <VideoConference
         SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         chatMessageFormatter={formatChatMessageLinks}

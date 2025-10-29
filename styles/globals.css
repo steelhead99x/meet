@@ -212,6 +212,24 @@ button[title*="encryption" i] {
 /* Connection quality indicator specific styling */
 .lk-participant-metadata-item.lk-connection-quality {
   padding: 6px 8px;
+  /* Ensure tooltips can overflow the participant tile */
+  position: relative;
+  z-index: 100;
+}
+
+/* Allow overflow for connection quality tooltips */
+.lk-participant-tile {
+  overflow: visible !important;
+}
+
+.lk-participant-metadata {
+  overflow: visible !important;
+  z-index: 50;
+}
+
+/* Ensure tooltips appear above other elements */
+.lk-participant-metadata-item {
+  overflow: visible !important;
 }
 
 /* LiveKit already adds encryption indicators via SVG - don't add duplicates */

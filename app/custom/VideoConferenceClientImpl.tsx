@@ -21,6 +21,7 @@ import { isMeetStaging } from '@/lib/client-utils';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
+import { ConnectionQualityTooltip } from '@/lib/ConnectionQualityTooltip';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -219,6 +220,7 @@ export function VideoConferenceClientImpl(props: {
         <RoomContext.Provider value={room}>
           <KeyboardShortcuts />
           <ReconnectionBanner />
+          <ConnectionQualityTooltip />
           <VideoConference
             SettingsComponent={
               process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined

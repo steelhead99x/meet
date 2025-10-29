@@ -998,6 +998,14 @@
   object-fit: cover;
 }
 
+/* Screen share video - use contain to show entire screen without cropping */
+[data-lk-theme] .lk-participant-tile[data-lk-source="screen_share_video"] video,
+[data-lk-theme] .lk-participant-tile[data-lk-source="screen_share"] video,
+[data-lk-theme] .lk-focus-layout .lk-participant-tile video {
+  object-fit: contain;
+  background-color: #000; /* Black background for letterboxing */
+}
+
 /* Speaking indicator */
 [data-lk-theme] .lk-participant-tile[data-lk-speaking="true"] {
   border-color: #22c55e;
