@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: 'Ruha Meetup',
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.svg',
     apple: '/images/ruha-logo.jpg',
   },
 };
