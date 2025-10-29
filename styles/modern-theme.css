@@ -1,1090 +1,459 @@
-/* Modern Video Conference Theme */
+/* Clean, Modern Video Conference Theme - Simplified & Beautiful */
 
 /* ===========================================
-   Control Bar & Buttons - Enhanced Modern Design
+   GLOBAL SETTINGS
    =========================================== */
 
-/* Control bar styling - Premium glassmorphism with constrained sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* ===========================================
+   CONTROL BAR - Clean & Simple
+   =========================================== */
+
 .lk-control-bar {
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.92) 0%,
-    rgba(0, 0, 0, 0.98) 100%
-  ) !important;
-  backdrop-filter: blur(32px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-  padding: 18px 24px !important;
-  gap: 12px !important;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6),
-              0 -4px 12px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 16px 20px !important;
+  gap: 10px !important;
   display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 88px !important;
-  position: relative !important;
-  width: 100% !important;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
-@media (max-width: 768px) {
-  .lk-control-bar {
-    padding: 12px 12px !important;
-    min-height: 72px !important;
-    gap: 8px !important;
-  }
-}
-
-/* Constrain control bar content on large screens */
-@media (min-width: 1024px) {
-  .lk-control-bar {
-    padding-left: max(20px, calc((100vw - 1200px) / 2)) !important;
-    padding-right: max(20px, calc((100vw - 1200px) / 2)) !important;
-  }
-}
-
-/* Control bar buttons - Enhanced base styling */
+/* Base button styling */
 .lk-control-bar .lk-button {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
-  padding: 13px 20px !important;
-  font-weight: 500 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 12px 18px !important;
+  color: white !important;
   font-size: 14px !important;
-  letter-spacing: 0.4px !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-              0 2px 4px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.95) !important;
-  min-height: 48px !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-/* Global icon styling for all control bar buttons */
-.lk-control-bar .lk-button svg {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.lk-control-bar .lk-button:hover svg {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) !important;
-}
-
-/* Subtle shine effect on buttons */
-.lk-control-bar .lk-button::before {
-  content: "" !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: -100% !important;
-  width: 100% !important;
-  height: 100% !important;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  ) !important;
-  transition: left 0.5s ease !important;
-  z-index: 1 !important;
-  pointer-events: none !important;
-}
-
-.lk-control-bar .lk-button:hover::before {
-  left: 100% !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
 }
 
 .lk-control-bar .lk-button:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
-              0 3px 8px rgba(0, 0, 0, 0.25),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-}
-
-.lk-control-bar .lk-button:active {
-  transform: translateY(0) scale(0.98) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3),
-              inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.1s ease !important;
-}
-
-/* Microphone & Camera buttons - Clean professional design with fixed sizing */
-.lk-control-bar .lk-button[data-lk-source="microphone"],
-.lk-control-bar .lk-button[data-lk-source="camera"] {
-  border-radius: 50% !important;
-  width: 56px !important;
-  height: 56px !important;
-  min-width: 56px !important;
-  min-height: 56px !important;
-  padding: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 2px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-  /* Simple text hiding */
-  font-size: 0 !important;
-  line-height: 0 !important;
-}
-
-.lk-control-bar .lk-button[data-lk-source="microphone"]:hover,
-.lk-control-bar .lk-button[data-lk-source="camera"]:hover {
   background: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(255, 255, 255, 0.25) !important;
-  transform: translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5),
-              0 2px 8px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1px) !important;
 }
 
-/* Icon sizing for mic/camera - clean and centered */
-.lk-control-bar .lk-button[data-lk-source="microphone"] svg,
-.lk-control-bar .lk-button[data-lk-source="camera"] svg {
-  width: 24px !important;
-  height: 24px !important;
-  color: #ffffff !important;
-  fill: currentColor !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)) !important;
-  flex-shrink: 0 !important;
-  font-size: 24px !important;
-}
-
-/* Explicitly hide inner spans/labels for icon-only mic/camera buttons */
-.lk-control-bar .lk-button[data-lk-source="microphone"] > span:not(:has(svg)),
-.lk-control-bar .lk-button[data-lk-source="camera"] > span:not(:has(svg)),
-.lk-control-bar .lk-button[data-lk-source="microphone"] .lk-button-label,
-.lk-control-bar .lk-button[data-lk-source="camera"] .lk-button-label {
-  display: none !important;
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-}
-
-/* Center the SVG container */
-.lk-control-bar .lk-button[data-lk-source="microphone"] > span,
-.lk-control-bar .lk-button[data-lk-source="camera"] > span {
+/* Microphone & Camera - Circular buttons */
+.lk-control-bar .lk-button[data-lk-source="microphone"],
+.lk-control-bar .lk-button[data-lk-source="camera"] {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
 }
 
-/* Active state - Enabled (clean green) */
-.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"],
-.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"] {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.25) 100%) !important;
-  border-color: rgba(34, 197, 94, 0.5) !important;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3),
-              0 0 16px rgba(34, 197, 94, 0.15),
-              inset 0 1px 0 rgba(34, 197, 94, 0.1) !important;
-}
-
-.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"]:hover,
-.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"]:hover {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.35) 100%) !important;
-  border-color: rgba(34, 197, 94, 0.7) !important;
-  transform: translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4),
-              0 2px 8px rgba(34, 197, 94, 0.3),
-              0 0 24px rgba(34, 197, 94, 0.2),
-              inset 0 1px 0 rgba(34, 197, 94, 0.15) !important;
-}
-
-.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="true"] svg,
-.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="true"] svg {
-  color: #22c55e !important;
-  filter: drop-shadow(0 1px 3px rgba(34, 197, 94, 0.6)) !important;
-}
-
-/* Disabled state - Muted/Off (clean red) */
-.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"],
-.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"] {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.25) 100%) !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3),
-              0 0 16px rgba(239, 68, 68, 0.15),
-              inset 0 1px 0 rgba(239, 68, 68, 0.1) !important;
-}
-
-.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"]:hover,
-.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"]:hover {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.35) 100%) !important;
-  border-color: rgba(239, 68, 68, 0.7) !important;
-  transform: translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4),
-              0 2px 8px rgba(239, 68, 68, 0.3),
-              0 0 24px rgba(239, 68, 68, 0.2),
-              inset 0 1px 0 rgba(239, 68, 68, 0.15) !important;
-}
-
-.lk-control-bar .lk-button[data-lk-source="microphone"][data-lk-enabled="false"] svg,
-.lk-control-bar .lk-button[data-lk-source="camera"][data-lk-enabled="false"] svg {
-  color: #ef4444 !important;
-  filter: drop-shadow(0 1px 3px rgba(239, 68, 68, 0.6)) !important;
-}
-
-/* Leave/End call button - Prominent with fixed sizing */
-.lk-control-bar .lk-disconnect-button,
-.lk-control-bar button[aria-label*="Leave"],
-.lk-control-bar button[aria-label*="leave"],
-.lk-control-bar button[aria-label*="End"] {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  border: 2px solid rgba(239, 68, 68, 0.5) !important;
-  color: white !important;
-  font-weight: 700 !important;
-  width: auto !important;
-  min-width: 105px !important;
-  max-width: 105px !important;
-  padding: 13px 20px !important;
-  border-radius: 14px !important;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45),
-              0 2px 6px rgba(239, 68, 68, 0.35),
-              inset 0 1px 0 rgba(255, 255, 255, 0.25),
-              inset 0 -1px 0 rgba(0, 0, 0, 0.25) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.8px !important;
-  font-size: 12.5px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 7px !important;
-  position: relative !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-  white-space: nowrap !important;
-}
-
-.lk-control-bar .lk-disconnect-button svg,
-.lk-control-bar button[aria-label*="Leave"] svg,
-.lk-control-bar button[aria-label*="leave"] svg,
-.lk-control-bar button[aria-label*="End"] svg {
+.lk-control-bar .lk-button[data-lk-source="microphone"] svg,
+.lk-control-bar .lk-button[data-lk-source="camera"] svg {
   width: 22px !important;
   height: 22px !important;
-  stroke-width: 2 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Hide labels on mic/camera buttons */
+.lk-control-bar .lk-button[data-lk-source="microphone"] > span:not(:has(svg)),
+.lk-control-bar .lk-button[data-lk-source="camera"] > span:not(:has(svg)) {
+  display: none !important;
+}
+
+/* Enabled state - Green */
+.lk-control-bar .lk-button[data-lk-source][data-lk-enabled="true"] {
+  background: rgba(34, 197, 94, 0.2) !important;
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.lk-control-bar .lk-button[data-lk-source][data-lk-enabled="true"] svg {
+  color: #22c55e !important;
+}
+
+/* Disabled state - Red */
+.lk-control-bar .lk-button[data-lk-source][data-lk-enabled="false"] {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.lk-control-bar .lk-button[data-lk-source][data-lk-enabled="false"] svg {
+  color: #ef4444 !important;
+}
+
+/* Leave button - Red and prominent */
+.lk-control-bar .lk-disconnect-button,
+.lk-control-bar button[aria-label*="Leave"] {
+  background: #dc2626 !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  font-size: 13px !important;
 }
 
 .lk-control-bar .lk-disconnect-button:hover,
-.lk-control-bar button[aria-label*="Leave"]:hover,
-.lk-control-bar button[aria-label*="leave"]:hover,
-.lk-control-bar button[aria-label*="End"]:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-  border-color: rgba(239, 68, 68, 0.7) !important;
-  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.55),
-              0 3px 10px rgba(239, 68, 68, 0.45),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3),
-              inset 0 -1px 0 rgba(0, 0, 0, 0.25) !important;
-  transform: translateY(-1px) scale(1.02) !important;
+.lk-control-bar button[aria-label*="Leave"]:hover {
+  background: #b91c1c !important;
 }
 
-/* Share screen button - Enhanced blue accent with icon and fixed sizing */
-.lk-button[data-lk-source="screen_share"],
-.lk-control-bar button[aria-label*="Share"],
-.lk-control-bar button[aria-label*="screen"] {
-  background: rgba(59, 130, 246, 0.1) !important;
-  border-color: rgba(59, 130, 246, 0.25) !important;
-  position: relative !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
+/* Screen share button */
+.lk-button[data-lk-source="screen_share"] {
   padding: 12px 18px !important;
-  width: auto !important;
-  min-width: 145px !important;
-  max-width: 145px !important;
-  flex-shrink: 0 !important;
-  white-space: nowrap !important;
-}
-
-.lk-button[data-lk-source="screen_share"] svg,
-.lk-control-bar button[aria-label*="Share"] svg,
-.lk-control-bar button[aria-label*="screen"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  flex-shrink: 0 !important;
-  stroke-width: 1.8 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
-}
-
-.lk-button[data-lk-source="screen_share"]::after {
-  content: "" !important;
-  position: absolute !important;
-  top: -2px !important;
-  left: -2px !important;
-  right: -2px !important;
-  bottom: -2px !important;
-  border-radius: 14px !important;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.2)) !important;
-  z-index: -1 !important;
-  opacity: 0 !important;
-  transition: opacity 0.3s ease !important;
-}
-
-.lk-button[data-lk-source="screen_share"]:hover,
-.lk-control-bar button[aria-label*="Share"]:hover,
-.lk-control-bar button[aria-label*="screen"]:hover {
-  background: rgba(59, 130, 246, 0.18) !important;
-  border-color: rgba(59, 130, 246, 0.4) !important;
-}
-
-.lk-button[data-lk-source="screen_share"]:hover::after {
-  opacity: 1 !important;
 }
 
 .lk-button[data-lk-source="screen_share"][data-lk-enabled="true"] {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-  border-color: rgba(59, 130, 246, 0.6) !important;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4),
-              0 0 24px rgba(59, 130, 246, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
 }
 
-.lk-button[data-lk-source="screen_share"][data-lk-enabled="true"]:hover {
-  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5),
-              0 0 32px rgba(59, 130, 246, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
-}
-
-/* Chat button - hidden since chat is always visible */
-/* Chat toggle button - Professional styling */
+/* Chat toggle button */
 .lk-chat-toggle,
-.lk-control-bar button[aria-label*="Chat"],
-.lk-control-bar button[aria-label*="chat"] {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
-  padding: 13px 20px !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  letter-spacing: 0.4px !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-              0 2px 4px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  cursor: pointer !important;
-  position: relative !important;
-  overflow: hidden !important;
+.lk-control-bar button[aria-label*="Chat"] {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
-.lk-chat-toggle:hover,
-.lk-control-bar button[aria-label*="Chat"]:hover,
-.lk-control-bar button[aria-label*="chat"]:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
-              0 3px 8px rgba(0, 0, 0, 0.25),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Active state when chat is open */
 .lk-chat-toggle[aria-pressed="true"],
 .lk-control-bar button[aria-label*="Chat"][aria-pressed="true"] {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.3) 100%) !important;
+  background: rgba(59, 130, 246, 0.25) !important;
   border-color: rgba(59, 130, 246, 0.5) !important;
-  color: rgba(255, 255, 255, 1) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3),
-              0 2px 4px rgba(59, 130, 246, 0.2),
-              inset 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
 }
 
-.lk-chat-toggle svg,
-.lk-control-bar button[aria-label*="Chat"] svg {
-  width: 20px !important;
-  height: 20px !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
-}
-
-/* Dropdown/Menu buttons next to mic/camera */
-.lk-button-group {
-  display: inline-flex !important;
-  gap: 4px !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-}
-
-/* Mic/Camera buttons inside button-group - ensure they maintain circular shape */
-.lk-button-group .lk-button[data-lk-source="microphone"],
-.lk-button-group .lk-button[data-lk-source="camera"] {
-  z-index: 1 !important;
-}
-
-.lk-button-group .lk-button:not([data-lk-source]),
-.lk-button-group .lk-button-menu {
-  border-radius: 10px !important;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  padding: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
-  position: relative !important;
-  margin-left: -8px !important;
-  z-index: 0 !important;
-  flex-shrink: 0 !important;
-}
-
-.lk-button-group .lk-button:not([data-lk-source]) svg,
-.lk-button-group .lk-button-menu svg {
-  width: 14px !important;
-  height: 14px !important;
-  stroke-width: 2.5 !important;
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-.lk-button-group .lk-button:not([data-lk-source]):hover,
-.lk-button-group .lk-button-menu:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  transform: translateY(-1px) !important;
-  z-index: 1 !important;
-}
-
-.lk-button-group .lk-button:not([data-lk-source]):hover svg,
-.lk-button-group .lk-button-menu:hover svg {
-  color: rgba(255, 255, 255, 0.9) !important;
-}
-
-/* Settings button - With fixed sizing */
-.lk-settings-menu-toggle,
-.lk-control-bar button[aria-label*="Settings"],
-.lk-control-bar button[aria-label*="settings"] {
-  border-radius: 14px !important;
-  width: auto !important;
-  height: 46px !important;
-  min-width: 115px !important;
-  max-width: 115px !important;
+/* Settings button */
+.lk-settings-menu-toggle {
   padding: 12px 18px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  flex-shrink: 0 !important;
-  white-space: nowrap !important;
 }
 
-.lk-settings-menu-toggle:hover,
-.lk-control-bar button[aria-label*="Settings"]:hover,
-.lk-control-bar button[aria-label*="settings"]:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  transform: translateY(-2px) scale(1.02) !important;
+/* Button groups (device selectors) */
+.lk-button-group {
+  display: flex !important;
+  gap: 4px !important;
 }
 
-.lk-settings-menu-toggle svg,
-.lk-control-bar button[aria-label*="Settings"] svg,
-.lk-control-bar button[aria-label*="settings"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  stroke-width: 1.8 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
-  transition: transform 0.25s ease !important;
-  flex-shrink: 0 !important;
+.lk-button-group .lk-button:not([data-lk-source]) {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
 }
 
 /* ===========================================
-   Video Tiles - Modern Layout
+   VIDEO TILES - Clean & Modern
    =========================================== */
 
 .lk-participant-tile {
-  position: relative !important;
-  border-radius: 16px !important;
+  border-radius: 12px !important;
   overflow: hidden !important;
-  border: 2px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-  /* GPU acceleration for smooth video rendering */
-  will-change: border-color, box-shadow !important;
-  contain: layout style paint !important;
-  transform: translateZ(0) !important; /* Force GPU layer */
-  backface-visibility: hidden !important;
-  -webkit-font-smoothing: subpixel-antialiased !important;
-  width: 100% !important;
-  height: 100% !important;
-  /* Minimum size constraints - always at least 360p */
-  min-width: 640px !important;
-  min-height: 360px !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  background: #1a1a1a !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Ensure video elements fill the participant tile completely */
+.lk-participant-tile:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
 .lk-participant-tile video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  display: block !important;
-  /* Prevent layout shifts and ensure crisp rendering */
-  transform: translateZ(0) !important;
-  backface-visibility: hidden !important;
 }
 
-/* Ensure participant tile placeholder/container fills properly */
-.lk-participant-tile > div {
-  width: 100% !important;
-  height: 100% !important;
-  box-sizing: border-box !important;
+/* Speaking indicator */
+.lk-participant-tile[data-lk-speaking="true"] {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3) !important;
 }
 
-/* Video track container - ensure proper sizing */
-.lk-video-track,
-.lk-participant-tile .lk-video {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-}
-
-/* Dark overlay styling - ensure full coverage with no gaps */
-.lk-participant-tile .dark-overlay,
-.lk-participant-tile [class*="overlay"],
-.lk-participant-tile [class*="Overlay"] {
+/* Participant name & metadata */
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata {
   position: absolute !important;
-  inset: 0 !important;
-  top: 0 !important;
+  bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent) !important;
+  padding: 30px 12px 12px !important;
 }
 
-/* Semi-transparent dark overlay example */
-.dark-overlay {
-  background: rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Ensure screen share tiles don't have gaps */
-.lk-focus-layout-wrapper,
-.lk-grid-layout-wrapper {
-  width: 100% !important;
-  height: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.lk-participant-tile:hover {
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5) !important;
-  /* Removed transform scale to prevent video blinking */
-}
-
-/* Participant metadata overlay - Positioned at bottom with compact design */
-[data-lk-theme] .lk-participant-tile .lk-participant-metadata {
-  position: absolute !important;
-  bottom: 0px !important;
-  left: 0px !important;
-  right: 0px !important;
-  width: 100% !important;
-  height: auto !important; /* Let content determine height */
-  max-height: 70px !important; /* Limit height so it doesn't cover whole video */
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 8px !important;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.92) 100%
-  ) !important;
-  padding: 12px 16px !important;
-  border-radius: 0 0 14px 14px !important;
-  z-index: 5 !important;
-  pointer-events: none !important;
-  box-sizing: border-box !important;
-}
-
-/* Force override the top property from LiveKit's default styles */
-[data-lk-theme] .lk-participant-tile .lk-participant-metadata {
-  top: unset !important;
-  inset-block-start: unset !important;
-}
-
-.lk-participant-metadata-item {
-  background: rgba(0, 0, 0, 0.85) !important;
-  border-radius: 8px !important;
-  padding: 6px 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  letter-spacing: 0.3px !important;
-  white-space: nowrap !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Participant name styling */
 .lk-participant-name {
-  color: #ffffff !important;
+  color: white !important;
   font-size: 14px !important;
   font-weight: 600 !important;
-  max-width: 200px !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
-/* Connection quality indicator styling */
-[data-lk-theme] .lk-participant-metadata .lk-connection-quality {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: auto !important;
-  padding: 6px 10px !important;
-  opacity: 1 !important; /* Make sure it's visible */
-}
-
-[data-lk-theme] .lk-participant-metadata .lk-connection-quality svg {
-  width: 16px !important;
-  height: 16px !important;
-  opacity: 1 !important;
-}
-
-/* Speaking indicator - Modern pulse animation */
-.lk-participant-tile[data-lk-speaking="true"] {
-  border-color: rgba(34, 197, 94, 0.6) !important;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2),
-              0 12px 48px rgba(0, 0, 0, 0.5) !important;
-  animation: speaking-pulse 1.5s ease-in-out infinite !important;
-}
-
-@keyframes speaking-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2),
-                0 12px 48px rgba(0, 0, 0, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.3),
-                0 12px 48px rgba(0, 0, 0, 0.5);
-  }
-}
-
-/* E2EE encryption indicator on participant tiles - Hidden since lock icon is in metadata bar */
-.lk-participant-tile[data-lk-encrypted="true"]::after {
-  display: none !important;
-}
-
-/* Pinned participant indicator */
-.lk-participant-tile[data-lk-pinned="true"]::before {
-  content: "📌";
-  position: absolute !important;
-  top: 12px !important;
-  left: 12px !important;
-  z-index: 10 !important;
-  font-size: 20px !important;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6)) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* ===========================================
-   Grid Layout - Modern Spacing
+   GRID LAYOUT - Responsive & Clean
    =========================================== */
 
 .lk-grid-layout {
-  gap: 16px !important;
-  padding: 16px !important;
+  display: grid !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+  align-items: stretch !important;
 }
 
+/* Single participant - full screen */
+.lk-grid-layout:has(> :nth-child(1):last-child) {
+  grid-template-columns: 1fr !important;
+}
+
+/* Two participants - side by side */
+.lk-grid-layout:has(> :nth-child(2):last-child) {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+/* 3-4 participants - 2x2 */
+.lk-grid-layout:has(> :nth-child(3):last-child),
+.lk-grid-layout:has(> :nth-child(4):last-child) {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+/* 5-9 participants - 3 columns */
+.lk-grid-layout:has(> :nth-child(5):last-child),
+.lk-grid-layout:has(> :nth-child(6):last-child),
+.lk-grid-layout:has(> :nth-child(7):last-child),
+.lk-grid-layout:has(> :nth-child(8):last-child),
+.lk-grid-layout:has(> :nth-child(9):last-child) {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+
+/* Focus layout (screen share) */
 .lk-focus-layout {
-  gap: 16px !important;
-  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 12px !important;
+}
+
+.lk-focus-layout > div:first-child {
+  flex: 1 !important;
+}
+
+.lk-focus-layout > div:last-child {
+  display: flex !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  max-height: 140px !important;
 }
 
 /* ===========================================
-   Chat Panel - Professional Design
+   CHAT PANEL - Clean & Functional
    =========================================== */
 
 .lk-chat {
+  width: 360px !important;
+  max-width: 500px !important;
+  min-width: 320px !important;
+  background: rgba(15, 15, 20, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
-  width: 380px !important;
-  max-width: 380px !important;
-  min-width: 320px !important;
-  flex-shrink: 0 !important;
-  background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%) !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6),
-              -2px 0 8px rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  z-index: 100 !important;
-  position: relative !important;
+  resize: horizontal !important;
+  overflow: auto !important;
 }
 
-/* Chat hidden state */
 .lk-chat[data-lk-chat-open="false"],
 .lk-chat[aria-hidden="true"] {
   transform: translateX(100%) !important;
   opacity: 0 !important;
-  pointer-events: none !important;
 }
 
-/* Chat visible state */
-.lk-chat[data-lk-chat-open="true"],
-.lk-chat:not([aria-hidden="true"]) {
+.lk-chat[data-lk-chat-open="true"] {
   transform: translateX(0) !important;
   opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Responsive chat width */
-@media (min-width: 1440px) {
-  .lk-chat {
-    width: 400px !important;
-    max-width: 400px !important;
-  }
-}
-
-@media (max-width: 1024px) {
-  .lk-chat {
-    width: 340px !important;
-    max-width: 340px !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .lk-chat {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    z-index: 1000 !important;
-  }
 }
 
 /* Chat header */
 .lk-chat-header {
+  padding: 20px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 24px !important;
-  gap: 16px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  flex-shrink: 0 !important;
-  min-height: 72px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-.lk-chat-header h3,
-.lk-chat-header-title,
-.lk-chat-header > *:first-child {
-  flex: 1 !important;
+.lk-chat-header h3 {
   font-size: 18px !important;
   font-weight: 600 !important;
-  color: rgba(255, 255, 255, 0.95) !important;
+  color: white !important;
   margin: 0 !important;
-  letter-spacing: 0.5px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  /* Hide original text and replace with "Chat" */
-  visibility: hidden !important;
-  position: relative !important;
 }
 
-.lk-chat-header h3::after,
-.lk-chat-header-title::after,
-.lk-chat-header > *:first-child::after {
-  content: "Chat" !important;
-  visibility: visible !important;
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.5px !important;
-  color: rgba(255, 255, 255, 0.95) !important;
-}
-
-/* Chat close button in header - Professional styling */
-.lk-chat-header button,
-.lk-close-button {
-  display: inline-flex !important;
+.lk-chat-header button {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  padding: 0 !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 10px !important;
-  color: rgba(255, 255, 255, 0.8) !important;
-  cursor: pointer !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  flex-shrink: 0 !important;
 }
 
-.lk-chat-header button:hover,
-.lk-close-button:hover {
+.lk-chat-header button:hover {
   background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  color: rgba(255, 255, 255, 1) !important;
-  transform: scale(1.05) !important;
 }
 
-.lk-chat-header button svg,
-.lk-close-button svg {
-  width: 18px !important;
-  height: 18px !important;
-  stroke-width: 2.5 !important;
-}
-
-/* Chat messages container */
+/* Messages container */
 .lk-chat-messages {
   flex: 1 !important;
   overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 20px !important;
+  padding: 16px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 16px !important;
-  min-height: 0 !important;
+  gap: 12px !important;
 }
 
-/* Individual message styling */
+/* Scrollbar */
+.lk-chat-messages::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.lk-chat-messages::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.lk-chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 3px !important;
+}
+
+.lk-chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Individual message */
 .lk-chat-message {
-  background: rgba(255, 255, 255, 0.07) !important;
-  border-radius: 16px !important;
-  padding: 16px 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
   max-width: 85% !important;
-  word-wrap: break-word !important;
-  word-break: break-word !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25),
-              0 1px 3px rgba(0, 0, 0, 0.2) !important;
-  margin-bottom: 0 !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  position: relative !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  animation: messageIn 0.2s ease !important;
 }
 
-.lk-chat-message::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 16px !important;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%) !important;
-  pointer-events: none !important;
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .lk-chat-message:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
-              0 2px 6px rgba(0, 0, 0, 0.25) !important;
-  transform: translateY(-2px) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Local (your own) messages */
+/* Local (your) messages */
 .lk-chat-message.lk-chat-message-local {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.28) 0%, rgba(37, 99, 235, 0.32) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.6) !important;
+  background: rgba(59, 130, 246, 0.2) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
   margin-left: auto !important;
-  margin-right: 0 !important;
-  border-radius: 16px 16px 4px 16px !important;
-  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.25),
-              0 1px 4px rgba(59, 130, 246, 0.15),
-              0 0 0 1px rgba(59, 130, 246, 0.15) inset !important;
-}
-
-.lk-chat-message.lk-chat-message-local::before {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%) !important;
 }
 
 .lk-chat-message.lk-chat-message-local:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35) 0%, rgba(37, 99, 235, 0.4) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.7) !important;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35),
-              0 2px 8px rgba(59, 130, 246, 0.2),
-              0 0 0 1px rgba(59, 130, 246, 0.2) inset !important;
+  background: rgba(59, 130, 246, 0.25) !important;
 }
 
-/* Remote (other users') messages */
-.lk-chat-message:not(.lk-chat-message-local) {
-  margin-left: 0 !important;
-  margin-right: auto !important;
-  border-radius: 18px 18px 18px 4px !important;
-}
-
-/* Message header (author + timestamp) */
-.lk-chat-message > div:first-child,
-.lk-chat-message-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  margin-bottom: 8px !important;
-}
-
-/* Message author name */
-.lk-chat-message-author,
+/* Message author */
 .lk-chat-message strong {
-  font-weight: 600 !important;
+  color: white !important;
   font-size: 13px !important;
-  color: rgba(255, 255, 255, 0.95) !important;
-  letter-spacing: 0.4px !important;
-  margin: 0 !important;
+  font-weight: 600 !important;
 }
 
 /* Message timestamp */
-.lk-chat-message-timestamp,
-.lk-chat-message > div:first-child > div:last-child {
-  font-size: 11px !important;
+.lk-chat-message-timestamp {
   color: rgba(255, 255, 255, 0.5) !important;
-  font-weight: 400 !important;
-  white-space: nowrap !important;
-  margin: 0 !important;
+  font-size: 11px !important;
+  margin-left: 8px !important;
 }
 
 /* Message text */
-.lk-chat-message-body,
-.lk-chat-message > div:last-child {
-  font-size: 15px !important;
-  line-height: 1.5 !important;
+.lk-chat-message-body {
   color: rgba(255, 255, 255, 0.9) !important;
-  margin: 0 !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  margin-top: 4px !important;
 }
 
-/* Chat input form - Fixed size for consistent layout */
+/* Links in messages */
+.lk-chat-message a {
+  color: #60a5fa !important;
+  text-decoration: underline !important;
+}
+
+.lk-chat-message a:hover {
+  color: #93c5fd !important;
+}
+
+/* Chat input */
 .lk-chat-form {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.7) 100%) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-  padding: 20px 24px !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  flex-shrink: 0 !important;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4),
-              0 -2px 8px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-  min-height: 92px !important;
-  max-height: 92px !important;
-  height: 92px !important;
+  padding: 16px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
 }
 
-.lk-chat-form > form,
-.lk-chat-form-input {
+.lk-chat-form form {
   display: flex !important;
-  gap: 10px !important;
-  align-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
+  gap: 8px !important;
 }
 
-.lk-chat-form input,
-.lk-chat-form textarea {
+.lk-chat-form input {
   flex: 1 !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 2px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 14px !important;
-  padding: 14px 18px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
   color: white !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  line-height: 1.4 !important;
-  min-height: 48px !important;
-  max-height: 48px !important;
-  height: 48px !important;
-  resize: none !important;
-  overflow: hidden !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
-.lk-chat-form input::placeholder,
-.lk-chat-form textarea::placeholder {
+.lk-chat-form input::placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
-  font-weight: 400 !important;
 }
 
-.lk-chat-form input:focus,
-.lk-chat-form textarea:focus {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(59, 130, 246, 0.6) !important;
+.lk-chat-form input:focus {
   outline: none !important;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
+  border-color: #3b82f6 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .lk-chat-form button {
-  flex-shrink: 0 !important;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  background: #3b82f6 !important;
   border: none !important;
-  border-radius: 14px !important;
-  padding: 14px 28px !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
+  border-radius: 10px !important;
+  padding: 12px 20px !important;
   color: white !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important;
+  font-weight: 600 !important;
   cursor: pointer !important;
+  font-size: 14px !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.6px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
-  height: 44px !important;
-  white-space: nowrap !important;
-  min-width: 80px !important;
+  letter-spacing: 0.5px !important;
 }
 
-.lk-chat-form button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45) !important;
-}
-
-.lk-chat-form button:active:not(:disabled) {
-  transform: translateY(0) !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4) !important;
+.lk-chat-form button:hover {
+  background: #2563eb !important;
 }
 
 .lk-chat-form button:disabled {
@@ -1092,422 +461,154 @@
   cursor: not-allowed !important;
 }
 
-/* Scrollbar styling */
-.lk-chat-messages::-webkit-scrollbar {
-  width: 6px !important;
-}
-
-.lk-chat-messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-radius: 3px !important;
-}
-
-.lk-chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 3px !important;
-  transition: background 0.2s ease !important;
-}
-
-.lk-chat-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-}
-
 /* ===========================================
-   Settings Menu - Modern Panels
-   =========================================== */
-
-.lk-settings-menu {
-  background: rgba(0, 0, 0, 0.95) !important;
-  border-radius: 20px !important;
-  padding: 24px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
-  max-width: 480px !important;
-}
-
-.lk-settings-menu h3 {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  margin-bottom: 16px !important;
-  color: white !important;
-  letter-spacing: 0.3px !important;
-}
-
-.lk-settings-menu section {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 12px !important;
-  padding: 16px !important;
-  margin-bottom: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Device selection menus */
-.lk-button-group-menu {
-  background: rgba(0, 0, 0, 0.95) !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5) !important;
-  padding: 8px !important;
-}
-
-.lk-button-group-menu button {
-  border-radius: 8px !important;
-  padding: 10px 16px !important;
-  margin: 2px 0 !important;
-  transition: all 0.2s ease !important;
-  text-align: left !important;
-}
-
-.lk-button-group-menu button:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.lk-button-group-menu button[aria-checked="true"] {
-  background: rgba(59, 130, 246, 0.2) !important;
-  border-color: rgba(59, 130, 246, 0.4) !important;
-  color: #60a5fa !important;
-}
-
-/* ===========================================
-   Pre-Join Screen - Modern Design
+   PRE-JOIN SCREEN - Clean
    =========================================== */
 
 .lk-prejoin {
   background: rgba(0, 0, 0, 0.85) !important;
-  border-radius: 24px !important;
-  padding: 40px !important;
+  border-radius: 16px !important;
+  padding: 32px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6) !important;
-  max-width: 520px !important;
-}
-
-/* Pre-join: icon-only mic/camera buttons */
-.lk-prejoin .lk-button[data-lk-source="microphone"],
-.lk-prejoin .lk-button[data-lk-source="camera"] {
-  border-radius: 50% !important;
-  width: 52px !important;
-  height: 52px !important;
-  min-width: 52px !important;
-  min-height: 52px !important;
-  padding: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 0 !important; /* hide label text visually */
-}
-
-.lk-prejoin .lk-button[data-lk-source="microphone"] > span,
-.lk-prejoin .lk-button[data-lk-source="camera"] > span,
-.lk-prejoin .lk-button[data-lk-source="microphone"] .lk-button-label,
-.lk-prejoin .lk-button[data-lk-source="camera"] .lk-button-label {
-  display: none !important;
-}
-
-.lk-prejoin .lk-button[data-lk-source="microphone"] svg,
-.lk-prejoin .lk-button[data-lk-source="camera"] svg {
-  width: 20px !important;
-  height: 20px !important;
-}
-
-/* Prejoin state colors - professional and subtle */
-.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="true"] {
-  background: rgba(16, 185, 129, 0.15) !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2) !important;
-}
-
-.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="true"]:hover {
-  background: rgba(16, 185, 129, 0.2) !important;
-  border-color: rgba(16, 185, 129, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
-}
-
-.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="false"] {
-  background: rgba(239, 68, 68, 0.15) !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
-}
-
-.lk-prejoin .lk-button[data-lk-source][data-lk-enabled="false"]:hover {
-  background: rgba(239, 68, 68, 0.2) !important;
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+  max-width: 480px !important;
 }
 
 .lk-prejoin input {
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 12px !important;
-  padding: 14px 18px !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
   color: white !important;
-  font-size: 16px !important;
-  transition: all 0.2s ease !important;
+  font-size: 15px !important;
 }
 
 .lk-prejoin input:focus {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  border-color: #3b82f6 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .lk-prejoin button[type="submit"] {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  background: #3b82f6 !important;
   border: none !important;
-  border-radius: 14px !important;
-  padding: 16px 32px !important;
-  font-size: 16px !important;
+  border-radius: 10px !important;
+  padding: 14px 28px !important;
+  color: white !important;
   font-weight: 600 !important;
-  letter-spacing: 0.5px !important;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
-  transition: all 0.3s ease !important;
+  font-size: 15px !important;
+  cursor: pointer !important;
   width: 100% !important;
-  margin-top: 20px !important;
+  margin-top: 16px !important;
 }
 
 .lk-prejoin button[type="submit"]:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 28px rgba(59, 130, 246, 0.5) !important;
+  background: #2563eb !important;
+}
+
+/* PreJoin mic/camera buttons */
+.lk-prejoin .lk-button[data-lk-source="microphone"],
+.lk-prejoin .lk-button[data-lk-source="camera"] {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
 }
 
 /* ===========================================
-   Connection Status - Modern Indicators
+   SETTINGS MENU
    =========================================== */
 
-.lk-connection-quality {
-  background: rgba(0, 0, 0, 0.6) !important;
-  border-radius: 8px !important;
-  padding: 6px 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-/* Quality indicators with colors */
-.lk-connection-quality[data-quality="excellent"] {
-  border-color: rgba(34, 197, 94, 0.4) !important;
-  color: #22c55e !important;
-}
-
-.lk-connection-quality[data-quality="good"] {
-  border-color: rgba(59, 130, 246, 0.4) !important;
-  color: #3b82f6 !important;
-}
-
-.lk-connection-quality[data-quality="poor"] {
-  border-color: rgba(251, 191, 36, 0.4) !important;
-  color: #fbbf24 !important;
-}
-
-/* ===========================================
-   Tooltips - Modern Style
-   =========================================== */
-
-.lk-tooltip {
+.lk-settings-menu {
   background: rgba(0, 0, 0, 0.95) !important;
-  border-radius: 8px !important;
-  padding: 8px 12px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  max-width: 400px !important;
+}
+
+.lk-settings-menu h3 {
+  color: white !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin-bottom: 12px !important;
 }
 
 /* ===========================================
-   Animations - Smooth Transitions
-   =========================================== */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.lk-control-bar {
-  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.lk-participant-tile {
-  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* ===========================================
-   Scrollbar Styling - Modern Look
-   =========================================== */
-
-.lk-chat::-webkit-scrollbar,
-.lk-button-group-menu::-webkit-scrollbar {
-  width: 8px !important;
-}
-
-.lk-chat::-webkit-scrollbar-track,
-.lk-button-group-menu::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 4px !important;
-}
-
-.lk-chat::-webkit-scrollbar-thumb,
-.lk-button-group-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 4px !important;
-}
-
-.lk-chat::-webkit-scrollbar-thumb:hover,
-.lk-button-group-menu::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* ===========================================
-   Loading States
-   =========================================== */
-
-.lk-loading-spinner {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  border-top-color: #3b82f6 !important;
-  animation: spin 0.8s linear infinite !important;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ===========================================
-   Responsive Design - Mobile & Tablet
+   RESPONSIVE - Mobile & Tablet
    =========================================== */
 
 @media (max-width: 768px) {
   .lk-control-bar {
-    padding: 16px 16px !important;
-    gap: 10px !important;
-    min-height: 76px !important;
-  }
-
-  .lk-control-bar .lk-button {
-    padding: 12px 16px !important;
-    font-size: 13px !important;
-    min-height: 44px !important;
-    border-radius: 12px !important;
+    padding: 12px !important;
+    gap: 8px !important;
   }
 
   .lk-control-bar .lk-button[data-lk-source="microphone"],
   .lk-control-bar .lk-button[data-lk-source="camera"] {
-    width: 52px !important;
-    height: 52px !important;
-    min-width: 52px !important;
-    min-height: 52px !important;
-  }
-
-  .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
-  .lk-control-bar .lk-button[data-lk-source="camera"] svg {
-    width: 20px !important;
-    height: 20px !important;
-  }
-
-  .lk-control-bar .lk-disconnect-button {
-    min-width: 100px !important;
-    padding: 12px 20px !important;
-    font-size: 12px !important;
-  }
-
-  .lk-settings-menu-toggle {
     width: 48px !important;
     height: 48px !important;
   }
 
-  .lk-settings-menu-toggle svg {
-    width: 20px !important;
-    height: 20px !important;
+  .lk-grid-layout {
+    gap: 8px !important;
+    padding: 8px !important;
+    grid-template-columns: 1fr !important;
   }
 
-  /* Adjust participant tile minimum size for tablets */
-  .lk-participant-tile {
-    min-width: 480px !important;
-    min-height: 270px !important;
+  .lk-chat {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    z-index: 1000 !important;
+    resize: none !important;
   }
 }
 
 @media (max-width: 480px) {
-  .lk-control-bar {
-    padding: 12px 12px !important;
-    gap: 8px !important;
-    flex-wrap: wrap !important;
-    min-height: auto !important;
-    justify-content: space-around !important;
-  }
-
   .lk-control-bar .lk-button {
     padding: 10px 14px !important;
-    font-size: 12px !important;
-    border-radius: 10px !important;
+    font-size: 13px !important;
   }
 
   .lk-control-bar .lk-button[data-lk-source="microphone"],
   .lk-control-bar .lk-button[data-lk-source="camera"] {
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px !important;
-    min-height: 48px !important;
-  }
-
-  .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
-  .lk-control-bar .lk-button[data-lk-source="camera"] svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-
-  .lk-control-bar .lk-disconnect-button {
-    min-width: 90px !important;
-    padding: 10px 16px !important;
-    font-size: 11px !important;
-    letter-spacing: 0.5px !important;
-  }
-
-  .lk-settings-menu-toggle {
     width: 44px !important;
     height: 44px !important;
-  }
-
-  .lk-settings-menu-toggle svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-
-  /* Pre-join: smaller icon-only mic/camera buttons on very small screens */
-  .lk-prejoin .lk-button[data-lk-source="microphone"],
-  .lk-prejoin .lk-button[data-lk-source="camera"] {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-  }
-
-  .lk-prejoin .lk-button[data-lk-source="microphone"] svg,
-  .lk-prejoin .lk-button[data-lk-source="camera"] svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-
-  /* Adjust participant tile minimum size for mobile phones */
-  .lk-participant-tile {
-    min-width: 320px !important;
-    min-height: 180px !important;
   }
 }
 
+/* ===========================================
+   UTILITIES
+   =========================================== */
+
+/* Connection quality */
+.lk-connection-quality {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Hide pinned indicator - use border instead */
+.lk-participant-tile[data-lk-pinned="true"]::before {
+  display: none !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lk-participant-tile {
+  animation: fadeIn 0.3s ease !important;
+}
+
+/* Loading spinner */
+.lk-loading-spinner {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  border-top-color: #3b82f6 !important;
+}
