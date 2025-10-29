@@ -132,9 +132,6 @@ export function CameraSettings() {
     quality: BlurQuality | null;
   }>({ type: 'none', path: null, quality: null });
 
-  // Debounce timer ref
-  const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
@@ -176,7 +173,7 @@ export function CameraSettings() {
     console.log('[CameraSettings] Background changed to:', type, imagePath);
   };
 
-  // Effect to apply processors with debouncing and caching
+  // Effect to apply processors with caching - IMMEDIATE application for privacy
   React.useEffect(() => {
     const track = cameraTrack?.track;
     
@@ -194,17 +191,12 @@ export function CameraSettings() {
       return; // Already applied, skip
     }
 
-    // Clear any pending debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Debounce processor changes to prevent rapid reapplication
-    debounceTimerRef.current = setTimeout(async () => {
+    // Apply processor immediately for privacy - no debounce
+    const applyProcessor = async () => {
       try {
-        // Re-check track state after debounce delay to prevent race conditions
+        // Re-check track state to prevent race conditions
         if (!isLocalTrack(track) || track.mediaStreamTrack?.readyState !== 'live') {
-          console.warn('Track is no longer valid after debounce, skipping processor update');
+          console.warn('Track is no longer valid, skipping processor update');
           return;
         }
 
@@ -229,6 +221,7 @@ export function CameraSettings() {
           
           await track.setProcessor(blurProcessor);
           currentProcessorRef.current = { type: 'blur', path: null, quality: blurQuality };
+          console.log('[CameraSettings] Blur applied immediately to protect privacy');
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
           // Generate cache key
@@ -266,14 +259,10 @@ export function CameraSettings() {
           console.error('Error setting video processor:', error);
         }
       }
-    }, 150); // 150ms debounce - reduced for faster responsiveness and less perceived jitter
-
-    // Cleanup function
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
     };
+
+    // Apply immediately - no debounce to prevent background exposure
+    applyProcessor();
   }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality]);
 
   // Cleanup processors on unmount

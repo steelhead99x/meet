@@ -91,6 +91,8 @@
   justify-content: center;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   min-height: 84px;
+  position: relative;
+  z-index: 100; /* Floating controls layer */
 }
 
 /* Base button styling - circular icon buttons only */
@@ -546,7 +548,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  z-index: 10;
+  z-index: 110; /* Above control bar buttons */
 }
 
 /* All buttons in button groups - icon only */
@@ -579,7 +581,7 @@
   justify-content: center !important;
   flex-shrink: 0 !important;
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 110 !important; /* Above control bar buttons */
 }
 
 [data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child):hover,
@@ -603,7 +605,7 @@
   cursor: pointer !important;
   pointer-events: auto !important;
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 110 !important; /* Above control bar buttons */
 }
 
 /* Hide text in all button group buttons, show only icons */
@@ -684,7 +686,7 @@
   justify-content: center !important;
   flex-shrink: 0 !important;
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 110 !important; /* Above control bar buttons */
   overflow: visible !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -811,7 +813,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  z-index: 1000 !important;
+  z-index: 350 !important; /* Dropdowns & menus layer */
   position: absolute !important;
   animation: slideDown 0.2s ease;
 }
@@ -985,6 +987,7 @@
   position: relative;
   transition: all 0.2s ease;
   animation: fadeIn 0.3s ease;
+  z-index: 1; /* Base content layer - stays behind menus/tooltips */
 }
 
 [data-lk-theme] .lk-participant-tile:hover {
@@ -996,6 +999,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  position: relative;
+  z-index: 0; /* Ensure video stays at lowest layer within tile */
 }
 
 /* Screen share video - use contain to show entire screen without cropping */
@@ -1024,6 +1029,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 8px;
+  z-index: 2; /* Above video but still in base layer */
 }
 
 [data-lk-theme] .lk-participant-name {
@@ -1050,6 +1056,7 @@
 
 /* ===========================================
    GRID LAYOUT - Responsive & Clean
+   Auto-scales from 2 to 64+ participants evenly
    =========================================== */
 
 /* VideoConference main wrapper - ensure flex layout respects content */
@@ -1057,8 +1064,11 @@
   display: flex;
   flex-direction: row; /* Horizontal layout for split view */
   height: 100%;
-  overflow: hidden;
+  overflow: visible; /* Changed from 'hidden' to allow fixed-position modals to escape */
   align-items: stretch; /* Stretch children to same height */
+  position: relative;
+  z-index: auto; /* Create stacking context root */
+  isolation: isolate; /* Isolate this stacking context from parent */
 }
 
 /* Video grid and chat container should align properly */
@@ -1072,42 +1082,233 @@
   min-width: 0; /* Allow shrinking below content size */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* Keep hidden here to clip video content */
 }
 
 [data-lk-theme] .lk-grid-layout {
   display: grid;
-  gap: 12px;
-  padding: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 8px;
+  padding: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   align-items: stretch;
+  align-content: start;
   flex: 1; /* Take available space in the video container */
   overflow: auto;
+  grid-auto-rows: minmax(150px, 1fr);
+  position: relative;
+  z-index: 1; /* Base content layer */
 }
 
 /* Single participant - full screen */
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(1):last-child) {
   grid-template-columns: 1fr;
+  gap: 0;
+  padding: 0;
 }
 
-/* Two participants - side by side */
+/* Two participants - side by side (1x2) */
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(2):last-child) {
   grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px;
 }
 
-/* 3-4 participants - 2x2 */
+/* 3-4 participants - 2x2 grid */
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(3):last-child),
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(4):last-child) {
   grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px;
 }
 
-/* 5-9 participants - 3 columns */
+/* 5-6 participants - 3x2 grid */
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(5):last-child),
-[data-lk-theme] .lk-grid-layout:has(> :nth-child(6):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(6):last-child) {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
+}
+
+/* 7-9 participants - 3x3 grid */
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(7):last-child),
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(8):last-child),
 [data-lk-theme] .lk-grid-layout:has(> :nth-child(9):last-child) {
   grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
+}
+
+/* 10-12 participants - 4x3 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(10):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(11):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(12):last-child) {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+/* 13-16 participants - 4x4 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(13):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(14):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(15):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(16):last-child) {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+/* 17-20 participants - 5x4 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(17):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(18):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(19):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(20):last-child) {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 6px;
+}
+
+/* 21-25 participants - 5x5 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(21):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(22):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(23):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(24):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(25):last-child) {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 6px;
+}
+
+/* 26-30 participants - 6x5 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(26):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(27):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(28):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(29):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(30):last-child) {
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  padding: 5px;
+}
+
+/* 31-36 participants - 6x6 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(31):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(32):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(33):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(34):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(35):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(36):last-child) {
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  padding: 5px;
+}
+
+/* 37-42 participants - 7x6 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(37):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(38):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(39):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(40):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(41):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(42):last-child) {
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 4px;
+}
+
+/* 43-49 participants - 7x7 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(43):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(44):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(45):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(46):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(47):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(48):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(49):last-child) {
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 4px;
+}
+
+/* 50-56 participants - 8x7 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(50):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(51):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(52):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(53):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(54):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(55):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(56):last-child) {
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  padding: 3px;
+}
+
+/* 57-64 participants - 8x8 grid */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(57):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(58):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(59):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(60):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(61):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(62):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(63):last-child),
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(64):last-child) {
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  padding: 3px;
+}
+
+/* 65+ participants - 9 columns or more with auto-fit */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(65)) {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 2px;
+  padding: 2px;
+}
+
+/* Visual optimizations for large participant counts */
+
+/* Reduce borders and shadows for 10+ participants */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(10)) .lk-participant-tile {
+  border-width: 1px;
+}
+
+/* Simplify participant metadata for 17+ participants */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(17)) .lk-participant-tile .lk-participant-metadata {
+  padding: 20px 8px 8px;
+  gap: 4px;
+}
+
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(17)) .lk-participant-name {
+  font-size: 12px;
+}
+
+/* Further simplify for 37+ participants */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(37)) .lk-participant-tile .lk-participant-metadata {
+  padding: 15px 6px 6px;
+  gap: 3px;
+}
+
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(37)) .lk-participant-name {
+  font-size: 10px;
+}
+
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(37)) .lk-participant-tile {
+  border-radius: 6px;
+}
+
+/* Minimal styling for 50+ participants */
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(50)) .lk-participant-tile .lk-participant-metadata {
+  padding: 12px 4px 4px;
+  gap: 2px;
+}
+
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(50)) .lk-participant-name {
+  font-size: 9px;
+}
+
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(50)) .lk-participant-tile {
+  border-radius: 4px;
+  border-width: 1px;
+}
+
+[data-lk-theme] .lk-grid-layout:has(> :nth-child(50)) .lk-participant-metadata-item svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* Focus layout (screen share) */
@@ -1118,6 +1319,8 @@
   padding: 12px;
   flex: 1; /* Take available space in the video container */
   overflow: hidden;
+  position: relative;
+  z-index: 1; /* Base content layer */
 }
 
 [data-lk-theme] .lk-focus-layout > div:first-child {
@@ -1575,23 +1778,104 @@
 }
 
 /* ===========================================
-   SETTINGS MENU
+   SETTINGS MENU - Modal Overlay Style
    =========================================== */
 
-[data-lk-theme] .lk-settings-menu {
-  background: rgba(0, 0, 0, 0.95);
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  max-width: 400px;
+/* Custom settings menu component - NOT under [data-lk-theme] */
+.settings-menu {
+  background: linear-gradient(135deg, rgba(20, 20, 25, 0.98), rgba(10, 10, 15, 0.98));
+  backdrop-filter: blur(30px);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8), 
+              0 0 0 1px rgba(255, 255, 255, 0.1),
+              0 0 40px rgba(59, 130, 246, 0.2);
+  max-width: 480px;
+  width: calc(100% - 40px);
+  position: fixed !important; /* Fixed positioning to break out of stacking contexts */
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important; /* Maximum z-index to ensure it's above everything */
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
 }
 
-[data-lk-theme] .lk-settings-menu h3 {
+/* Force modal wrapper to also use high z-index */
+.lk-settings-menu-modal {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: none !important; /* Prevent LiveKit from centering the modal wrapper */
+  pointer-events: none; /* Allow clicks through except on settings menu */
+}
+
+.lk-settings-menu-modal .settings-menu {
+  pointer-events: auto; /* Enable clicks on the menu itself */
+}
+
+.settings-menu h3 {
   color: white;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  margin-top: 20px;
+}
+
+.settings-menu h3:first-of-type {
+  margin-top: 12px;
+}
+
+/* Scrollbar for settings menu */
+.settings-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.settings-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.settings-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Settings sections */
+.settings-menu section {
+  margin-bottom: 20px;
+  position: relative; /* Create stacking context for nested dropdowns */
+  z-index: 1;
+}
+
+/* Device menus inside settings menu need higher z-index */
+.settings-menu .lk-device-menu {
+  z-index: 910 !important; /* Above settings menu content */
+}
+
+/* Button groups inside settings need proper stacking */
+.settings-menu .lk-button-group-menu {
+  z-index: 905 !important; /* Above settings sections */
+}
+
+.settings-menu .lk-button-menu {
+  z-index: 905 !important; /* Above settings sections */
+}
+
+/* LiveKit's settings menu wrapper (if it exists) */
+[data-lk-theme] .lk-settings-menu-modal,
+[data-lk-theme] .lk-settings-menu {
+  z-index: 900 !important;
+  position: fixed !important;
 }
 
 /* ===========================================
@@ -1645,10 +1929,41 @@
     opacity: 1 !important;
   }
 
+  /* On mobile, use a simpler responsive grid */
   [data-lk-theme] .lk-grid-layout {
-    gap: 8px;
-    padding: 8px;
-    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 4px;
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 2 participants on mobile - side by side */
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(2):last-child) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px;
+  }
+
+  /* 3-4 participants on mobile - 2x2 */
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(3):last-child),
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px;
+  }
+
+  /* 5-9 participants on mobile - 3 columns */
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(5):last-child),
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(6):last-child),
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(7):last-child),
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(8):last-child),
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(9):last-child) {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 3px;
+  }
+
+  /* 10+ participants on mobile - auto-fit with smaller tiles */
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(10)) {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+    gap: 2px;
+    padding: 2px;
   }
 
   /* On mobile, chat should overlay instead of split view */
@@ -1690,9 +2005,26 @@
     max-width: 340px !important;
   }
   
-  /* Reduce min-width for video grid on tablets */
+  /* Adjust grid gaps for tablets */
   [data-lk-theme] .lk-grid-layout {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 6px;
+    padding: 6px;
+  }
+
+  /* Smaller gaps for larger participant counts on tablets */
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(13)) {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(25)) {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  [data-lk-theme] .lk-grid-layout:has(> :nth-child(37)) {
+    gap: 2px;
+    padding: 2px;
   }
 }
 

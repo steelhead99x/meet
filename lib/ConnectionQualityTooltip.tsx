@@ -37,7 +37,7 @@ export function ConnectionQualityTooltip() {
           border-radius: 8px;
           font-size: 12px;
           white-space: nowrap;
-          z-index: 1000;
+          z-index: 250;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           pointer-events: none;
           opacity: 0;

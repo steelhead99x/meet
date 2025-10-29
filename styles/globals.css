@@ -12,6 +12,8 @@ body {
     'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   background-color: #070707;
   color: #ffffff;
+  height: 100%;
+  width: 100%;
 }
 
 a {
@@ -36,15 +38,26 @@ button[title*="encryption" i] {
 }
 
 /* ===================================
-   Z-INDEX HIERARCHY
+   Z-INDEX HIERARCHY (ENFORCED)
    ===================================
-   1-99:      Base content
+   1-99:      Base content (videos, grids)
+     - Video tiles: 1
+     - Participant metadata: 2
+     - Connection quality indicators: 3
    100-199:   Floating buttons & controls
+     - Control bar: 100
+     - Button groups: 110
    200-299:   Tooltips & popovers
+     - Connection quality tooltips: 250
    300-399:   Dropdowns & menus
+     - Device menus: 350
    400-499:   Sidebars & panels
-   500-599:   Backdrops
-   600-999:   Modals & overlays
+     - Chat panel: 400
+   800-999:   Modals & overlays
+     - Settings backdrop: 890
+     - Settings menu: 900
+     - Settings dropdowns: 905-910
+     - Debug panel: 700
    =================================== */
 
 /* Shared animations */
@@ -129,6 +142,7 @@ button[title*="encryption" i] {
   min-height: 0; /* Allow flex items to shrink below content size */
   width: 100%;
   overflow: hidden;
+  z-index: 1; /* Base content layer - ensures videos stay behind menus */
 }
 
 /* Ensure the participant placeholder container fills the tile properly */
@@ -214,22 +228,18 @@ button[title*="encryption" i] {
   padding: 6px 8px;
   /* Ensure tooltips can overflow the participant tile */
   position: relative;
-  z-index: 100;
+  z-index: 3; /* Within participant tile, but low enough not to conflict with menus */
 }
 
-/* Allow overflow for connection quality tooltips */
-.lk-participant-tile {
-  overflow: visible !important;
-}
-
+/* Participant metadata should allow tooltips but not break tile overflow */
 .lk-participant-metadata {
-  overflow: visible !important;
-  z-index: 50;
+  position: relative;
+  z-index: 2; /* Above video but in base layer */
 }
 
-/* Ensure tooltips appear above other elements */
+/* Ensure tooltips can appear properly positioned */
 .lk-participant-metadata-item {
-  overflow: visible !important;
+  position: relative;
 }
 
 /* LiveKit already adds encryption indicators via SVG - don't add duplicates */

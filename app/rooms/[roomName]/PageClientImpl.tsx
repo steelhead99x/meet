@@ -376,12 +376,14 @@ function VideoConferenceComponent(props: {
       try {
         await room.connect(serverUrl, participantToken, connectOptions);
         
-        if (videoEnabled) {
-          await room.localParticipant.setCameraEnabled(true);
-        }
-        
+        // Enable tracks - CameraSettings will apply blur immediately when tracks become available
+        // The blur will be applied before the track is published to other participants
         if (audioEnabled) {
           await room.localParticipant.setMicrophoneEnabled(true);
+        }
+        
+        if (videoEnabled) {
+          await room.localParticipant.setCameraEnabled(true);
         }
         
         // Reassert E2EE key after connection to ensure worker picks up keys for local participant

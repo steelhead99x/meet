@@ -1,5 +1,5 @@
 import React from 'react';
-import { Track } from 'livekit-client';
+import { Track, LocalVideoTrack } from 'livekit-client';
 import {
   TrackToggle,
   usePreviewDevice,
@@ -9,6 +9,9 @@ import {
   LocalUserChoices,
 } from '@livekit/components-react';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
+import { BackgroundProcessor } from '@livekit/track-processors';
+import { getBlurConfig, getRecommendedBlurQuality } from './BlurConfig';
+import { detectDeviceCapabilities } from './client-utils';
 
 export interface CustomPreJoinProps {
   defaults?: Partial<LocalUserChoices>;
@@ -46,6 +49,55 @@ export function CustomPreJoin({
 
   const videoEl = React.useRef<HTMLVideoElement>(null);
   const videoTrack = tracks?.filter((t) => t.kind === Track.Kind.Video)[0];
+  const blurProcessorRef = React.useRef<any>(null);
+  const blurAppliedRef = React.useRef(false);
+
+  // Apply blur to preview track IMMEDIATELY before displaying
+  React.useEffect(() => {
+    const applyPreviewBlur = async () => {
+      if (!videoTrack || blurAppliedRef.current) return;
+      
+      // Check if user has blur enabled (default is blur)
+      const backgroundType = savedPrefs.backgroundType || 'blur';
+      
+      if (backgroundType === 'blur' && videoTrack instanceof LocalVideoTrack) {
+        try {
+          // Determine blur quality
+          const blurQuality = savedPrefs.blurQuality || 
+            getRecommendedBlurQuality(detectDeviceCapabilities());
+          
+          const config = getBlurConfig(blurQuality);
+          console.log('[CustomPreJoin] Applying blur to preview with quality:', blurQuality);
+          
+          // Create and apply blur processor
+          blurProcessorRef.current = BackgroundProcessor({
+            blurRadius: config.blurRadius,
+            segmenterOptions: {
+              delegate: config.segmenterOptions.delegate,
+            },
+          }, 'background-blur');
+          
+          await videoTrack.setProcessor(blurProcessorRef.current);
+          blurAppliedRef.current = true;
+          console.log('[CustomPreJoin] Blur applied to preview track');
+        } catch (error) {
+          console.error('[CustomPreJoin] Error applying blur to preview:', error);
+        }
+      }
+    };
+
+    applyPreviewBlur();
+
+    return () => {
+      // Cleanup blur processor
+      if (videoTrack instanceof LocalVideoTrack && blurProcessorRef.current) {
+        videoTrack.stopProcessor().catch(err => 
+          console.warn('[CustomPreJoin] Error stopping preview processor:', err)
+        );
+        blurAppliedRef.current = false;
+      }
+    };
+  }, [videoTrack, savedPrefs.backgroundType, savedPrefs.blurQuality]);
 
   React.useEffect(() => {
     if (videoEl.current && videoTrack) {
