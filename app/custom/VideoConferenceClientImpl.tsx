@@ -12,7 +12,7 @@ import {
   type VideoCodec,
 } from 'livekit-client';
 import { DebugMode } from '@/lib/Debug';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
@@ -23,6 +23,8 @@ import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
 import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
+import { ChatPanel } from '@/lib/ChatPanel';
+import { ChatToggleButton } from '@/lib/ChatToggleButton';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -210,6 +212,36 @@ export function VideoConferenceClientImpl(props: {
 
   useLowCPUOptimizer(room);
 
+  // Chat toggle state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Memoize the local participant identity
+  const [localIdentity, setLocalIdentity] = useState<string | undefined>(
+    room?.localParticipant?.identity
+  );
+
+  useEffect(() => {
+    if (room?.localParticipant?.identity) {
+      setLocalIdentity(room.localParticipant.identity);
+    }
+  }, [room?.localParticipant?.identity]);
+
+  // Memoize encoder and decoder
+  const chatMessageEncoder = useMemo(
+    () => createE2EEMessageEncoder(worker, localIdentity),
+    [worker, localIdentity]
+  );
+
+  const chatMessageDecoder = useMemo(
+    () => createE2EEMessageDecoder(worker, localIdentity),
+    [worker, localIdentity]
+  );
+
+  // Toggle chat handler
+  const toggleChat = useCallback(() => {
+    setIsChatOpen(prev => !prev);
+  }, []);
+
   // Use conditional rendering instead of early return to avoid hook order issues
   return (
     <div className="lk-room-container">
@@ -220,16 +252,23 @@ export function VideoConferenceClientImpl(props: {
       ) : (
         <RoomContext.Provider value={room}>
           <ReconnectionBanner />
-          <KeyboardShortcuts />
+          <KeyboardShortcuts onToggleChat={toggleChat} />
           <KeyboardShortcutsHelp />
           <VideoConference
-            chatMessageFormatter={formatChatMessageLinks}
             SettingsComponent={
               process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
             }
           />
           <RoomAudioRenderer />
           <DebugMode logLevel={LogLevel.debug} />
+          <ChatPanel
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            messageFormatter={formatChatMessageLinks}
+            messageEncoder={chatMessageEncoder}
+            messageDecoder={chatMessageDecoder}
+          />
+          <ChatToggleButton isOpen={isChatOpen} onToggle={toggleChat} />
         </RoomContext.Provider>
       )}
     </div>

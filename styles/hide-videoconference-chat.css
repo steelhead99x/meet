@@ -1,0 +1,22 @@
+/* Hide VideoConference built-in chat to use custom ChatPanel instead */
+
+/* Hide the built-in chat panel */
+.lk-video-conference .lk-chat {
+  display: none !important;
+}
+
+/* Hide the built-in chat toggle button */
+.lk-control-bar button[aria-label*="Chat"],
+.lk-control-bar .lk-chat-toggle,
+button.lk-chat-toggle,
+button[class*="chat-toggle"],
+button[class*="ChatToggle"] {
+  display: none !important;
+}
+
+/* Ensure the chat widget area doesn't take up space */
+.lk-video-conference [class*="chat-widget"],
+.lk-video-conference [class*="ChatWidget"] {
+  display: none !important;
+}
+

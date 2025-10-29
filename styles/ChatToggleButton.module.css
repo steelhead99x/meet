@@ -1,0 +1,157 @@
+/* Chat Toggle Button - Floating button in bottom-right */
+
+.chatToggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  color: #60a5fa;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 900;
+  backdrop-filter: blur(10px);
+}
+
+.chatToggle:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+}
+
+.chatToggle:active {
+  transform: translateY(0);
+}
+
+.chatToggle.active {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #93c5fd;
+}
+
+.chatToggle.active:hover {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.chatToggle svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+/* ===========================
+   Tablet Adjustments
+   =========================== */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .chatToggle {
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .chatToggle svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ===========================
+   Mobile Adjustments
+   =========================== */
+@media (max-width: 767px) {
+  .chatToggle {
+    bottom: 16px;
+    right: 16px;
+    padding: 14px;
+    /* Hide label text on mobile to save space */
+    gap: 0;
+  }
+
+  .label {
+    display: none;
+  }
+
+  .chatToggle svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Larger touch target on mobile */
+  .chatToggle::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+  }
+}
+
+/* ===========================
+   Landscape Mode (Mobile)
+   =========================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .chatToggle {
+    bottom: 12px;
+    right: 12px;
+    padding: 10px;
+  }
+
+  .chatToggle svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ===========================
+   Safe Area for iOS
+   =========================== */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .chatToggle {
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: calc(24px + env(safe-area-inset-right));
+  }
+
+  @media (max-width: 767px) {
+    .chatToggle {
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      right: calc(16px + env(safe-area-inset-right));
+    }
+  }
+}
+
+/* ===========================
+   Accessibility: Reduced Motion
+   =========================== */
+@media (prefers-reduced-motion: reduce) {
+  .chatToggle {
+    transition: none;
+  }
+
+  .chatToggle:hover {
+    transform: none;
+  }
+}
+
+/* ===========================
+   Focus Visible (Accessibility)
+   =========================== */
+.chatToggle:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+

@@ -35,6 +35,8 @@ import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
 import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
+import { ChatPanel } from '@/lib/ChatPanel';
+import { ChatToggleButton } from '@/lib/ChatToggleButton';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -444,6 +446,9 @@ function VideoConferenceComponent(props: {
 
 // Separate component for room content to isolate hooks
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
+  // Chat toggle state
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
+
   // Memoize the local participant identity to prevent unnecessary re-renders
   const [localIdentity, setLocalIdentity] = React.useState<string | undefined>(
     room.localParticipant?.identity
@@ -466,20 +471,32 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
     [worker, localIdentity]
   );
 
+  // Toggle chat handler
+  const toggleChat = React.useCallback(() => {
+    setIsChatOpen(prev => !prev);
+  }, []);
+
+  console.log('🟡 RoomContent render', { isChatOpen, ChatPanel, ChatToggleButton });
+
   return (
     <RoomContext.Provider value={room}>
       <ReconnectionBanner />
-      <KeyboardShortcuts />
+      <KeyboardShortcuts onToggleChat={toggleChat} />
       <KeyboardShortcutsHelp />
       <VideoConference
-        chatMessageFormatter={formatChatMessageLinks}
-        chatMessageEncoder={chatMessageEncoder}
-        chatMessageDecoder={chatMessageDecoder}
         SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
       />
       <RoomAudioRenderer />
       <DebugMode />
       <RecordingIndicator />
+      <ChatPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        messageFormatter={formatChatMessageLinks}
+        messageEncoder={chatMessageEncoder}
+        messageDecoder={chatMessageDecoder}
+      />
+      <ChatToggleButton isOpen={isChatOpen} onToggle={toggleChat} />
     </RoomContext.Provider>
   );
 }
