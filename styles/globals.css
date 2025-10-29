@@ -127,18 +127,33 @@ button[title*="encryption" i] {
   position: relative;
   aspect-ratio: 16 / 9;
   min-height: 0; /* Allow flex items to shrink below content size */
+  width: 100%;
+  overflow: hidden;
 }
 
-/* Ensure the participant placeholder container has 16:9 aspect ratio */
+/* Ensure the participant placeholder container fills the tile properly */
 .lk-participant-placeholder {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   background: #1a1a1a;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Limit avatar/icon size to look proportional in 16:9 container */
+.lk-participant-placeholder svg,
+.lk-participant-placeholder img {
+  max-width: 35% !important;
+  max-height: 60% !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 /* Alternative: Use padding-bottom trick for older browser support */
@@ -176,14 +191,46 @@ button[title*="encryption" i] {
 
 /* Ensure participant metadata (name, etc.) is positioned correctly */
 .lk-participant-metadata-item {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  z-index: 10;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: rgba(0, 0, 0, 0.7);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 14px;
+  backdrop-filter: blur(8px);
+}
+
+/* Ensure icons within metadata items are properly sized and spaced */
+.lk-participant-metadata-item svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* Connection quality indicator specific styling */
+.lk-participant-metadata-item.lk-connection-quality {
+  padding: 6px 8px;
+}
+
+/* Add encryption indicator to ALL participant tiles when E2EE is enabled */
+.lk-participant-tile .lk-participant-metadata .lk-participant-metadata-item:first-child::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 4px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="white" fill-rule="evenodd" d="M4 6.104V4a4 4 0 1 1 8 0v2.104c1.154.326 2 1.387 2 2.646v4.5A2.75 2.75 0 0 1 11.25 16h-6.5A2.75 2.75 0 0 1 2 13.25v-4.5c0-1.259.846-2.32 2-2.646ZM5.5 4a2.5 2.5 0 0 1 5 0v2h-5V4Z" clip-rule="evenodd"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Remove duplicate lock icon from local participant (LiveKit adds it by default) */
+.lk-participant-tile[data-lk-local-participant="true"] .lk-participant-metadata-item:first-child > svg:first-child {
+  display: none;
 }
 
 /* Style the avatar/initials when no video is present */

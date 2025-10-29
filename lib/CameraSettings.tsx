@@ -291,30 +291,25 @@ export function CameraSettings() {
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={() => selectBackground('none')}
-            className="lk-button"
+            className="lk-button lk-button-visual"
+            aria-label="No background effect"
             aria-pressed={backgroundType === 'none'}
             style={{
-              border: backgroundType === 'none' ? '2px solid #0090ff' : '2px solid #d1d1d1',
-              width: '80px',
-              height: '60px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              border: backgroundType === 'none' ? '2px solid #3b82f6' : '2px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(255, 255, 255, 0.08)',
             }}
           >
-            None
+            <span className="lk-button-visual-label">None</span>
           </button>
 
           <button
             onClick={() => selectBackground('blur')}
-            className="lk-button"
+            className="lk-button lk-button-visual"
             aria-label="Blur background effect"
             aria-pressed={backgroundType === 'blur'}
             style={{
-              border: backgroundType === 'blur' ? '2px solid #0090ff' : '2px solid #d1d1d1',
-              width: '80px',
-              height: '60px',
-              backgroundColor: '#f0f0f0',
+              border: backgroundType === 'blur' ? '2px solid #3b82f6' : '2px solid rgba(255, 255, 255, 0.15)',
+              backgroundColor: '#e0e0e0',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -326,56 +321,32 @@ export function CameraSettings() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: '#e0e0e0',
-                filter: 'blur(8px)',
+                backgroundColor: '#d0d0d0',
+                filter: 'blur(12px)',
                 zIndex: 0,
               }}
             />
-            <span
-              style={{
-                position: 'relative',
-                zIndex: 1,
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                color: 'white',
-              }}
-            >
-              Blur
-            </span>
+            <span className="lk-button-visual-label">Blur</span>
           </button>
 
           {GRADIENT_BACKGROUNDS.map((gradientBg) => (
             <button
               key={gradientBg.name}
               onClick={() => selectBackground('gradient', gradientBg.gradient)}
-              className="lk-button"
+              className="lk-button lk-button-visual"
               aria-label={`${gradientBg.name} gradient background`}
               aria-pressed={
                 backgroundType === 'gradient' && virtualBackgroundImagePath === gradientBg.gradient
               }
               style={{
                 background: gradientBg.gradient,
-                width: '80px',
-                height: '60px',
                 border:
                   backgroundType === 'gradient' && virtualBackgroundImagePath === gradientBg.gradient
-                    ? '2px solid #0090ff'
-                    : '2px solid transparent',
+                    ? '2px solid #3b82f6'
+                    : '2px solid rgba(255, 255, 255, 0.15)',
               }}
             >
-              <span
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  padding: '2px 5px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  color: 'white',
-                }}
-              >
-                {gradientBg.name}
-              </span>
+              <span className="lk-button-visual-label">{gradientBg.name}</span>
             </button>
           ))}
 
@@ -383,7 +354,7 @@ export function CameraSettings() {
             <button
               key={image.path}
               onClick={() => selectBackground('image', image.path)}
-              className="lk-button"
+              className="lk-button lk-button-visual"
               aria-label={`${image.name} background image`}
               aria-pressed={
                 backgroundType === 'image' && virtualBackgroundImagePath === image.path
@@ -392,25 +363,13 @@ export function CameraSettings() {
                 backgroundImage: `url(${image.path})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                width: '80px',
-                height: '60px',
                 border:
                   backgroundType === 'image' && virtualBackgroundImagePath === image.path
-                    ? '2px solid #0090ff'
-                    : '2px solid transparent',
+                    ? '2px solid #3b82f6'
+                    : '2px solid rgba(255, 255, 255, 0.15)',
               }}
             >
-              <span
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  padding: '2px 5px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  color: 'white',
-                }}
-              >
-                {image.name}
-              </span>
+              <span className="lk-button-visual-label">{image.name}</span>
             </button>
           ))}
         </div>
