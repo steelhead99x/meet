@@ -10,6 +10,7 @@ import { BackgroundBlur, BackgroundProcessor, VirtualBackground, ProcessorWrappe
 import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent } from 'livekit-client';
 import { detectDeviceCapabilities } from './client-utils';
 import { getBlurConfig, getRecommendedBlurQuality, BlurQuality } from './BlurConfig';
+import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -76,26 +77,34 @@ const createGradientCanvas = (gradient: string): string => {
 
 export function CameraSettings() {
   const { cameraTrack, localParticipant } = useLocalParticipant();
-  const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(
-    (cameraTrack as LocalTrackPublication)?.track?.getProcessor()?.name === 'background-blur'
-      ? 'blur'
-      : (cameraTrack as LocalTrackPublication)?.track?.getProcessor()?.name === 'virtual-background'
-        ? 'image'
-        : 'none',
-  );
+  
+  // Initialize from saved preferences - BLUR ENABLED BY DEFAULT
+  const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(() => {
+    if (typeof window === 'undefined') return 'blur';
+    
+    const prefs = loadUserPreferences();
+    console.log('[CameraSettings] Loaded preferences:', prefs);
+    
+    // Return saved preference or default to 'blur'
+    return prefs.backgroundType || 'blur';
+  });
 
-  const [virtualBackgroundImagePath, setVirtualBackgroundImagePath] = React.useState<string | null>(
-    null,
-  );
+  const [virtualBackgroundImagePath, setVirtualBackgroundImagePath] = React.useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    
+    const prefs = loadUserPreferences();
+    return prefs.backgroundPath || null;
+  });
 
   // Detect device capabilities and determine recommended blur quality
   const [blurQuality, setBlurQuality] = React.useState<BlurQuality>(() => {
     if (typeof window === 'undefined') return 'medium';
     
-    // Check for stored preference
-    const stored = localStorage.getItem('blurQuality');
-    if (stored && ['low', 'medium', 'high', 'ultra'].includes(stored)) {
-      return stored as BlurQuality;
+    const prefs = loadUserPreferences();
+    
+    // Use saved blur quality if available
+    if (prefs.blurQuality && ['low', 'medium', 'high', 'ultra'].includes(prefs.blurQuality)) {
+      return prefs.blurQuality;
     }
     
     // Auto-detect based on device capabilities
@@ -136,7 +145,7 @@ export function CameraSettings() {
   React.useEffect(() => {
     window.__setBlurQuality = (quality: BlurQuality) => {
       setBlurQuality(quality);
-      localStorage.setItem('blurQuality', quality);
+      saveUserPreferences({ blurQuality: quality });
       console.log('[BlurConfig] Blur quality changed to:', quality);
     };
     window.__getBlurQuality = () => blurQuality;
@@ -149,11 +158,22 @@ export function CameraSettings() {
 
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
     setBackgroundType(type);
+    
     if ((type === 'image' || type === 'gradient') && imagePath) {
       setVirtualBackgroundImagePath(imagePath);
+      saveUserPreferences({ 
+        backgroundType: type, 
+        backgroundPath: imagePath 
+      });
     } else if (type !== 'image' && type !== 'gradient') {
       setVirtualBackgroundImagePath(null);
+      saveUserPreferences({ 
+        backgroundType: type, 
+        backgroundPath: undefined 
+      });
     }
+    
+    console.log('[CameraSettings] Background changed to:', type, imagePath);
   };
 
   // Effect to apply processors with debouncing and caching

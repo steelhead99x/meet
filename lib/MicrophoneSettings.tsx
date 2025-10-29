@@ -4,6 +4,7 @@ import { TrackToggle } from '@livekit/components-react';
 import { MediaDeviceMenu } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { isLowPowerDevice } from './client-utils';
+import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 
 export function MicrophoneSettings() {
   const { isNoiseFilterEnabled, setNoiseFilterEnabled, isNoiseFilterPending } = useKrispNoiseFilter(
@@ -22,9 +23,22 @@ export function MicrophoneSettings() {
   );
 
   React.useEffect(() => {
-    // enable Krisp by default on non-low power devices
-    setNoiseFilterEnabled(!isLowPowerDevice());
+    // Load saved preference or enable Krisp by default on non-low power devices
+    const prefs = loadUserPreferences();
+    const shouldEnable = prefs.noiseFilterEnabled !== undefined 
+      ? prefs.noiseFilterEnabled 
+      : !isLowPowerDevice();
+    
+    setNoiseFilterEnabled(shouldEnable);
+    console.log('[MicrophoneSettings] Noise filter enabled:', shouldEnable);
   }, [setNoiseFilterEnabled]);
+
+  // Save noise filter preference when it changes
+  React.useEffect(() => {
+    if (!isNoiseFilterPending) {
+      saveUserPreferences({ noiseFilterEnabled: isNoiseFilterEnabled });
+    }
+  }, [isNoiseFilterEnabled, isNoiseFilterPending]);
   return (
     <div
       style={{

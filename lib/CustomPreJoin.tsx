@@ -8,6 +8,7 @@ import {
   VideoTrack,
   LocalUserChoices,
 } from '@livekit/components-react';
+import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 
 export interface CustomPreJoinProps {
   defaults?: Partial<LocalUserChoices>;
@@ -22,14 +23,23 @@ export function CustomPreJoin({
   onValidate,
   onError,
 }: CustomPreJoinProps) {
-  const [username, setUsername] = React.useState(defaults?.username ?? '');
-  const [videoEnabled, setVideoEnabled] = React.useState(defaults?.videoEnabled ?? true);
-  const [audioEnabled, setAudioEnabled] = React.useState(defaults?.audioEnabled ?? true);
+  // Load saved preferences
+  const savedPrefs = React.useMemo(() => loadUserPreferences(), []);
+  
+  const [username, setUsername] = React.useState(
+    defaults?.username ?? savedPrefs.username ?? ''
+  );
+  const [videoEnabled, setVideoEnabled] = React.useState(
+    defaults?.videoEnabled ?? savedPrefs.videoEnabled ?? true
+  );
+  const [audioEnabled, setAudioEnabled] = React.useState(
+    defaults?.audioEnabled ?? savedPrefs.audioEnabled ?? true
+  );
 
   const tracks = usePreviewTracks(
     {
-      audio: audioEnabled,
-      video: videoEnabled,
+      audio: audioEnabled ? { deviceId: savedPrefs.audioDeviceId } : false,
+      video: videoEnabled ? { deviceId: savedPrefs.videoDeviceId } : false,
     },
     onError,
   );
@@ -47,19 +57,53 @@ export function CustomPreJoin({
     };
   }, [videoTrack]);
 
+  // Save video/audio toggle preferences in real-time
+  React.useEffect(() => {
+    saveUserPreferences({ videoEnabled, audioEnabled });
+  }, [videoEnabled, audioEnabled]);
+
+  // Save device changes in real-time
+  React.useEffect(() => {
+    if (tracks) {
+      const videoDeviceId = tracks.find((t) => t.kind === Track.Kind.Video)?.mediaStreamTrack.getSettings().deviceId;
+      const audioDeviceId = tracks.find((t) => t.kind === Track.Kind.Audio)?.mediaStreamTrack.getSettings().deviceId;
+      
+      if (videoDeviceId || audioDeviceId) {
+        saveUserPreferences({
+          videoDeviceId,
+          audioDeviceId,
+        });
+      }
+    }
+  }, [tracks]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const videoDeviceId = tracks?.find((t) => t.kind === Track.Kind.Video)?.mediaStreamTrack.getSettings().deviceId;
+    const audioDeviceId = tracks?.find((t) => t.kind === Track.Kind.Audio)?.mediaStreamTrack.getSettings().deviceId;
+    
     const values: LocalUserChoices = {
       username,
       videoEnabled,
       audioEnabled,
-      videoDeviceId: tracks?.find((t) => t.kind === Track.Kind.Video)?.mediaStreamTrack.getSettings().deviceId,
-      audioDeviceId: tracks?.find((t) => t.kind === Track.Kind.Audio)?.mediaStreamTrack.getSettings().deviceId,
+      videoDeviceId,
+      audioDeviceId,
     };
 
     if (onValidate && !onValidate(values)) {
       return;
     }
+
+    // Save preferences when user joins
+    saveUserPreferences({
+      username,
+      videoEnabled,
+      audioEnabled,
+      videoDeviceId,
+      audioDeviceId,
+    });
+    
+    console.log('[CustomPreJoin] Saved user preferences:', values);
 
     onSubmit?.(values);
   };

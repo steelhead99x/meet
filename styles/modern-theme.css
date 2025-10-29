@@ -645,17 +645,24 @@
 /* Dropdown arrow icons should be slightly smaller */
 [data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child) svg,
 [data-lk-theme] .lk-button-group > button:not(:first-child) svg {
-  width: 12px !important;
-  height: 12px !important;
-  min-width: 12px !important;
-  min-height: 12px !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
 }
 
 /* Ensure SVG children are visible */
 [data-lk-theme] .lk-button-group svg * {
-  display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* Chevron arrows in button groups should use stroke, not fill */
+[data-lk-theme] .lk-button-group svg path[d*="L8 10L12 6"],
+[data-lk-theme] .lk-button-group svg path[stroke],
+[data-lk-theme] .lk-button-group .lk-button-menu svg path {
+  fill: none !important;
+  stroke: currentColor !important;
 }
 
 /* MediaDeviceMenu dropdown button styling */
@@ -726,45 +733,39 @@
 
 /* Ensure dropdown arrow SVG is visible in MediaDeviceMenu button */
 [data-lk-theme] .lk-button-menu svg {
-  width: 12px !important;
-  height: 12px !important;
-  min-width: 12px !important;
-  min-height: 12px !important;
-  flex-shrink: 0;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   color: white !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  fill: white !important;
-  stroke: white !important;
   pointer-events: none !important;
-  position: relative;
-  z-index: 1;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
-/* Ensure SVG children in dropdown menu buttons are visible and white */
+/* Ensure SVG children in dropdown menu buttons are visible */
 [data-lk-theme] .lk-button-menu svg * {
-  display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  fill: white !important;
-  stroke: white !important;
 }
 
-/* Force SVG paths to be white */
-[data-lk-theme] .lk-button-menu svg path,
-[data-lk-theme] .lk-button-menu svg circle,
-[data-lk-theme] .lk-button-menu svg rect,
-[data-lk-theme] .lk-button-menu svg line,
-[data-lk-theme] .lk-button-menu svg polyline,
-[data-lk-theme] .lk-button-menu svg polygon {
-  fill: white !important;
+/* Chevron arrow paths use stroke, not fill */
+[data-lk-theme] .lk-button-menu svg path {
+  fill: none !important;
   stroke: white !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
 }
 
 /* Hide text but show icons in MediaDeviceMenu button */
 [data-lk-theme] .lk-button-menu {
   font-size: 0 !important;
+  position: relative;
 }
 
 [data-lk-theme] .lk-button-menu > span:not(:has(svg)),
@@ -772,23 +773,46 @@
   display: none !important;
 }
 
+/* Create dropdown arrow icon using CSS when no SVG exists */
+[data-lk-theme] .lk-button-menu::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid white;
+  transition: transform 0.2s ease;
+}
+
+/* Rotate arrow when dropdown is open */
+[data-lk-theme] .lk-button-menu[aria-pressed="true"]::after {
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
 /* ===========================================
    DEVICE MENU DROPDOWN - Professional Layout
    =========================================== */
 
-[data-lk-theme] .lk-device-menu {
+[data-lk-theme] .lk-device-menu,
+.lk-device-menu {
   background: linear-gradient(135deg, rgba(20, 20, 25, 0.98), rgba(10, 10, 15, 0.98));
   backdrop-filter: blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   padding: 12px;
-  min-width: 280px;
-  max-width: 400px;
+  width: auto !important;
+  min-width: 360px !important;
+  max-width: 360px !important;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  z-index: 1000;
-  position: absolute;
+  z-index: 1000 !important;
+  position: absolute !important;
   animation: slideDown 0.2s ease;
 }
 
@@ -810,31 +834,58 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Device menu list container */
+[data-lk-theme] .lk-device-menu .lk-media-device-select,
+[data-lk-theme] .lk-device-menu .lk-list,
+.lk-device-menu .lk-media-device-select,
+.lk-device-menu .lk-list {
+  width: 100% !important;
+  max-width: 100% !important;
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+[data-lk-theme] .lk-device-menu .lk-media-device-select > li,
+[data-lk-theme] .lk-device-menu .lk-list > li,
+.lk-device-menu .lk-media-device-select > li,
+.lk-device-menu .lk-list > li {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+
 /* Device menu buttons */
-[data-lk-theme] .lk-device-menu .lk-button {
+[data-lk-theme] .lk-control-bar .lk-device-menu .lk-button,
+[data-lk-theme] .lk-device-menu .lk-button,
+.lk-control-bar .lk-device-menu .lk-button,
+.lk-device-menu .lk-button {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 100% !important;
-  height: auto !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
   min-height: 44px !important;
+  max-height: 44px !important;
   border-radius: 8px !important;
-  padding: 12px 16px !important;
-  margin: 4px 0 !important;
+  padding: 10px 14px !important;
+  margin: 3px 0 !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   line-height: 1.4 !important;
   text-align: left !important;
   justify-content: flex-start !important;
-  white-space: normal !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   transition: all 0.15s ease !important;
   cursor: pointer !important;
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
+  flex-direction: row !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
 }
 
 [data-lk-theme] .lk-device-menu .lk-button:hover {
@@ -865,10 +916,14 @@
 [data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"]::before,
 [data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]::before {
   content: '✓';
-  margin-right: 8px;
   color: #60a5fa;
   font-weight: bold;
   font-size: 16px;
+  margin-right: 8px;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  line-height: 1;
 }
 
 /* Show all text and elements in device menu */
@@ -876,14 +931,18 @@
 [data-lk-theme] .lk-device-menu .lk-button > div,
 [data-lk-theme] .lk-device-menu .lk-button > label,
 [data-lk-theme] .lk-device-menu .lk-button > p {
-  display: block !important;
+  display: inline-block !important;
   font-size: 14px !important;
   color: inherit !important;
-  white-space: normal !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
+  white-space: nowrap !important;
   line-height: 1.4 !important;
-  flex: 1 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
 }
 
 /* Device menu heading */
@@ -1515,6 +1574,15 @@
     padding: 12px;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  /* Device menu full width on mobile */
+  [data-lk-theme] .lk-device-menu {
+    width: calc(100vw - 32px) !important;
+    min-width: 280px !important;
+    max-width: 360px !important;
+    left: 16px !important;
+    right: 16px !important;
   }
 
   /* All control bar buttons smaller on mobile */
