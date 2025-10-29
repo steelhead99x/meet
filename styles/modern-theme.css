@@ -517,6 +517,7 @@
    =========================================== */
 
 .lk-participant-tile {
+  position: relative !important;
   border-radius: 16px !important;
   overflow: hidden !important;
   border: 2px solid rgba(255, 255, 255, 0.08) !important;
