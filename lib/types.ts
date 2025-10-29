@@ -1,5 +1,6 @@
 import { LocalAudioTrack, LocalVideoTrack, videoCodecs } from 'livekit-client';
 import { VideoCodec } from 'livekit-client';
+import { BlurQuality } from './BlurConfig';
 
 export interface SessionProps {
   roomName: string;
@@ -26,3 +27,11 @@ export type ConnectionDetails = {
   participantName: string;
   participantToken: string;
 };
+
+// Extend Window interface for custom blur quality methods
+declare global {
+  interface Window {
+    __setBlurQuality?: (quality: BlurQuality) => void;
+    __getBlurQuality?: () => BlurQuality | undefined;
+  }
+}

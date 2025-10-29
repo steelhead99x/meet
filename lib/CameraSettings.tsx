@@ -134,19 +134,15 @@ export function CameraSettings() {
 
   // Expose blur quality setter for SettingsMenu
   React.useEffect(() => {
-    // @ts-ignore - Attach to window for SettingsMenu access
     window.__setBlurQuality = (quality: BlurQuality) => {
       setBlurQuality(quality);
       localStorage.setItem('blurQuality', quality);
       console.log('[BlurConfig] Blur quality changed to:', quality);
     };
-    // @ts-ignore
     window.__getBlurQuality = () => blurQuality;
     
     return () => {
-      // @ts-ignore
       delete window.__setBlurQuality;
-      // @ts-ignore
       delete window.__getBlurQuality;
     };
   }, [blurQuality]);

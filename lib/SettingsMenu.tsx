@@ -53,7 +53,6 @@ export function SettingsMenu(props: SettingsMenuProps) {
       const capabilities = detectDeviceCapabilities();
       setDeviceInfo(capabilities);
       
-      // @ts-ignore - Get current quality from CameraSettings via window
       const currentQuality = window.__getBlurQuality?.();
       if (currentQuality) {
         setBlurQuality(currentQuality);
@@ -63,7 +62,6 @@ export function SettingsMenu(props: SettingsMenuProps) {
 
   const handleBlurQualityChange = (quality: BlurQuality) => {
     setBlurQuality(quality);
-    // @ts-ignore - Call CameraSettings via window
     if (window.__setBlurQuality) {
       window.__setBlurQuality(quality);
     }

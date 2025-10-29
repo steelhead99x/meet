@@ -118,6 +118,11 @@
   color: white !important; /* Ensure SVG icons are visible */
 }
 
+/* Ensure SVG children (paths, circles, etc.) are always visible */
+[data-lk-theme] .lk-control-bar .lk-button svg * {
+  display: block !important;
+}
+
 /* ===========================================
    BUTTON UTILITY CLASSES
    =========================================== */
@@ -457,6 +462,11 @@
   min-width: 16px !important;
   min-height: 16px !important;
   color: white !important;
+}
+
+/* Ensure SVG children are visible */
+[data-lk-theme] .lk-button-group svg * {
+  display: block !important;
 }
 
 /* ===========================================
@@ -865,6 +875,11 @@
   color: white !important;
 }
 
+/* Ensure SVG children are visible */
+[data-lk-theme] .lk-chat-form button svg * {
+  display: block !important;
+}
+
 /* ===========================================
    PRE-JOIN SCREEN - Clean
    =========================================== */
@@ -930,6 +945,11 @@
   color: white !important;
 }
 
+/* Ensure SVG children are visible */
+[data-lk-theme] .lk-prejoin button[type="submit"] svg * {
+  display: block !important;
+}
+
 /* PreJoin mic/camera buttons */
 [data-lk-theme] .lk-prejoin .lk-button[data-lk-source="microphone"],
 [data-lk-theme] .lk-prejoin .lk-button[data-lk-source="camera"] {
@@ -965,6 +985,12 @@
   padding: 0 !important;
   font-size: 20px !important;
   color: white !important;
+}
+
+/* Ensure SVG children are visible */
+[data-lk-theme] .lk-prejoin .lk-button[data-lk-source="microphone"] svg *,
+[data-lk-theme] .lk-prejoin .lk-button[data-lk-source="camera"] svg * {
+  display: block !important;
 }
 
 /* ===========================================
