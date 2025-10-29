@@ -1,7 +1,7 @@
 .helpButton {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  left: 24px;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -14,7 +14,7 @@
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4),
               0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 999;
+  z-index: 100; /* Floating button */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 600; /* Modal overlay */
   animation: fadeIn 0.2s ease;
 }
 
@@ -165,30 +165,12 @@
   margin: 0 4px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+/* Animations moved to globals.css */
 
 @media (max-width: 768px) {
   .helpButton {
     bottom: 100px;
-    right: 16px;
+    left: 16px;
     width: 44px;
     height: 44px;
     font-size: 20px;

@@ -21,7 +21,8 @@ import { isMeetStaging } from '@/lib/client-utils';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
-import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
+// Note: LiveKit v2 chat uses native sendChatMessage() API
+// E2EE only applies to media tracks, not chat messages
 import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ChatToggleButton } from '@/lib/ChatToggleButton';
@@ -215,28 +216,6 @@ export function VideoConferenceClientImpl(props: {
   // Chat toggle state
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Memoize the local participant identity
-  const [localIdentity, setLocalIdentity] = useState<string | undefined>(
-    room?.localParticipant?.identity
-  );
-
-  useEffect(() => {
-    if (room?.localParticipant?.identity) {
-      setLocalIdentity(room.localParticipant.identity);
-    }
-  }, [room?.localParticipant?.identity]);
-
-  // Memoize encoder and decoder
-  const chatMessageEncoder = useMemo(
-    () => createE2EEMessageEncoder(worker, localIdentity),
-    [worker, localIdentity]
-  );
-
-  const chatMessageDecoder = useMemo(
-    () => createE2EEMessageDecoder(worker, localIdentity),
-    [worker, localIdentity]
-  );
-
   // Toggle chat handler
   const toggleChat = useCallback(() => {
     setIsChatOpen(prev => !prev);
@@ -265,8 +244,6 @@ export function VideoConferenceClientImpl(props: {
             isOpen={isChatOpen}
             onClose={() => setIsChatOpen(false)}
             messageFormatter={formatChatMessageLinks}
-            messageEncoder={chatMessageEncoder}
-            messageDecoder={chatMessageDecoder}
           />
           <ChatToggleButton isOpen={isChatOpen} onToggle={toggleChat} />
         </RoomContext.Provider>

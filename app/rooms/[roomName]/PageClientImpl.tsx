@@ -33,7 +33,8 @@ import { useLowCPUOptimizer } from '@/lib/usePerformanceOptimizer';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
-import { createE2EEMessageDecoder, createE2EEMessageEncoder } from '@/lib/e2eeChatCodec';
+// Note: LiveKit v2 chat uses native sendChatMessage() API
+// E2EE only applies to media tracks, not chat messages
 import { KeyboardShortcutsHelp } from '@/lib/KeyboardShortcutsHelp';
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ChatToggleButton } from '@/lib/ChatToggleButton';
@@ -186,14 +187,7 @@ function VideoConferenceComponent(props: {
         }
         // Step 1: Set the key BEFORE creating the room
         if (e2eeEnabled) {
-          console.log('E2EE Setup: Starting encryption setup');
-          console.log('E2EE Setup: Passphrase length:', e2eePassphrase?.length);
-          console.log('E2EE Setup: Worker available:', !!worker);
-          
           await keyProvider.setKey(e2eePassphrase);
-          console.log('E2EE Setup: Key set successfully on keyProvider');
-        } else {
-          console.log('E2EE Setup: E2EE disabled (no passphrase or worker)');
         }
 
         if (cancelled) return;
@@ -241,9 +235,6 @@ function VideoConferenceComponent(props: {
         if (e2eeEnabled) {
           // Enable E2EE before connecting
           await newRoom.setE2EEEnabled(true);
-          console.log('E2EE Setup: Room created with E2EE');
-          console.log('E2EE Setup: E2EE enabled successfully');
-          console.log('E2EE Setup: room.isE2EEEnabled =', newRoom.isE2EEEnabled);
           toast.success('🔒 End-to-end encryption enabled', {
             duration: 3000,
             position: 'top-center',
@@ -403,13 +394,6 @@ function VideoConferenceComponent(props: {
             handlersRef.current.handleEncryptionError(err);
           }
         }
-        
-        // Log successful connection once
-        console.log('Room connected:', {
-          isConnected: room.state,
-          localParticipant: room.localParticipant?.identity,
-          permissions: room.localParticipant?.permissions,
-        });
       } catch (error) {
         handlersRef.current.handleError(error);
       }
@@ -449,34 +433,10 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
   // Chat toggle state
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
-  // Memoize the local participant identity to prevent unnecessary re-renders
-  const [localIdentity, setLocalIdentity] = React.useState<string | undefined>(
-    room.localParticipant?.identity
-  );
-
-  React.useEffect(() => {
-    if (room.localParticipant?.identity) {
-      setLocalIdentity(room.localParticipant.identity);
-    }
-  }, [room.localParticipant?.identity]);
-
-  // Memoize encoder and decoder to prevent recreation on every render
-  const chatMessageEncoder = React.useMemo(
-    () => createE2EEMessageEncoder(worker, localIdentity),
-    [worker, localIdentity]
-  );
-
-  const chatMessageDecoder = React.useMemo(
-    () => createE2EEMessageDecoder(worker, localIdentity),
-    [worker, localIdentity]
-  );
-
   // Toggle chat handler
   const toggleChat = React.useCallback(() => {
     setIsChatOpen(prev => !prev);
   }, []);
-
-  console.log('🟡 RoomContent render', { isChatOpen, ChatPanel, ChatToggleButton });
 
   return (
     <RoomContext.Provider value={room}>
@@ -493,8 +453,6 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         messageFormatter={formatChatMessageLinks}
-        messageEncoder={chatMessageEncoder}
-        messageDecoder={chatMessageDecoder}
       />
       <ChatToggleButton isOpen={isChatOpen} onToggle={toggleChat} />
     </RoomContext.Provider>

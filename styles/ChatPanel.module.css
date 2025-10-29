@@ -12,13 +12,8 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 998;
+  z-index: 400; /* Panel backdrop */
   animation: fadeIn 0.2s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 /* Chat Panel Container */
@@ -31,18 +26,31 @@
   max-width: 400px;
   background: #1a1a1a;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 999;
+  z-index: 500; /* Side panel - must be above backdrop */
   display: flex;
   flex-direction: column;
   animation: slideIn 0.3s ease-out;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes slideIn {
+@-webkit-keyframes slideIn {
   from {
+    -webkit-transform: translateX(100%);
     transform: translateX(100%);
   }
   to {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
+  }
+  to {
+    -webkit-transform: translateX(0);
     transform: translateX(0);
   }
 }
@@ -136,11 +144,24 @@
     animation: slideUp 0.3s ease-out;
   }
 
-  @keyframes slideUp {
+  @-webkit-keyframes slideUp {
     from {
+      -webkit-transform: translateY(100%);
       transform: translateY(100%);
     }
     to {
+      -webkit-transform: translateY(0);
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      -webkit-transform: translateY(100%);
+      transform: translateY(100%);
+    }
+    to {
+      -webkit-transform: translateY(0);
       transform: translateY(0);
     }
   }

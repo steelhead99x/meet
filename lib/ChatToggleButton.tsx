@@ -14,14 +14,6 @@ export interface ChatToggleButtonProps {
  * Shows notification badge for unread messages (future enhancement)
  */
 export function ChatToggleButton({ isOpen, onToggle }: ChatToggleButtonProps) {
-  console.log('🔵 ChatToggleButton RENDERING', { isOpen, stylesObject: styles });
-  
-  React.useEffect(() => {
-    console.log('🔵 ChatToggleButton MOUNTED');
-    const button = document.querySelector('[aria-label*="chat" i]');
-    console.log('🔵 Button in DOM?', !!button, button);
-  }, []);
-  
   return (
     <button
       onClick={onToggle}

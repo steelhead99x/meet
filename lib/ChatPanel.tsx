@@ -3,14 +3,11 @@
 import React from 'react';
 import { Chat } from '@livekit/components-react';
 import styles from '../styles/ChatPanel.module.css';
-import type { MessageDecoder, MessageEncoder } from '@livekit/components-react';
 
 export interface ChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
   messageFormatter?: (message: string) => React.ReactNode;
-  messageEncoder?: MessageEncoder;
-  messageDecoder?: MessageDecoder;
 }
 
 /**
@@ -26,11 +23,7 @@ export function ChatPanel({
   isOpen,
   onClose,
   messageFormatter,
-  messageEncoder,
-  messageDecoder,
 }: ChatPanelProps) {
-  console.log('🟢 ChatPanel RENDERING', { isOpen });
-  
   // Close on Escape key
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -88,12 +81,10 @@ export function ChatPanel({
           </button>
         </div>
 
-        {/* Chat Component */}
+        {/* Chat Component - Using LiveKit v2 native chat API */}
         <div className={styles.chatContent}>
           <Chat
             messageFormatter={messageFormatter}
-            messageEncoder={messageEncoder}
-            messageDecoder={messageDecoder}
           />
         </div>
       </div>
