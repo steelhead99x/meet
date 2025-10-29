@@ -34,6 +34,7 @@ import { useLowCPUOptimizer } from '@/lib/usePerformanceOptimizer';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
+import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
 // Note: LiveKit v2 chat uses native sendChatMessage() API
 // E2EE only applies to media tracks, not chat messages
 
@@ -436,6 +437,7 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
       <KeyboardShortcuts />
       <ReconnectionBanner />
       <ConnectionQualityTooltip />
+      <ScreenSharePIP />
       <VideoConference
         SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         chatMessageFormatter={formatChatMessageLinks}

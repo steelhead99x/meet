@@ -1311,29 +1311,61 @@
   height: 12px;
 }
 
-/* Focus layout (screen share) */
+/* Focus layout (screen share) - PIP style with overlay in corner */
 [data-lk-theme] .lk-focus-layout {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
+  gap: 0; /* Remove gap for full-screen screenshare */
+  padding: 0; /* Remove padding for full-screen */
   flex: 1; /* Take available space in the video container */
   overflow: hidden;
   position: relative;
   z-index: 1; /* Base content layer */
 }
 
-[data-lk-theme] .lk-focus-layout > div:first-child {
-  flex: 1;
-  min-height: 0; /* Allow proper shrinking */
+/* PIP container (user's camera) - positioned in lower right corner */
+/* First child is the carousel with participant cameras */
+[data-lk-theme] .lk-focus-layout > div:first-child,
+[data-lk-theme] .lk-focus-layout > .lk-carousel {
+  position: absolute !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  width: 280px !important;
+  max-width: 25% !important;
+  height: auto !important;
+  flex: none !important;
+  z-index: 10 !important; /* Above screenshare */
+  display: flex !important;
+  gap: 8px !important;
+  pointer-events: auto !important;
 }
 
-[data-lk-theme] .lk-focus-layout > div:last-child {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  max-height: 140px;
-  flex-shrink: 0; /* Don't shrink the participant thumbnails */
+/* Main screenshare video - full screen */
+/* Last child is the screen share participant tile */
+[data-lk-theme] .lk-focus-layout > div:last-child,
+[data-lk-theme] .lk-focus-layout > .lk-participant-tile {
+  flex: 1 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+}
+
+/* PIP participant tiles - maintain 16:9 with border */
+[data-lk-theme] .lk-focus-layout > div:first-child .lk-participant-tile {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  transition: all 0.2s ease;
+}
+
+/* PIP hover effect */
+[data-lk-theme] .lk-focus-layout > div:first-child .lk-participant-tile:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
 }
 
 /* ===========================================
@@ -1887,6 +1919,19 @@
     padding: 12px;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  /* Mobile PIP - smaller and closer to corner */
+  [data-lk-theme] .lk-focus-layout > div:first-child,
+  [data-lk-theme] .lk-focus-layout > .lk-carousel {
+    width: 120px !important;
+    max-width: 35% !important;
+    bottom: 80px !important; /* Above mobile control bar */
+    right: 12px !important;
+  }
+
+  [data-lk-theme] .lk-focus-layout > div:first-child .lk-participant-tile {
+    border-width: 2px;
   }
 
   /* Device menu full width on mobile */

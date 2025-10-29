@@ -1,0 +1,94 @@
+/* Screen Share PIP Mode Styles */
+
+/* When in PIP mode, make the entire app compact and always visible */
+body.pip-mode {
+  /* Ensure the window stays in a compact, fixed size */
+  overflow: hidden;
+}
+
+body.pip-mode .lk-room-container {
+  width: 100vw !important;
+  height: 100vh !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 999999 !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 8px !important;
+}
+
+/* Make video tiles smaller and more compact in PIP mode */
+body.pip-mode [data-lk-theme] .lk-grid-layout {
+  padding: 8px !important;
+  gap: 4px !important;
+}
+
+body.pip-mode [data-lk-theme] .lk-participant-tile {
+  border-radius: 6px !important;
+}
+
+/* Hide chat in PIP mode to save space */
+body.pip-mode [data-lk-theme] .lk-chat,
+body.pip-mode [data-lk-theme] .lk-chat-toggle {
+  display: none !important;
+}
+
+/* Keep control bar compact */
+body.pip-mode [data-lk-theme] .lk-control-bar {
+  padding: 8px !important;
+  min-height: 60px !important;
+}
+
+/* Hide settings menu in PIP mode */
+body.pip-mode [data-lk-theme] .lk-settings-menu-toggle,
+body.pip-mode [data-lk-theme] button[aria-label*="Settings"] {
+  display: none !important;
+}
+
+/* Make buttons slightly smaller in PIP mode */
+body.pip-mode [data-lk-theme] .lk-control-bar button {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+
+/* Add a visual indicator that we're in PIP mode */
+body.pip-mode::before {
+  content: 'PIP MODE - Screen Sharing Active';
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3b82f6;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 1000000;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+/* Ensure participant names are still visible but smaller */
+body.pip-mode [data-lk-theme] .lk-participant-metadata {
+  font-size: 11px !important;
+}
+
+body.pip-mode [data-lk-theme] .lk-participant-name {
+  font-size: 11px !important;
+}
+
+/* Hide non-essential UI elements */
+body.pip-mode [data-lk-theme] .lk-focus-toggle,
+body.pip-mode [data-lk-theme] .lk-start-audio-button {
+  display: none !important;
+}
+
+/* Make the screen share track not display in PIP view to save space */
+body.pip-mode [data-lk-theme] .lk-participant-tile[data-lk-source="screen_share"] {
+  display: none !important;
+}
+

@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { ConnectionQualityTooltip } from '@/lib/ConnectionQualityTooltip';
+import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -221,6 +222,7 @@ export function VideoConferenceClientImpl(props: {
           <KeyboardShortcuts />
           <ReconnectionBanner />
           <ConnectionQualityTooltip />
+          <ScreenSharePIP />
           <VideoConference
             SettingsComponent={
               process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
