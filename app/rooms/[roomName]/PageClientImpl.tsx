@@ -7,10 +7,11 @@ import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { ConnectionDetails } from '@/lib/types';
+import { CustomPreJoin } from '@/lib/CustomPreJoin';
+import { CustomControlBar } from '@/lib/CustomControlBar';
 import {
   formatChatMessageLinks,
   LocalUserChoices,
-  PreJoin,
   RoomAudioRenderer,
   RoomContext,
   VideoConference,
@@ -121,7 +122,7 @@ export function PageClientImpl(props: {
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {connectionDetails === undefined || preJoinChoices === undefined ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-          <PreJoin
+          <CustomPreJoin
             defaults={preJoinDefaults}
             onSubmit={handlePreJoinSubmit}
             onValidate={handlePreJoinValidate}
@@ -435,6 +436,7 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
       <VideoConference
         SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         chatMessageFormatter={formatChatMessageLinks}
+        ControlBar={CustomControlBar}
       />
       <RoomAudioRenderer />
       <DebugMode />

@@ -292,7 +292,11 @@ export function CameraSettings() {
       <section className="lk-button-group">
         <TrackToggle aria-label="Toggle camera" source={Track.Source.Camera} />
         <div className="lk-button-group-menu">
-          <MediaDeviceMenu kind="videoinput" />
+          <MediaDeviceMenu kind="videoinput">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </MediaDeviceMenu>
         </div>
       </section>
 
@@ -344,8 +348,8 @@ export function CameraSettings() {
               padding: '0',
             }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 3L21 21M3 21L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 3L21 21M3 21L21 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
 
@@ -379,7 +383,7 @@ export function CameraSettings() {
                 zIndex: 0,
               }}
             />
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 1 }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ position: 'relative', zIndex: 1 }}>
               <circle cx="12" cy="12" r="4" fill="#666" opacity="0.3"/>
               <circle cx="8" cy="8" r="3" fill="#999" opacity="0.4"/>
               <circle cx="16" cy="9" r="2.5" fill="#999" opacity="0.4"/>

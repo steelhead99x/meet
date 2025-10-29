@@ -214,22 +214,11 @@ button[title*="encryption" i] {
   padding: 6px 8px;
 }
 
-/* Add encryption indicator to ALL participant tiles when E2EE is enabled */
-.lk-participant-tile .lk-participant-metadata .lk-participant-metadata-item:first-child::before {
-  content: '';
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  margin-right: 4px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="white" fill-rule="evenodd" d="M4 6.104V4a4 4 0 1 1 8 0v2.104c1.154.326 2 1.387 2 2.646v4.5A2.75 2.75 0 0 1 11.25 16h-6.5A2.75 2.75 0 0 1 2 13.25v-4.5c0-1.259.846-2.32 2-2.646ZM5.5 4a2.5 2.5 0 0 1 5 0v2h-5V4Z" clip-rule="evenodd"/></svg>');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
+/* LiveKit already adds encryption indicators via SVG - don't add duplicates */
+/* The lock icon is automatically added by LiveKit when E2EE is enabled */
 
-/* Remove duplicate lock icon from local participant (LiveKit adds it by default) */
-.lk-participant-tile[data-lk-local-participant="true"] .lk-participant-metadata-item:first-child > svg:first-child {
+/* Hide any duplicate lock icons that might appear */
+.lk-participant-tile .lk-participant-metadata-item > svg[data-lk-encryption-indicator] + svg {
   display: none;
 }
 

@@ -50,6 +50,31 @@
   box-sizing: border-box;
 }
 
+/* Global rule: Ensure all SVG icons are always visible */
+[data-lk-theme] svg {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+[data-lk-theme] svg * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Fallback for older browsers: ensure SVG parent containers are visible */
+@supports not selector(:has(svg)) {
+  [data-lk-theme] .lk-control-bar .lk-button > span,
+  [data-lk-theme] .lk-control-bar .lk-button > div {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 /* ===========================================
    CONTROL BAR - Clean & Simple
    =========================================== */
@@ -61,9 +86,11 @@
   padding: 16px 20px;
   gap: 10px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+  min-height: 84px;
 }
 
 /* Base button styling - circular icon buttons only */
@@ -71,9 +98,12 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
-  width: 52px;
-  height: 52px;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   padding: 0 !important;
+  margin: 0 !important;
   color: white;
   font-size: 14px;
   font-weight: 500;
@@ -84,6 +114,7 @@
   justify-content: center !important;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0 !important;
 }
 
 [data-lk-theme] .lk-control-bar .lk-button:hover {
@@ -98,7 +129,11 @@
   /* Don't use color: transparent - it makes SVG icons invisible */
 }
 
-[data-lk-theme] .lk-control-bar .lk-button *:not(svg) {
+/* Hide text nodes and spans, but not elements that contain SVGs */
+[data-lk-theme] .lk-control-bar .lk-button > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-button > div:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-button > label:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-button > p:not(:has(svg)) {
   display: none !important;
 }
 
@@ -114,13 +149,21 @@
   transform: translate(-50%, -50%);
   margin: 0 !important;
   padding: 0 !important;
-  font-size: 22px !important; /* Reset font-size for SVG */
-  color: white !important; /* Ensure SVG icons are visible */
+  font-size: 22px !important;
+  color: white !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
 }
 
 /* Ensure SVG children (paths, circles, etc.) are always visible */
 [data-lk-theme] .lk-control-bar .lk-button svg * {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* ===========================================
@@ -204,28 +247,35 @@
 /* Microphone & Camera - Circular buttons */
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
-  width: 52px;
-  height: 52px;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   border-radius: 50%;
   padding: 0 !important;
-  margin: 0;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0 !important;
 }
 
 /* Hide labels on mic/camera buttons - text nodes and spans */
-[data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] *:not(svg),
-[data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] *:not(svg) {
-  display: none !important; /* Hide all non-SVG content */
+[data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] > div:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] > div:not(:has(svg)) {
+  display: none !important;
 }
 
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] svg {
   width: 22px !important;
   height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -233,6 +283,12 @@
   transform: translate(-50%, -50%);
   margin: 0 !important;
   padding: 0 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  z-index: 1 !important;
 }
 
 /* Enabled state - Green */
@@ -262,15 +318,19 @@
   border: none;
   color: white;
   font-weight: 600;
-  width: 52px;
-  height: 52px;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   border-radius: 50%;
   padding: 0 !important;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0 !important;
 }
 
 [data-lk-theme] .lk-control-bar .lk-disconnect-button:hover,
@@ -286,8 +346,10 @@
   letter-spacing: 0 !important;
 }
 
-[data-lk-theme] .lk-control-bar .lk-disconnect-button *:not(svg),
-[data-lk-theme] .lk-control-bar button[aria-label*="Leave"] *:not(svg) {
+[data-lk-theme] .lk-control-bar .lk-disconnect-button > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar .lk-disconnect-button > div:not(:has(svg)),
+[data-lk-theme] .lk-control-bar button[aria-label*="Leave"] > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar button[aria-label*="Leave"] > div:not(:has(svg)) {
   display: none !important;
 }
 
@@ -295,24 +357,36 @@
 [data-lk-theme] .lk-control-bar button[aria-label*="Leave"] svg {
   width: 22px !important;
   height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  z-index: 1 !important;
 }
 
 /* Screen share button - circular icon only */
 [data-lk-theme] .lk-button[data-lk-source="screen_share"] {
-  width: 52px;
-  height: 52px;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   border-radius: 50%;
   padding: 0 !important;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0 !important;
 }
 
 [data-lk-theme] .lk-button[data-lk-source="screen_share"][data-lk-enabled="true"] {
@@ -321,18 +395,27 @@
 }
 
 /* Hide text in screen share button, show only icon */
-[data-lk-theme] .lk-button[data-lk-source="screen_share"] *:not(svg) {
+[data-lk-theme] .lk-button[data-lk-source="screen_share"] > span:not(:has(svg)),
+[data-lk-theme] .lk-button[data-lk-source="screen_share"] > div:not(:has(svg)) {
   display: none !important;
 }
 
 [data-lk-theme] .lk-button[data-lk-source="screen_share"] svg {
   width: 22px !important;
   height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  z-index: 1 !important;
 }
 
 /* Chat toggle button - circular icon only */
@@ -340,15 +423,19 @@
 [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.3);
-  width: 52px;
-  height: 52px;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   border-radius: 50%;
   padding: 0 !important;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0 !important;
 }
 
 [data-lk-theme] .lk-chat-toggle[aria-pressed="true"],
@@ -358,8 +445,10 @@
 }
 
 /* Hide text in chat button, show only icon */
-[data-lk-theme] .lk-chat-toggle *:not(svg),
-[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] *:not(svg) {
+[data-lk-theme] .lk-chat-toggle > span:not(:has(svg)),
+[data-lk-theme] .lk-chat-toggle > div:not(:has(svg)),
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] > div:not(:has(svg)) {
   display: none !important;
 }
 
@@ -367,30 +456,52 @@
 [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg {
   width: 22px !important;
   height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  z-index: 1 !important;
+}
+
+/* Ensure SVG children are visible */
+[data-lk-theme] .lk-chat-toggle svg *,
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg * {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Settings button - circular icon only */
 [data-lk-theme] .lk-settings-menu-toggle,
 [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] {
-  width: 52px;
-  height: 52px;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   border-radius: 50%;
   padding: 0 !important;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0 !important;
 }
 
 /* Hide text in settings button, show only icon */
-[data-lk-theme] .lk-settings-menu-toggle *:not(svg),
-[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] *:not(svg) {
+[data-lk-theme] .lk-settings-menu-toggle > span:not(:has(svg)),
+[data-lk-theme] .lk-settings-menu-toggle > div:not(:has(svg)),
+[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] > span:not(:has(svg)),
+[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] > div:not(:has(svg)) {
   display: none !important;
 }
 
@@ -398,11 +509,27 @@
 [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
   width: 22px !important;
   height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  z-index: 1 !important;
+}
+
+/* Ensure SVG children are visible */
+[data-lk-theme] .lk-settings-menu-toggle svg *,
+[data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg * {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Button groups (device selectors) */
@@ -411,6 +538,15 @@
   gap: 4px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+/* MediaDeviceMenu wrapper - ensure it doesn't block dropdown button */
+[data-lk-theme] .lk-button-group-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
 }
 
 /* All buttons in button groups - icon only */
@@ -424,21 +560,50 @@
 }
 
 /* Dropdown toggle buttons - small icons */
-[data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child) {
-  width: 32px;
-  height: 32px;
-  padding: 0;
+[data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child),
+[data-lk-theme] .lk-button-group > button:not(:first-child) {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+[data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child):hover,
+[data-lk-theme] .lk-button-group > button:not(:first-child):hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* First button in group - icon only, circular */
 [data-lk-theme] .lk-button-group > .lk-button:first-child:not([data-lk-source]),
 [data-lk-theme] .lk-button-group > span.lk-button:first-child,
 [data-lk-theme] .lk-button-group > button:first-child {
-  width: 48px;
-  height: 48px;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
   padding: 0 !important;
   border-radius: 50%;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 10 !important;
 }
 
 /* Hide text in all button group buttons, show only icons */
@@ -448,9 +613,12 @@
   font-size: 0 !important;
 }
 
-[data-lk-theme] .lk-button-group .lk-button *:not(svg),
-[data-lk-theme] .lk-button-group > span.lk-button *:not(svg),
-[data-lk-theme] .lk-button-group > button *:not(svg) {
+[data-lk-theme] .lk-button-group .lk-button > span:not(:has(svg)),
+[data-lk-theme] .lk-button-group .lk-button > div:not(:has(svg)),
+[data-lk-theme] .lk-button-group > span.lk-button > span:not(:has(svg)),
+[data-lk-theme] .lk-button-group > span.lk-button > div:not(:has(svg)),
+[data-lk-theme] .lk-button-group > button > span:not(:has(svg)),
+[data-lk-theme] .lk-button-group > button > div:not(:has(svg)) {
   display: none !important;
 }
 
@@ -458,15 +626,292 @@
 [data-lk-theme] .lk-button-group > span.lk-button svg,
 [data-lk-theme] .lk-button-group > button svg {
   flex-shrink: 0;
-  font-size: 16px !important; /* Reset font-size for SVG */
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
   min-width: 16px !important;
   min-height: 16px !important;
   color: white !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  pointer-events: none !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Dropdown arrow icons should be slightly smaller */
+[data-lk-theme] .lk-button-group .lk-button:not([data-lk-source]):not(:first-child) svg,
+[data-lk-theme] .lk-button-group > button:not(:first-child) svg {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
 }
 
 /* Ensure SVG children are visible */
 [data-lk-theme] .lk-button-group svg * {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* MediaDeviceMenu dropdown button styling */
+[data-lk-theme] .lk-button-menu {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  overflow: visible !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-lk-theme] .lk-button-menu:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-lk-theme] .lk-button-menu:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Pressed/Active state - dropdown is open */
+[data-lk-theme] .lk-button-menu[aria-pressed="true"] {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2)) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-lk-theme] .lk-button-menu[aria-pressed="true"]:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.25)) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+}
+
+/* Rotate arrow when dropdown is open */
+[data-lk-theme] .lk-button-menu[aria-pressed="true"] svg {
+  transform: rotate(180deg) !important;
+  transition: transform 0.2s ease !important;
+}
+
+[data-lk-theme] .lk-button-menu svg {
+  transition: transform 0.2s ease !important;
+}
+
+[data-lk-theme] .lk-button-menu[disabled] {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Ensure dropdown arrow SVG is visible in MediaDeviceMenu button */
+[data-lk-theme] .lk-button-menu svg {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  flex-shrink: 0;
+  color: white !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: white !important;
+  stroke: white !important;
+  pointer-events: none !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure SVG children in dropdown menu buttons are visible and white */
+[data-lk-theme] .lk-button-menu svg * {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: white !important;
+  stroke: white !important;
+}
+
+/* Force SVG paths to be white */
+[data-lk-theme] .lk-button-menu svg path,
+[data-lk-theme] .lk-button-menu svg circle,
+[data-lk-theme] .lk-button-menu svg rect,
+[data-lk-theme] .lk-button-menu svg line,
+[data-lk-theme] .lk-button-menu svg polyline,
+[data-lk-theme] .lk-button-menu svg polygon {
+  fill: white !important;
+  stroke: white !important;
+}
+
+/* Hide text but show icons in MediaDeviceMenu button */
+[data-lk-theme] .lk-button-menu {
+  font-size: 0 !important;
+}
+
+[data-lk-theme] .lk-button-menu > span:not(:has(svg)),
+[data-lk-theme] .lk-button-menu > div:not(:has(svg)) {
+  display: none !important;
+}
+
+/* ===========================================
+   DEVICE MENU DROPDOWN - Professional Layout
+   =========================================== */
+
+[data-lk-theme] .lk-device-menu {
+  background: linear-gradient(135deg, rgba(20, 20, 25, 0.98), rgba(10, 10, 15, 0.98));
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 280px;
+  max-width: 400px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  position: absolute;
+  animation: slideDown 0.2s ease;
+}
+
+/* Scrollbar for device menu */
+[data-lk-theme] .lk-device-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-lk-theme] .lk-device-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-lk-theme] .lk-device-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+[data-lk-theme] .lk-device-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Device menu buttons */
+[data-lk-theme] .lk-device-menu .lk-button {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  height: auto !important;
+  min-height: 44px !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  margin: 4px 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+[data-lk-theme] .lk-device-menu .lk-button:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateX(2px);
+  color: white !important;
+}
+
+/* Active/Selected device */
+[data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"],
+[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"] {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.25)) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: #93c5fd !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(59, 130, 246, 0.2);
+  font-weight: 600 !important;
+}
+
+[data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"]:hover,
+[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.3)) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  color: #bfdbfe !important;
+}
+
+/* Checkmark for active device */
+[data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"]::before,
+[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]::before {
+  content: '✓';
+  margin-right: 8px;
+  color: #60a5fa;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Show all text and elements in device menu */
+[data-lk-theme] .lk-device-menu .lk-button > span,
+[data-lk-theme] .lk-device-menu .lk-button > div,
+[data-lk-theme] .lk-device-menu .lk-button > label,
+[data-lk-theme] .lk-device-menu .lk-button > p {
+  display: block !important;
+  font-size: 14px !important;
+  color: inherit !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.4 !important;
+  flex: 1 !important;
+}
+
+/* Device menu heading */
+[data-lk-theme] .lk-device-menu-heading {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px 6px;
+  margin: 12px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-lk-theme] .lk-device-menu-heading:first-child {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Empty state message */
+[data-lk-theme] .lk-device-menu:empty::after {
+  content: 'No devices found';
+  display: block;
+  padding: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
 }
 
 /* ===========================================
@@ -861,7 +1306,8 @@
   font-size: 0 !important;
 }
 
-[data-lk-theme] .lk-chat-form button *:not(svg) {
+[data-lk-theme] .lk-chat-form button > span:not(:has(svg)),
+[data-lk-theme] .lk-chat-form button > div:not(:has(svg)) {
   display: none !important;
 }
 
@@ -871,13 +1317,22 @@
   min-width: 20px !important;
   min-height: 20px !important;
   flex-shrink: 0;
-  font-size: 20px !important; /* Reset font-size for SVG */
+  font-size: 20px !important;
   color: white !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  position: relative;
+  z-index: 1;
 }
 
 /* Ensure SVG children are visible */
 [data-lk-theme] .lk-chat-form button svg * {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* ===========================================
@@ -933,6 +1388,27 @@
 [data-lk-theme] .lk-prejoin button[type="submit"] {
   font-size: 0 !important;
   overflow: hidden;
+  position: relative;
+}
+
+/* Add arrow icon when no SVG present */
+[data-lk-theme] .lk-prejoin button[type="submit"]::before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 12px solid white;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  font-size: 28px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* When SVG is present, hide the pseudo-element icon */
+[data-lk-theme] .lk-prejoin button[type="submit"]:has(svg)::before {
+  display: none !important;
 }
 
 [data-lk-theme] .lk-prejoin button[type="submit"] svg {
@@ -941,13 +1417,22 @@
   min-width: 28px !important;
   min-height: 28px !important;
   flex-shrink: 0;
-  font-size: 28px !important; /* Reset font-size for SVG */
+  font-size: 28px !important;
   color: white !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  position: relative;
+  z-index: 1;
 }
 
 /* Ensure SVG children are visible */
 [data-lk-theme] .lk-prejoin button[type="submit"] svg * {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* PreJoin mic/camera buttons */
@@ -985,12 +1470,20 @@
   padding: 0 !important;
   font-size: 20px !important;
   color: white !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  z-index: 1 !important;
 }
 
 /* Ensure SVG children are visible */
 [data-lk-theme] .lk-prejoin .lk-button[data-lk-source="microphone"] svg *,
 [data-lk-theme] .lk-prejoin .lk-button[data-lk-source="camera"] svg * {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* ===========================================
@@ -1021,17 +1514,38 @@
   [data-lk-theme] .lk-control-bar {
     padding: 12px;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   /* All control bar buttons smaller on mobile */
-  [data-lk-theme] .lk-control-bar .lk-button {
-    width: 48px;
-    height: 48px;
+  [data-lk-theme] .lk-control-bar .lk-button,
+  [data-lk-theme] .lk-chat-toggle,
+  [data-lk-theme] .lk-settings-menu-toggle,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Chat"],
+  [data-lk-theme] .lk-control-bar button[aria-label*="Settings"],
+  [data-lk-theme] .lk-control-bar .lk-disconnect-button,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Leave"],
+  [data-lk-theme] .lk-button[data-lk-source="screen_share"],
+  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
+  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
   }
 
-  [data-lk-theme] .lk-control-bar .lk-button svg {
+  [data-lk-theme] .lk-control-bar .lk-button svg,
+  [data-lk-theme] .lk-chat-toggle svg,
+  [data-lk-theme] .lk-settings-menu-toggle svg,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
     width: 20px !important;
     height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   [data-lk-theme] .lk-grid-layout {
@@ -1083,14 +1597,34 @@
 
 @media (max-width: 480px) {
   /* All control bar buttons even smaller on very small screens */
-  [data-lk-theme] .lk-control-bar .lk-button {
-    width: 44px;
-    height: 44px;
+  [data-lk-theme] .lk-control-bar .lk-button,
+  [data-lk-theme] .lk-chat-toggle,
+  [data-lk-theme] .lk-settings-menu-toggle,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Chat"],
+  [data-lk-theme] .lk-control-bar button[aria-label*="Settings"],
+  [data-lk-theme] .lk-control-bar .lk-disconnect-button,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Leave"],
+  [data-lk-theme] .lk-button[data-lk-source="screen_share"],
+  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
+  [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
   }
 
-  [data-lk-theme] .lk-control-bar .lk-button svg {
+  [data-lk-theme] .lk-control-bar .lk-button svg,
+  [data-lk-theme] .lk-chat-toggle svg,
+  [data-lk-theme] .lk-settings-menu-toggle svg,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg,
+  [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
     width: 18px !important;
     height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   /* Make visual buttons even smaller on very small screens */

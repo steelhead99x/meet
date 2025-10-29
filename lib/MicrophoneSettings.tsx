@@ -38,7 +38,11 @@ export function MicrophoneSettings() {
       <section className="lk-button-group">
         <TrackToggle aria-label="Toggle microphone" source={Track.Source.Microphone} />
         <div className="lk-button-group-menu">
-          <MediaDeviceMenu kind="audioinput" />
+          <MediaDeviceMenu kind="audioinput">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </MediaDeviceMenu>
         </div>
       </section>
 
@@ -58,8 +62,9 @@ export function MicrophoneSettings() {
           position: 'relative',
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 1C12 1 8 5 8 12C8 15 10 18 12 19M12 1C12 1 16 5 16 12C16 15 14 18 12 19M12 1V19M12 19V23M9 23H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M5 10C5 10 5 14 12 17M19 10C19 10 19 14 12 17M12 17V21M8 21H16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           {!isNoiseFilterEnabled && (
             <path d="M2 2L22 22" stroke="red" strokeWidth="2.5" strokeLinecap="round"/>
           )}
