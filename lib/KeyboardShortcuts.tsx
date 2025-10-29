@@ -24,15 +24,11 @@ export function KeyboardShortcuts() {
         toggleCamera();
       }
 
-      // Toggle chat: Cmd/Ctrl-C
+      // Toggle chat: Cmd/Ctrl-Shift-C
       if (event.key === 'c' && (event.ctrlKey || event.metaKey) && event.shiftKey) {
         event.preventDefault();
         if (layoutContext?.widget.dispatch) {
-          const currentShowChat = layoutContext.widget.state?.showChat ?? false;
-          layoutContext.widget.dispatch({
-            msg: 'show_chat',
-            visible: !currentShowChat,
-          });
+          layoutContext.widget.dispatch({ msg: 'toggle_chat' });
         }
       }
     }
