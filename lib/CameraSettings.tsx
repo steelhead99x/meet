@@ -103,50 +103,16 @@ export function CameraSettings() {
   // Debounce timer ref
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Track CPU constraint state
-  const [cpuConstrained, setCpuConstrained] = React.useState(false);
-
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
       : undefined;
   }, [localParticipant, cameraTrack]);
 
-  // Monitor CPU constraints and auto-disable effects if needed
-  React.useEffect(() => {
-    if (!localParticipant) return;
-
-    const handleCpuConstrained = async () => {
-      console.warn('CPU constrained detected - disabling background effects');
-      setCpuConstrained(true);
-      
-      // Auto-disable background effects when CPU constrained
-      if (backgroundType !== 'none') {
-        const track = cameraTrack?.track;
-        if (isLocalTrack(track)) {
-          try {
-            await track.stopProcessor();
-            currentProcessorRef.current = { type: 'none', path: null };
-          } catch (err) {
-            console.error('Failed to stop processor on CPU constraint:', err);
-          }
-        }
-      }
-    };
-
-    localParticipant.on(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
-
-    return () => {
-      localParticipant.off(ParticipantEvent.LocalTrackCpuConstrained, handleCpuConstrained);
-    };
-  }, [localParticipant, cameraTrack, backgroundType]);
+  // CPU constraint monitoring REMOVED - prioritizing quality over performance
+  // No auto-disable of effects to maintain maximum blur quality at all times
 
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
-    // Warn if trying to enable effects when CPU constrained
-    if (cpuConstrained && type !== 'none') {
-      console.warn('CPU constrained - background effects may cause performance issues');
-    }
-    
     setBackgroundType(type);
     if ((type === 'image' || type === 'gradient') && imagePath) {
       setVirtualBackgroundImagePath(imagePath);
@@ -190,9 +156,11 @@ export function CameraSettings() {
           // Reuse cached blur processor if available
           let blurProcessor = processorCacheRef.current.blur;
           if (!blurProcessor) {
-            // Create and cache blur processor with optimized settings
-            blurProcessor = BackgroundBlur(10, { // Reduced from 15 to 10 for better performance
-              delegate: 'GPU',
+            // Create and cache blur processor with MAXIMUM quality settings
+            // Using high blur radius (25+) for the strongest, most professional blur effect
+            // GPU delegation ensures hardware acceleration for best performance
+            blurProcessor = BackgroundBlur(30, { // Maximum quality blur - increased from 10 to 30
+              delegate: 'GPU', // Force GPU acceleration for best quality processing
             });
             processorCacheRef.current.blur = blurProcessor;
           }
@@ -296,19 +264,6 @@ export function CameraSettings() {
         >
           <div style={{ fontWeight: '500' }}>
             Background Effects
-            {cpuConstrained && (
-              <span
-                style={{
-                  marginLeft: '8px',
-                  fontSize: '12px',
-                  color: '#f59e0b',
-                  fontWeight: 'normal',
-                }}
-                title="CPU constraints detected - effects may impact performance"
-              >
-                ⚠️ Limited Performance
-              </span>
-            )}
           </div>
           <div
             title="Tips for best results:&#10;• Use good front lighting&#10;• Avoid backlighting&#10;• Keep background simple&#10;• Adjust Edge Quality slider"

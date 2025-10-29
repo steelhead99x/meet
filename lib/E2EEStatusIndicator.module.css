@@ -1,65 +1,74 @@
 .container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 
 .indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   background: rgba(0, 0, 0, 0.75);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .indicator:hover {
-  background: rgba(0, 0, 0, 0.85);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transform: scale(1.1);
 }
 
 .indicator svg {
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 
 .text {
-  white-space: nowrap;
+  display: none;
 }
 
 /* Encrypted state - green accent */
 .container[data-encrypted="true"] .indicator {
-  border-color: rgba(34, 197, 94, 0.3);
-  background: rgba(0, 50, 20, 0.75);
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(0, 40, 20, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4),
+              0 0 12px rgba(34, 197, 94, 0.2);
 }
 
 .container[data-encrypted="true"] .indicator:hover {
-  border-color: rgba(34, 197, 94, 0.5);
-  background: rgba(0, 60, 25, 0.85);
+  border-color: rgba(34, 197, 94, 0.7);
+  background: rgba(0, 50, 25, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5),
+              0 0 16px rgba(34, 197, 94, 0.3);
 }
 
 .container[data-encrypted="true"] .indicator svg {
   color: rgb(34, 197, 94);
+  filter: drop-shadow(0 1px 2px rgba(34, 197, 94, 0.6));
 }
 
 /* Not encrypted state - yellow/warning accent */
 .container[data-encrypted="false"] .indicator {
-  border-color: rgba(234, 179, 8, 0.3);
-  background: rgba(60, 50, 0, 0.75);
+  border-color: rgba(234, 179, 8, 0.4);
+  background: rgba(50, 40, 0, 0.85);
 }
 
 .container[data-encrypted="false"] .indicator:hover {
-  border-color: rgba(234, 179, 8, 0.5);
-  background: rgba(70, 60, 0, 0.85);
+  border-color: rgba(234, 179, 8, 0.6);
+  background: rgba(60, 50, 0, 0.95);
 }
 
 .container[data-encrypted="false"] .indicator svg {
@@ -134,37 +143,23 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .container {
-    top: 12px;
-    right: 12px;
+    top: 6px;
+    right: 6px;
   }
 
   .indicator {
-    padding: 8px 12px;
-    font-size: 13px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .indicator svg {
+    width: 12px;
+    height: 12px;
   }
 
   .details {
     min-width: 240px;
-    right: -12px;
-  }
-}
-
-/* Very small mobile - hide text, show icon only */
-@media (max-width: 480px) {
-  .text {
-    display: none;
-  }
-
-  .indicator {
-    padding: 10px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    justify-content: center;
-  }
-
-  .details {
-    right: 0;
+    right: -6px;
   }
 }
 
