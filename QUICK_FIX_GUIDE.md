@@ -114,3 +114,4 @@ Read the full documentation:
 
 The tooltip (blue "?" icon next to "Background Effects") also has detailed tips!
 
+

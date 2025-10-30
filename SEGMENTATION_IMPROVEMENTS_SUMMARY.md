@@ -151,3 +151,4 @@ The improvements I've made give you better defaults, guidance, and control - but
 
 **Questions?** Read the full `PERSON_DETECTION_IMPROVEMENTS.md` for detailed explanations, troubleshooting, and technical details.
 
+
