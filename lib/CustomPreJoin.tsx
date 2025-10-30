@@ -163,6 +163,19 @@ export function CustomPreJoin({
           console.log('[CustomPreJoin] Applying blur to preview with quality:', blurQuality, 
                       useCustom ? '(custom settings)' : '');
           
+          // Suppress MediaPipe initialization warnings
+          // MediaPipe logs benign OpenGL warnings during WebGL context initialization
+          const originalWarn = console.warn;
+          console.warn = (...args: any[]) => {
+            const message = args.join(' ');
+            // Filter out MediaPipe OpenGL warnings
+            if (message.includes('OpenGL error checking') || 
+                message.includes('gl_context.cc')) {
+              return; // Suppress this specific warning
+            }
+            originalWarn.apply(console, args);
+          };
+          
           // Create and apply blur processor
           blurProcessorRef.current = BackgroundProcessor({
             blurRadius: config.blurRadius,
@@ -170,6 +183,11 @@ export function CustomPreJoin({
               delegate: config.segmenterOptions.delegate,
             },
           }, 'background-blur');
+          
+          // Restore console.warn after a delay to catch initialization warnings
+          setTimeout(() => {
+            console.warn = originalWarn;
+          }, 1000);
           
           // Final check before applying
           if (mediaStreamTrack.readyState !== 'live') {

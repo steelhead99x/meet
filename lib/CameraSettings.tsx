@@ -411,6 +411,26 @@ export function CameraSettings() {
         // Mark that we're applying a processor
         isApplyingProcessorRef.current = true;
         setIsApplyingProcessor(true);
+        
+        // Suppress MediaPipe initialization warnings
+        // MediaPipe logs benign OpenGL warnings during WebGL context initialization
+        const originalWarn = console.warn;
+        console.warn = (...args: any[]) => {
+          const message = args.join(' ');
+          // Filter out MediaPipe OpenGL warnings
+          if (message.includes('OpenGL error checking') || 
+              message.includes('gl_context.cc')) {
+            return; // Suppress this specific warning
+          }
+          originalWarn.apply(console, args);
+        };
+        
+        // Restore console.warn after processor initialization
+        const restoreConsoleWarn = () => {
+          setTimeout(() => {
+            console.warn = originalWarn;
+          }, 1000);
+        };
 
         if (backgroundType === 'blur') {
           // Final check before applying processor
@@ -465,7 +485,9 @@ export function CameraSettings() {
               customSettings: customSettingsStr
             };
             console.log('[CameraSettings] Blur processor applied successfully, stream remains active');
+            restoreConsoleWarn();
           } catch (processorError) {
+            restoreConsoleWarn();
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying blur processor:', processorError.message);
               return;
@@ -512,7 +534,9 @@ export function CameraSettings() {
             
             currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
             console.log('[CameraSettings] Virtual background applied successfully, stream remains active');
+            restoreConsoleWarn();
           } catch (processorError) {
+            restoreConsoleWarn();
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying virtual background:', processorError.message);
               return;
@@ -557,7 +581,9 @@ export function CameraSettings() {
               
               currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
               console.log('[CameraSettings] Custom background applied successfully, stream remains active:', customBg.name);
+              restoreConsoleWarn();
             } catch (processorError) {
+              restoreConsoleWarn();
               if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
                 console.warn('[CameraSettings] Stream closed while applying custom background:', processorError.message);
                 return;
@@ -574,7 +600,9 @@ export function CameraSettings() {
               await track.stopProcessor();
               currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
               console.log('[CameraSettings] Processor stopped successfully');
+              restoreConsoleWarn();
             } catch (stopError) {
+              restoreConsoleWarn();
               if (stopError instanceof DOMException && stopError.name === 'InvalidStateError') {
                 console.warn('[CameraSettings] Stream closed while stopping processor:', stopError.message);
               } else {
@@ -584,6 +612,7 @@ export function CameraSettings() {
           } else {
             console.warn('[CameraSettings] Cannot stop processor - stream is not live');
             currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
+            restoreConsoleWarn();
           }
         }
         
