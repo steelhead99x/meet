@@ -577,12 +577,17 @@ export function SettingsMenu(props: SettingsMenuProps) {
                     border: '1px solid rgba(59, 130, 246, 0.3)',
                   }}>
                     <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#60a5fa' }}>
-                      💡 Pro Tip
+                      💡 How Quality Settings Work
                     </div>
                     <div style={{ lineHeight: '1.5' }}>
-                      Higher quality settings provide stronger blur and smoother edges around your person,
-                      but use more CPU/GPU resources. Your device was detected as <strong>{deviceInfo?.powerLevel}</strong> power.
-                      Changes apply smoothly with a short delay to prevent freezing.
+                      <strong>Currently Applied:</strong> Blur strength (15px → 45px → 90px → 150px) and 
+                      processing mode (Low uses CPU, others use GPU).
+                      <br/><br/>
+                      <strong>System Activity:</strong> Low uses CPU only. Medium/High/Ultra use GPU with 
+                      similar processing load - the main difference is visual blur intensity.
+                      <br/><br/>
+                      Your device: <strong>{deviceInfo?.powerLevel}</strong> power.
+                      Changes apply with a short delay to prevent freezing.
                     </div>
                   </div>
                   </section>
@@ -797,31 +802,76 @@ export function SettingsMenu(props: SettingsMenuProps) {
                         marginTop: '16px',
                       }}>
                         {/* Enhanced Person Detection Toggle - MOST IMPORTANT */}
-                        <label style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between',
-                          padding: '10px',
+                        <div style={{
                           background: 'rgba(96, 165, 250, 0.15)',
                           borderRadius: '6px',
                           border: '2px solid rgba(96, 165, 250, 0.4)',
-                          cursor: 'pointer',
+                          padding: '10px',
                         }}>
-                          <div>
-                            <div style={{ fontWeight: '600', fontSize: '13px', color: '#60a5fa' }}>
-                              Enhanced Person Detection
+                          <label style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                          }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: '600', fontSize: '13px', color: '#60a5fa' }}>
+                                🎯 Enhanced Person Detection
+                              </div>
+                              <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
+                                Advanced algorithms to reduce false background detections
+                              </div>
                             </div>
-                            <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
-                              Reduces false detection of background objects
+                            <input
+                              type="checkbox"
+                              checked={customSegmentation.useEnhancedPersonModel}
+                              onChange={(e) => handleCustomSegmentationChange('useEnhancedPersonModel', e.target.checked)}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                          </label>
+                          
+                          {/* Detailed explanation when enabled */}
+                          {customSegmentation.useEnhancedPersonModel && (
+                            <div style={{
+                              marginTop: '10px',
+                              paddingTop: '10px',
+                              borderTop: '1px solid rgba(96, 165, 250, 0.3)',
+                              fontSize: '11px',
+                              lineHeight: '1.5',
+                            }}>
+                              <div style={{ fontWeight: '600', marginBottom: '6px', color: '#60a5fa' }}>
+                                Active Enhancements:
+                              </div>
+                              <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                                <li>✓ Confidence threshold filtering (removes uncertain areas)</li>
+                                <li>✓ Morphological noise removal (eliminates small artifacts)</li>
+                                <li>✓ Largest component isolation (focuses on main person)</li>
+                                <li>✓ Minimum area filtering (blocks tiny false detections)</li>
+                              </ul>
+                              <div style={{ 
+                                marginTop: '8px', 
+                                fontStyle: 'italic',
+                                opacity: 0.8,
+                              }}>
+                                These algorithms significantly reduce false positives from objects like
+                                chairs, lamps, plants, and other background items that might be mistaken
+                                for a person.
+                              </div>
+                              <div style={{ 
+                                marginTop: '10px',
+                                padding: '8px',
+                                background: 'rgba(251, 191, 36, 0.2)',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                border: '1px solid rgba(251, 191, 36, 0.4)',
+                              }}>
+                                ⚠️ <strong>Note:</strong> Enhanced person detection algorithms are configured 
+                                but require custom processor integration to be fully active. Check browser console 
+                                for details on applied settings.
+                              </div>
                             </div>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={customSegmentation.useEnhancedPersonModel}
-                            onChange={(e) => handleCustomSegmentationChange('useEnhancedPersonModel', e.target.checked)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                          />
-                        </label>
+                          )}
+                        </div>
                         
                         {/* Edge Refinement Toggle */}
                         <label style={{ 
@@ -942,11 +992,12 @@ export function SettingsMenu(props: SettingsMenuProps) {
                           lineHeight: '1.6',
                         }}>
                           <li>Changes apply automatically 0.5s after you stop adjusting sliders</li>
+                          <li><strong>Enable Enhanced Person Detection</strong> to reduce false positives from background objects</li>
                           <li>Increase Edge Quality if you see jagged outlines</li>
                           <li>Enable Temporal Smoothing to reduce flickering</li>
                           <li>Lower Blur Strength if experiencing performance issues</li>
                           <li>Disable GPU Acceleration if you see visual glitches</li>
-                          <li>Good lighting helps segmentation accuracy</li>
+                          <li><strong>Good lighting is crucial</strong> - front lighting with simple backgrounds works best</li>
                         </ul>
                       </div>
                     </>

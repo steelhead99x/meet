@@ -472,7 +472,7 @@ export function CameraSettings() {
           // DO NOT reuse cached processors - they have stale state that causes issues
           // DO NOT call stopProcessor() first - it closes the stream and causes black screen
           // LiveKit's setProcessor() will handle stopping the old processor internally
-          console.log(`[CameraSettings] Creating fresh blur processor for quality:`, blurQuality, config);
+          console.log(`[CameraSettings] Creating fresh blur processor for quality:`, blurQuality);
           
           const blurProcessor = BackgroundProcessor({
             blurRadius: config.blurRadius,
@@ -480,6 +480,17 @@ export function CameraSettings() {
               delegate: config.segmenterOptions.delegate,
             },
           }, 'background-blur');
+          
+          // Log what's actually being applied
+          console.log(`[BlurConfig] ✅ Applied ${blurQuality} quality: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing`);
+          
+          // Warn about configured but unsupported features
+          if (config.enhancedPersonDetection?.enabled) {
+            console.warn('[BlurConfig] ⚠️  Enhanced person detection is configured but not yet integrated with LiveKit processor');
+          }
+          if (config.edgeRefinement?.enabled) {
+            console.warn('[BlurConfig] ⚠️  Edge refinement is configured but not yet integrated with LiveKit processor');
+          }
           
           // Update cache with new processor (for reference only, not reused)
           processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);

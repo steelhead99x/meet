@@ -352,6 +352,17 @@ export function CustomPreJoin({
                 delegate: config.segmenterOptions.delegate,
               },
             });
+            
+            // Log what's actually being applied
+            console.log(`[BlurConfig] ✅ PreJoin: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing`);
+            
+            // Warn about configured but unsupported features
+            if (config.enhancedPersonDetection?.enabled) {
+              console.warn('[BlurConfig] ⚠️  Enhanced person detection configured but not yet integrated');
+            }
+            if (config.edgeRefinement?.enabled) {
+              console.warn('[BlurConfig] ⚠️  Edge refinement configured but not yet integrated');
+            }
           } else if (backgroundType === 'gradient' || backgroundType === 'image' || backgroundType === 'custom-image') {
             // Create virtual background processor
             // For gradient, convert CSS gradient to canvas data URL

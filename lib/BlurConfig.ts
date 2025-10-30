@@ -42,6 +42,21 @@ export interface BlurConfig {
     /** Enable temporal smoothing between frames */
     temporalSmoothing: boolean;
   };
+  /** Enhanced person detection settings */
+  enhancedPersonDetection?: {
+    /** Enable enhanced person detection mode */
+    enabled: boolean;
+    /** Minimum confidence threshold (0-1) - higher values reduce false positives */
+    confidenceThreshold: number;
+    /** Remove small isolated regions (noise reduction) */
+    morphologyEnabled: boolean;
+    /** Size of morphology kernel for noise removal */
+    morphologyKernelSize: number;
+    /** Keep only the largest connected component (the main person) */
+    keepLargestComponentOnly: boolean;
+    /** Minimum mask area ratio to be considered valid (0-1) */
+    minMaskAreaRatio: number;
+  };
 }
 
 /**
@@ -78,7 +93,7 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Basic edge handling
    */
   low: {
-    blurRadius: 20,
+    blurRadius: 15,
     segmenterOptions: {
       delegate: 'CPU',
     },
@@ -86,6 +101,14 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
       enabled: false,
       featherAmount: 0.1,
       temporalSmoothing: false,
+    },
+    enhancedPersonDetection: {
+      enabled: true,
+      confidenceThreshold: 0.6,
+      morphologyEnabled: false,
+      morphologyKernelSize: 3,
+      keepLargestComponentOnly: false,
+      minMaskAreaRatio: 0.01,
     },
   },
 
@@ -96,7 +119,7 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Good balance of quality and performance
    */
   medium: {
-    blurRadius: 35,
+    blurRadius: 45,
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -104,6 +127,14 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
       enabled: true,
       featherAmount: 0.2,
       temporalSmoothing: false,
+    },
+    enhancedPersonDetection: {
+      enabled: true,
+      confidenceThreshold: 0.65,
+      morphologyEnabled: true,
+      morphologyKernelSize: 3,
+      keepLargestComponentOnly: false,
+      minMaskAreaRatio: 0.01,
     },
   },
 
@@ -114,7 +145,7 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Enhanced edge refinement
    */
   high: {
-    blurRadius: 60,
+    blurRadius: 90,
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -122,6 +153,14 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
       enabled: true,
       featherAmount: 0.35,
       temporalSmoothing: true,
+    },
+    enhancedPersonDetection: {
+      enabled: true,
+      confidenceThreshold: 0.7,
+      morphologyEnabled: true,
+      morphologyKernelSize: 5,
+      keepLargestComponentOnly: true,
+      minMaskAreaRatio: 0.02,
     },
   },
 
@@ -132,7 +171,7 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Utilizes all available GPU resources
    */
   ultra: {
-    blurRadius: 80,
+    blurRadius: 150,
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -140,6 +179,14 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
       enabled: true,
       featherAmount: 0.5,
       temporalSmoothing: true,
+    },
+    enhancedPersonDetection: {
+      enabled: true,
+      confidenceThreshold: 0.75,
+      morphologyEnabled: true,
+      morphologyKernelSize: 7,
+      keepLargestComponentOnly: true,
+      minMaskAreaRatio: 0.03,
     },
   },
 };
@@ -201,13 +248,29 @@ export function getBlurConfig(quality: BlurQuality, customSettings?: CustomSegme
       },
     };
     
-    // Add enhanced person model if enabled
-    // Note: This would use a custom MediaPipe model optimized for person segmentation
-    // Currently MediaPipe doesn't expose easy model selection in the browser
-    // but this flag can be used for future enhancements
+    // Add enhanced person detection if enabled
     if (customSettings.useEnhancedPersonModel) {
-      // Future: Load custom person-optimized model
-      // config.segmenterOptions.modelAssetPath = '/models/person_segmenter.tflite';
+      config.enhancedPersonDetection = {
+        enabled: true,
+        // Higher confidence threshold reduces false positives
+        confidenceThreshold: 0.7,
+        // Enable morphology to remove noise and small false detections
+        morphologyEnabled: true,
+        morphologyKernelSize: 5,
+        // Keep only largest component to focus on main person
+        keepLargestComponentOnly: true,
+        // Minimum mask area to filter out tiny detections
+        minMaskAreaRatio: 0.02,
+      };
+    } else {
+      config.enhancedPersonDetection = {
+        enabled: false,
+        confidenceThreshold: 0.5,
+        morphologyEnabled: false,
+        morphologyKernelSize: 3,
+        keepLargestComponentOnly: false,
+        minMaskAreaRatio: 0.01,
+      };
     }
     
     return config;
