@@ -124,39 +124,41 @@ export function PageClientImpl(props: {
   }, []);
 
   return (
-    <main data-lk-theme="default" style={{ height: '100%' }}>
-      {connectionDetails === undefined || preJoinChoices === undefined ? (
-        <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-          <CustomPreJoin
-            defaults={preJoinDefaults}
-            onSubmit={handlePreJoinSubmit}
-            onValidate={handlePreJoinValidate}
-            onError={handlePreJoinError}
-          />
-          <div style={{ marginTop: 16, textAlign: 'center' }}>
-            <label style={{ cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={useEncryption}
-                onChange={(e) => setUseEncryption(e.target.checked)}
-                style={{ marginRight: 8 }}
-              />
-              Use end-to-end encryption
-            </label>
+    <ProcessorLoadingProvider>
+      <main data-lk-theme="default" style={{ height: '100%' }}>
+        {connectionDetails === undefined || preJoinChoices === undefined ? (
+          <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+            <CustomPreJoin
+              defaults={preJoinDefaults}
+              onSubmit={handlePreJoinSubmit}
+              onValidate={handlePreJoinValidate}
+              onError={handlePreJoinError}
+            />
+            <div style={{ marginTop: 16, textAlign: 'center' }}>
+              <label style={{ cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={useEncryption}
+                  onChange={(e) => setUseEncryption(e.target.checked)}
+                  style={{ marginRight: 8 }}
+                />
+                Use end-to-end encryption
+              </label>
+            </div>
           </div>
-        </div>
-      ) : (
-        <RoomErrorBoundary>
-          <VideoConferenceComponent
-            connectionDetails={connectionDetails}
-            userChoices={preJoinChoices}
-            codec={props.codec}
-            hq={props.hq}
-            useEncryption={useEncryption}
-          />
-        </RoomErrorBoundary>
-      )}
-    </main>
+        ) : (
+          <RoomErrorBoundary>
+            <VideoConferenceComponent
+              connectionDetails={connectionDetails}
+              userChoices={preJoinChoices}
+              codec={props.codec}
+              hq={props.hq}
+              useEncryption={useEncryption}
+            />
+          </RoomErrorBoundary>
+        )}
+      </main>
+    </ProcessorLoadingProvider>
   );
 }
 
@@ -554,23 +556,21 @@ function VideoConferenceComponent(props: {
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
 
   return (
-    <ProcessorLoadingProvider>
-      <RoomContext.Provider value={room}>
-        <KeyboardShortcuts />
-        <ReconnectionBanner />
-        <ConnectionQualityTooltip />
-        <BrowserWindowPIP />
-        <CarouselNavigation />
-        <VideoConference
-          SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
-          chatMessageFormatter={formatChatMessageLinks}
-        />
-        <RoomAudioRenderer />
-        <DebugMode />
-        <RecordingIndicator />
-        <ProcessorLoadingOverlay />
-      </RoomContext.Provider>
-    </ProcessorLoadingProvider>
+    <RoomContext.Provider value={room}>
+      <KeyboardShortcuts />
+      <ReconnectionBanner />
+      <ConnectionQualityTooltip />
+      <BrowserWindowPIP />
+      <CarouselNavigation />
+      <VideoConference
+        SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
+        chatMessageFormatter={formatChatMessageLinks}
+      />
+      <RoomAudioRenderer />
+      <DebugMode />
+      <RecordingIndicator />
+      <ProcessorLoadingOverlay />
+    </RoomContext.Provider>
   );
 }
 

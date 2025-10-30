@@ -17,7 +17,7 @@ export function ProcessorLoadingOverlay() {
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.7)',
+      background: 'rgba(0, 0, 0, 0.85)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -27,15 +27,29 @@ export function ProcessorLoadingOverlay() {
       pointerEvents: 'none', // Allow clicks through to underlying UI
     }}>
       <div style={{
-        width: '48px',
-        height: '48px',
+        width: '56px',
+        height: '56px',
         border: '3px solid rgba(255, 255, 255, 0.1)',
         borderTopColor: '#fff',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite',
       }} />
-      <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>
-        Applying video effect...
+      <div style={{ 
+        color: '#fff', 
+        fontSize: '16px', 
+        fontWeight: 600,
+        textAlign: 'center',
+        padding: '0 20px'
+      }}>
+        Securing your privacy...
+      </div>
+      <div style={{ 
+        color: 'rgba(255, 255, 255, 0.7)', 
+        fontSize: '13px',
+        textAlign: 'center',
+        padding: '0 20px'
+      }}>
+        Applying background effect
       </div>
       <style>{`
         @keyframes spin {

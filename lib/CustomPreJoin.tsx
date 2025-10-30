@@ -13,6 +13,8 @@ import { BackgroundProcessor, VirtualBackground } from '@livekit/track-processor
 import { getBlurConfig, getRecommendedBlurQuality, CustomSegmentationSettings } from './BlurConfig';
 import { detectDeviceCapabilities } from './client-utils';
 import { waitForProcessorWithFallback } from './videoProcessorUtils';
+import { MediaPipeImageSegmenterProcessor } from './processors/MediaPipeImageSegmenter';
+import { useProcessorLoading } from './ProcessorLoadingContext';
 
 // Helper function to create a canvas with gradient for VirtualBackground
 // Placed outside component to avoid recreation
@@ -86,6 +88,9 @@ export function CustomPreJoin({
   const [backgroundPath, setBackgroundPath] = React.useState(
     savedPrefs.backgroundPath || ''
   );
+  
+  // Use shared processor loading context for privacy screen during room join
+  const { setIsApplyingProcessor } = useProcessorLoading();
 
   // Validate that saved devices are still available
   const [validatedDeviceIds, setValidatedDeviceIds] = React.useState<{
@@ -170,11 +175,22 @@ export function CustomPreJoin({
   const blurProcessorRef = React.useRef<any>(null);
   const processedTrackIdRef = React.useRef<string | null>(null);
   const isApplyingBlurRef = React.useRef(false);
-  const [isPreparingVideo, setIsPreparingVideo] = React.useState(false);
+  // Start with isPreparingVideo=true if blur/effects are enabled (for privacy)
+  const [isPreparingVideo, setIsPreparingVideo] = React.useState(() => {
+    return backgroundType !== 'none'; // Hide video initially if effect is enabled
+  });
   
   // Handle background effect changes
   const selectBackground = React.useCallback((type: string, path?: string) => {
     console.log('[CustomPreJoin] Changing background to:', type, path);
+    
+    // PRIVACY: Hide video immediately when switching to a blur/effect
+    if (type !== 'none') {
+      setIsPreparingVideo(true);
+    } else {
+      // Show video immediately when switching to 'none'
+      setIsPreparingVideo(false);
+    }
     
     // Stop current processor first
     if (videoTrack instanceof LocalVideoTrack && blurProcessorRef.current) {
@@ -282,7 +298,7 @@ export function CustomPreJoin({
         // Wait a brief moment for track to stabilize after creation
         // This prevents applying blur to a track that's still initializing
         console.log('[CustomPreJoin] Waiting for track to stabilize:', trackId);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         // Check if effect is still active after wait
         if (!isEffectActive) {
@@ -345,7 +361,11 @@ export function CustomPreJoin({
           
           // Create processor based on background type
           if (backgroundType === 'blur') {
-            // Create blur processor
+            // IMPORTANT: For preview, always use LiveKit default processor instead of MediaPipe
+            // MediaPipe initialization takes too long (downloads 3MB WASM) and preview tracks
+            // can close during initialization. The main video track in-room will use MediaPipe.
+            console.log(`[CustomPreJoin] Using LiveKit BackgroundProcessor for preview (fast initialization)`);
+            
             blurProcessorRef.current = BackgroundProcessor({
               blurRadius: config.blurRadius,
               segmenterOptions: {
@@ -353,15 +373,11 @@ export function CustomPreJoin({
               },
             });
             
-            // Log what's actually being applied
             console.log(`[BlurConfig] ✅ PreJoin: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing`);
             
-            // Warn about configured but unsupported features
-            if (config.enhancedPersonDetection?.enabled) {
-              console.warn('[BlurConfig] ⚠️  Enhanced person detection configured but not yet integrated');
-            }
-            if (config.edgeRefinement?.enabled) {
-              console.warn('[BlurConfig] ⚠️  Edge refinement configured but not yet integrated');
+            // Note: MediaPipe and enhanced features will be used in the main room video track
+            if (config.processorType === 'mediapipe-image') {
+              console.log('[BlurConfig] ℹ️  MediaPipe will be used for in-room video (not preview)');
             }
           } else if (backgroundType === 'gradient' || backgroundType === 'image' || backgroundType === 'custom-image') {
             // Create virtual background processor
@@ -413,7 +429,7 @@ export function CustomPreJoin({
           // This detects when the effect is actually ready instead of using fixed timeouts
           console.log('[CustomPreJoin] Detecting when', backgroundType, 'processor is ready...');
           try {
-            await waitForProcessorWithFallback(videoTrack, 100);
+            await waitForProcessorWithFallback(videoTrack, 50);
           } catch (waitError) {
             console.warn('[CustomPreJoin] Error waiting for processor ready, continuing anyway:', waitError);
           }
@@ -560,6 +576,15 @@ export function CustomPreJoin({
       }
     }
 
+    // PRIVACY: Show global loading overlay while joining room if video effects are enabled
+    // This prevents showing unblurred video during the transition from preview to room
+    const currentPrefs2 = loadUserPreferences();
+    if (videoEnabled && currentPrefs2.backgroundType && currentPrefs2.backgroundType !== 'none') {
+      console.log('[CustomPreJoin] Setting global processor loading state for room join');
+      setIsApplyingProcessor(true);
+      // The CameraSettings component will clear this state once the processor is applied
+    }
+
     onSubmit?.(values);
   };
 
@@ -571,7 +596,14 @@ export function CustomPreJoin({
           {videoEnabled && videoTrack ? (
             <video
               ref={videoEl}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover', 
+                transform: 'scaleX(-1)',
+                // PRIVACY: Hide video until blur is ready (only if blur/effect is enabled)
+                visibility: (isPreparingVideo && backgroundType !== 'none') ? 'hidden' : 'visible'
+              }}
               autoPlay
               playsInline
               muted
@@ -609,8 +641,9 @@ export function CustomPreJoin({
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }} />
-              <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>
-                Applying video effect...
+              <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500, textAlign: 'center', padding: '0 20px' }}>
+                Securing your privacy...<br/>
+                <span style={{ fontSize: '12px', opacity: 0.7 }}>Applying background effect</span>
               </div>
               <style>{`
                 @keyframes spin {

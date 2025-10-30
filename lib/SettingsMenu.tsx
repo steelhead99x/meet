@@ -72,12 +72,14 @@ export function SettingsMenu(props: SettingsMenuProps) {
     speaker: boolean;
     blur: boolean;
     segmentation: boolean;
+    mediapipe: boolean;
   }>({
     camera: true,
     microphone: false,
     speaker: false,
     blur: false,
     segmentation: false,
+    mediapipe: false,
   });
   
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -180,6 +182,30 @@ export function SettingsMenu(props: SettingsMenuProps) {
       // Hide "applying" indicator after update is sent
       setIsApplyingChanges(false);
     }, 500); // 500ms debounce - adjust after user stops sliding
+  };
+  
+  // Helper function for updating MediaPipe settings (nested object)
+  const handleMediaPipeSettingChange = (
+    updatedSettings: CustomSegmentationSettings['mediaPipeSettings']
+  ) => {
+    const updated = { ...customSegmentation, mediaPipeSettings: updatedSettings };
+    setCustomSegmentation(updated);
+    
+    // Show "applying" indicator
+    setIsApplyingChanges(true);
+    
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Debounce the actual processor update
+    debounceTimerRef.current = setTimeout(() => {
+      if (window.__setCustomSegmentation) {
+        window.__setCustomSegmentation(updated);
+      }
+      setIsApplyingChanges(false);
+    }, 500);
   };
 
   // Cleanup debounce timer on unmount
@@ -580,11 +606,16 @@ export function SettingsMenu(props: SettingsMenuProps) {
                       💡 How Quality Settings Work
                     </div>
                     <div style={{ lineHeight: '1.5' }}>
-                      <strong>Currently Applied:</strong> Blur strength (15px → 45px → 90px → 150px) and 
-                      processing mode (Low uses CPU, others use GPU).
+                      <strong>Blur Strength:</strong> 15px (Low) → 45px (Medium) → 90px (High) → 150px (Ultra)
                       <br/><br/>
+                      <strong>Segmentation Engine:</strong>
+                      <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                        <li>⭐ All quality levels now use MediaPipe Image Segmenter</li>
+                        <li>Low: CPU processing for compatibility</li>
+                        <li>Medium/High/Ultra: GPU-accelerated for best quality</li>
+                      </ul>
                       <strong>System Activity:</strong> Low uses CPU only. Medium/High/Ultra use GPU with 
-                      similar processing load - the main difference is visual blur intensity.
+                      similar processing load - the main difference is visual blur intensity and segmentation quality.
                       <br/><br/>
                       Your device: <strong>{deviceInfo?.powerLevel}</strong> power.
                       Changes apply with a short delay to prevent freezing.
@@ -1002,6 +1033,469 @@ export function SettingsMenu(props: SettingsMenuProps) {
                       </div>
                     </>
                   )}
+                  </section>
+                )}
+              </>
+            )}
+            
+            {/* MediaPipe Image Segmenter Controls - Show for all quality levels since all use MediaPipe now */}
+            {settings.media && settings.media.camera && useCustomSegmentation && (
+              <>
+                <h3 
+                  onClick={() => toggleSection('mediapipe')}
+                  style={{ 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px',
+                    margin: '8px 0 8px 0',
+                    background: 'rgba(147, 51, 234, 0.15)',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s',
+                    border: '2px solid rgba(147, 51, 234, 0.3)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(147, 51, 234, 0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(147, 51, 234, 0.15)'}
+                >
+                  <span>⭐ MediaPipe Image Segmenter Settings</span>
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    style={{ 
+                      transform: expandedSections.mediapipe ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}
+                  >
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </h3>
+                {expandedSections.mediapipe && (
+                  <section>
+                    {/* Applying changes indicator */}
+                    {isApplyingChanges && (
+                      <div style={{
+                        marginBottom: '12px',
+                        padding: '8px 12px',
+                        background: 'rgba(147, 51, 234, 0.15)',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(147, 51, 234, 0.3)',
+                        fontSize: '12px',
+                        color: '#c084fc',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}>
+                        <svg 
+                          width="14" 
+                          height="14" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          style={{ animation: 'spin 1s linear infinite' }}
+                        >
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="8" strokeLinecap="round"/>
+                        </svg>
+                        Applying MediaPipe changes...
+                      </div>
+                    )}
+                    
+                    <div style={{ 
+                      marginBottom: '16px',
+                      padding: '12px',
+                      background: 'rgba(147, 51, 234, 0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(147, 51, 234, 0.3)',
+                      fontSize: '12px',
+                      lineHeight: '1.6',
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#c084fc' }}>
+                        🎯 About MediaPipe Image Segmenter
+                      </div>
+                      <div>
+                        These controls adjust the <strong>MediaPipe Image Segmentation model</strong> used in 
+                        High and Ultra quality modes. This advanced AI model provides superior person detection 
+                        compared to the standard processor.
+                        <br/><br/>
+                        <strong>Fine-tune these settings</strong> based on your lighting, background, and clothing 
+                        to get the best blur results.
+                      </div>
+                    </div>
+                    
+                    {/* Initialize mediaPipeSettings if not exists */}
+                    {!customSegmentation.mediaPipeSettings && (() => {
+                      const updated = {
+                        ...customSegmentation,
+                        mediaPipeSettings: {
+                          confidenceThreshold: 0.7,
+                          morphologyEnabled: true,
+                          morphologyKernelSize: 5,
+                          keepLargestComponentOnly: true,
+                          minMaskAreaRatio: 0.02,
+                          temporalSmoothingAlpha: 0.7,
+                        },
+                      };
+                      setCustomSegmentation(updated);
+                      return null;
+                    })()}
+                    
+                    {/* Confidence Threshold Slider */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        marginBottom: '8px',
+                        alignItems: 'center',
+                      }}>
+                        <label style={{ fontWeight: '500', fontSize: '14px' }}>
+                          Confidence Threshold
+                        </label>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          fontWeight: 'bold',
+                          color: '#c084fc',
+                          minWidth: '35px',
+                          textAlign: 'right',
+                        }}>
+                          {((customSegmentation.mediaPipeSettings?.confidenceThreshold ?? 0.7) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="0.95"
+                        step="0.05"
+                        value={customSegmentation.mediaPipeSettings?.confidenceThreshold ?? 0.7}
+                        onChange={(e) => {
+                          handleMediaPipeSettingChange({
+                            ...(customSegmentation.mediaPipeSettings || {
+                              morphologyEnabled: true,
+                              morphologyKernelSize: 5,
+                              keepLargestComponentOnly: true,
+                              minMaskAreaRatio: 0.02,
+                              temporalSmoothingAlpha: 0.7,
+                            }),
+                            confidenceThreshold: parseFloat(e.target.value),
+                          });
+                        }}
+                        style={{ width: '100%', cursor: 'pointer' }}
+                      />
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '11px',
+                        opacity: 0.6,
+                        marginTop: '4px',
+                      }}>
+                        <span>Lenient (50%)</span>
+                        <span>Strict (95%)</span>
+                      </div>
+                      <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '6px', fontStyle: 'italic' }}>
+                        Higher = stricter person detection, fewer false positives (background blur stays intact)
+                      </div>
+                    </div>
+                    
+                    {/* Morphology Kernel Size Slider */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        marginBottom: '8px',
+                        alignItems: 'center',
+                      }}>
+                        <label style={{ fontWeight: '500', fontSize: '14px' }}>
+                          Noise Removal Strength
+                        </label>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          fontWeight: 'bold',
+                          color: '#c084fc',
+                          minWidth: '35px',
+                          textAlign: 'right',
+                        }}>
+                          {customSegmentation.mediaPipeSettings?.morphologyKernelSize ?? 5}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="3"
+                        max="9"
+                        step="2"
+                        value={customSegmentation.mediaPipeSettings?.morphologyKernelSize ?? 5}
+                        onChange={(e) => {
+                          handleMediaPipeSettingChange({
+                            ...(customSegmentation.mediaPipeSettings || {
+                              confidenceThreshold: 0.7,
+                              morphologyEnabled: true,
+                              keepLargestComponentOnly: true,
+                              minMaskAreaRatio: 0.02,
+                              temporalSmoothingAlpha: 0.7,
+                            }),
+                            morphologyKernelSize: parseInt(e.target.value),
+                          });
+                        }}
+                        style={{ width: '100%', cursor: 'pointer' }}
+                      />
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '11px',
+                        opacity: 0.6,
+                        marginTop: '4px',
+                      }}>
+                        <span>Light (3)</span>
+                        <span>Strong (9)</span>
+                      </div>
+                      <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '6px', fontStyle: 'italic' }}>
+                        Removes small noise and artifacts from the segmentation mask
+                      </div>
+                    </div>
+                    
+                    {/* Minimum Mask Area Slider */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        marginBottom: '8px',
+                        alignItems: 'center',
+                      }}>
+                        <label style={{ fontWeight: '500', fontSize: '14px' }}>
+                          Minimum Mask Area
+                        </label>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          fontWeight: 'bold',
+                          color: '#c084fc',
+                          minWidth: '35px',
+                          textAlign: 'right',
+                        }}>
+                          {((customSegmentation.mediaPipeSettings?.minMaskAreaRatio ?? 0.02) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.01"
+                        max="0.1"
+                        step="0.01"
+                        value={customSegmentation.mediaPipeSettings?.minMaskAreaRatio ?? 0.02}
+                        onChange={(e) => {
+                          handleMediaPipeSettingChange({
+                            ...(customSegmentation.mediaPipeSettings || {
+                              confidenceThreshold: 0.7,
+                              morphologyEnabled: true,
+                              morphologyKernelSize: 5,
+                              keepLargestComponentOnly: true,
+                              temporalSmoothingAlpha: 0.7,
+                            }),
+                            minMaskAreaRatio: parseFloat(e.target.value),
+                          });
+                        }}
+                        style={{ width: '100%', cursor: 'pointer' }}
+                      />
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '11px',
+                        opacity: 0.6,
+                        marginTop: '4px',
+                      }}>
+                        <span>Tiny (1%)</span>
+                        <span>Large (10%)</span>
+                      </div>
+                      <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '6px', fontStyle: 'italic' }}>
+                        Filters out detections smaller than this % of frame - prevents tiny false positives
+                      </div>
+                    </div>
+                    
+                    {/* Temporal Smoothing Alpha Slider */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        marginBottom: '8px',
+                        alignItems: 'center',
+                      }}>
+                        <label style={{ fontWeight: '500', fontSize: '14px' }}>
+                          Temporal Smoothing Factor
+                        </label>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          fontWeight: 'bold',
+                          color: '#c084fc',
+                          minWidth: '35px',
+                          textAlign: 'right',
+                        }}>
+                          {((customSegmentation.mediaPipeSettings?.temporalSmoothingAlpha ?? 0.7) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="0.9"
+                        step="0.05"
+                        value={customSegmentation.mediaPipeSettings?.temporalSmoothingAlpha ?? 0.7}
+                        onChange={(e) => {
+                          handleMediaPipeSettingChange({
+                            ...(customSegmentation.mediaPipeSettings || {
+                              confidenceThreshold: 0.7,
+                              morphologyEnabled: true,
+                              morphologyKernelSize: 5,
+                              keepLargestComponentOnly: true,
+                              minMaskAreaRatio: 0.02,
+                            }),
+                            temporalSmoothingAlpha: parseFloat(e.target.value),
+                          });
+                        }}
+                        style={{ width: '100%', cursor: 'pointer' }}
+                      />
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '11px',
+                        opacity: 0.6,
+                        marginTop: '4px',
+                      }}>
+                        <span>More Smoothing (50%)</span>
+                        <span>More Responsive (90%)</span>
+                      </div>
+                      <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '6px', fontStyle: 'italic' }}>
+                        Lower = smoother but laggy, Higher = responsive but may flicker
+                      </div>
+                    </div>
+                    
+                    {/* Toggle Options */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '12px',
+                      marginTop: '16px',
+                    }}>
+                      {/* Morphology Enabled Toggle */}
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        padding: '10px',
+                        background: 'rgba(147, 51, 234, 0.08)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        border: '1px solid rgba(147, 51, 234, 0.2)',
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: '500', fontSize: '13px' }}>
+                            Enable Morphological Operations
+                          </div>
+                          <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>
+                            Apply erosion/dilation to clean up mask edges
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={customSegmentation.mediaPipeSettings?.morphologyEnabled ?? true}
+                          onChange={(e) => {
+                            handleMediaPipeSettingChange({
+                              ...(customSegmentation.mediaPipeSettings || {
+                                confidenceThreshold: 0.7,
+                                morphologyKernelSize: 5,
+                                keepLargestComponentOnly: true,
+                                minMaskAreaRatio: 0.02,
+                                temporalSmoothingAlpha: 0.7,
+                              }),
+                              morphologyEnabled: e.target.checked,
+                            });
+                          }}
+                          style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                        />
+                      </label>
+                      
+                      {/* Keep Largest Component Toggle */}
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        padding: '10px',
+                        background: 'rgba(147, 51, 234, 0.08)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        border: '1px solid rgba(147, 51, 234, 0.2)',
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: '500', fontSize: '13px' }}>
+                            Keep Only Largest Person
+                          </div>
+                          <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>
+                            Focus on main person, blur any others
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={customSegmentation.mediaPipeSettings?.keepLargestComponentOnly ?? true}
+                          onChange={(e) => {
+                            handleMediaPipeSettingChange({
+                              ...(customSegmentation.mediaPipeSettings || {
+                                confidenceThreshold: 0.7,
+                                morphologyEnabled: true,
+                                morphologyKernelSize: 5,
+                                minMaskAreaRatio: 0.02,
+                                temporalSmoothingAlpha: 0.7,
+                              }),
+                              keepLargestComponentOnly: e.target.checked,
+                            });
+                          }}
+                          style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                        />
+                      </label>
+                    </div>
+                    
+                    {/* Reset Button */}
+                    <button
+                      onClick={() => {
+                        const presetSettings = customSettingsFromPreset(blurQuality);
+                        setCustomSegmentation(presetSettings);
+                        if (window.__setCustomSegmentation) {
+                          window.__setCustomSegmentation(presetSettings);
+                        }
+                      }}
+                      className="lk-button"
+                      style={{
+                        marginTop: '16px',
+                        width: '100%',
+                        padding: '10px',
+                        fontSize: '13px',
+                        background: 'rgba(147, 51, 234, 0.15)',
+                        border: '1px solid rgba(147, 51, 234, 0.3)',
+                      }}
+                    >
+                      Reset MediaPipe Settings to {blurQuality.charAt(0).toUpperCase() + blurQuality.slice(1)} Defaults
+                    </button>
+                    
+                    {/* Advanced Tips Panel */}
+                    <div style={{ 
+                      marginTop: '16px', 
+                      padding: '12px', 
+                      background: 'rgba(251, 146, 60, 0.1)', 
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      border: '1px solid rgba(251, 146, 60, 0.3)',
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#fb923c' }}>
+                        🔧 MediaPipe Tuning Guide
+                      </div>
+                      <ul style={{ 
+                        margin: '0', 
+                        paddingLeft: '20px',
+                        lineHeight: '1.6',
+                      }}>
+                        <li><strong>If background items are unblurred:</strong> Increase Confidence Threshold (70-85%)</li>
+                        <li><strong>If you&apos;re getting blurred:</strong> Decrease Confidence Threshold (50-65%)</li>
+                        <li><strong>If mask has holes/gaps:</strong> Increase Noise Removal Strength (7-9)</li>
+                        <li><strong>If edges are too rough:</strong> Increase Edge Quality in previous section</li>
+                        <li><strong>If blur flickers:</strong> Lower Temporal Smoothing Factor (50-60%)</li>
+                        <li><strong>If blur lags behind movements:</strong> Increase Temporal Smoothing Factor (80-90%)</li>
+                        <li>Enable both toggles for best results in complex scenes</li>
+                      </ul>
+                    </div>
                   </section>
                 )}
               </>

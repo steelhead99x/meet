@@ -23,6 +23,8 @@ export type BlurQuality = 'low' | 'medium' | 'high' | 'ultra';
 export interface BlurConfig {
   /** Blur radius in pixels - higher values create stronger blur */
   blurRadius: number;
+  /** Which segmentation processor to use */
+  processorType?: 'livekit-default' | 'mediapipe-image' | 'modnet';
   /** Segmentation options for MediaPipe */
   segmenterOptions: {
     /** GPU or CPU delegation */
@@ -80,6 +82,25 @@ export interface CustomSegmentationSettings {
    * from background objects
    */
   useEnhancedPersonModel: boolean;
+  
+  /** 
+   * MediaPipe Image Segmenter specific settings 
+   * These only apply when using MediaPipe processor (High/Ultra quality)
+   */
+  mediaPipeSettings?: {
+    /** Confidence threshold for person detection (0.5-0.95) - higher = stricter */
+    confidenceThreshold: number;
+    /** Enable morphology to remove noise (recommended) */
+    morphologyEnabled: boolean;
+    /** Morphology kernel size (3-9) - larger removes more noise */
+    morphologyKernelSize: number;
+    /** Keep only the largest person detected */
+    keepLargestComponentOnly: boolean;
+    /** Minimum mask area ratio (0.01-0.1) - filters out tiny detections */
+    minMaskAreaRatio: number;
+    /** Temporal smoothing alpha (0.5-0.9) - higher = more smoothing */
+    temporalSmoothingAlpha: number;
+  };
 }
 
 /**
@@ -91,9 +112,11 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Minimal blur for performance
    * - CPU processing as fallback
    * - Basic edge handling
+   * - Uses MediaPipe Image Segmenter for better quality
    */
   low: {
     blurRadius: 15,
+    processorType: 'mediapipe-image',
     segmenterOptions: {
       delegate: 'CPU',
     },
@@ -117,9 +140,11 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Moderate blur with GPU acceleration
    * - Basic edge smoothing
    * - Good balance of quality and performance
+   * - Uses MediaPipe Image Segmenter for better quality
    */
   medium: {
     blurRadius: 45,
+    processorType: 'mediapipe-image',
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -143,9 +168,11 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Strong blur with advanced edge smoothing
    * - GPU-accelerated processing
    * - Enhanced edge refinement
+   * - Uses MediaPipe Image Segmenter for better quality
    */
   high: {
     blurRadius: 90,
+    processorType: 'mediapipe-image',
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -169,9 +196,11 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Maximum blur for best background separation
    * - Advanced edge processing with temporal smoothing
    * - Utilizes all available GPU resources
+   * - Uses MediaPipe Image Segmenter for superior quality
    */
   ultra: {
     blurRadius: 150,
+    processorType: 'mediapipe-image',
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -238,6 +267,7 @@ export function getBlurConfig(quality: BlurQuality, customSettings?: CustomSegme
   if (customSettings) {
     const config: BlurConfig = {
       blurRadius: customSettings.blurRadius,
+      processorType: preset.processorType, // Inherit from preset
       segmenterOptions: {
         delegate: customSettings.useGPU ? 'GPU' : 'CPU',
       },
@@ -249,17 +279,25 @@ export function getBlurConfig(quality: BlurQuality, customSettings?: CustomSegme
     };
     
     // Add enhanced person detection if enabled
-    if (customSettings.useEnhancedPersonModel) {
+    if (customSettings.useEnhancedPersonModel && customSettings.mediaPipeSettings) {
+      // Use custom MediaPipe settings if provided
+      const mp = customSettings.mediaPipeSettings;
       config.enhancedPersonDetection = {
         enabled: true,
-        // Higher confidence threshold reduces false positives
+        confidenceThreshold: mp.confidenceThreshold,
+        morphologyEnabled: mp.morphologyEnabled,
+        morphologyKernelSize: mp.morphologyKernelSize,
+        keepLargestComponentOnly: mp.keepLargestComponentOnly,
+        minMaskAreaRatio: mp.minMaskAreaRatio,
+      };
+    } else if (customSettings.useEnhancedPersonModel) {
+      // Use default enhanced settings if MediaPipe settings not specified
+      config.enhancedPersonDetection = {
+        enabled: true,
         confidenceThreshold: 0.7,
-        // Enable morphology to remove noise and small false detections
         morphologyEnabled: true,
         morphologyKernelSize: 5,
-        // Keep only largest component to focus on main person
         keepLargestComponentOnly: true,
-        // Minimum mask area to filter out tiny detections
         minMaskAreaRatio: 0.02,
       };
     } else {
@@ -292,6 +330,14 @@ export function customSettingsFromPreset(quality: BlurQuality): CustomSegmentati
     useGPU: preset.segmenterOptions.delegate === 'GPU',
     enableEdgeRefinement: preset.edgeRefinement.enabled,
     useEnhancedPersonModel: true, // Enable by default for better person detection
+    mediaPipeSettings: preset.enhancedPersonDetection ? {
+      confidenceThreshold: preset.enhancedPersonDetection.confidenceThreshold,
+      morphologyEnabled: preset.enhancedPersonDetection.morphologyEnabled,
+      morphologyKernelSize: preset.enhancedPersonDetection.morphologyKernelSize,
+      keepLargestComponentOnly: preset.enhancedPersonDetection.keepLargestComponentOnly,
+      minMaskAreaRatio: preset.enhancedPersonDetection.minMaskAreaRatio,
+      temporalSmoothingAlpha: 0.7, // Default temporal smoothing
+    } : undefined,
   };
 }
 
@@ -306,6 +352,14 @@ export function getDefaultCustomSettings(): CustomSegmentationSettings {
     useGPU: true,
     enableEdgeRefinement: true,
     useEnhancedPersonModel: true, // Enable by default for better person detection
+    mediaPipeSettings: {
+      confidenceThreshold: 0.7,
+      morphologyEnabled: true,
+      morphologyKernelSize: 5,
+      keepLargestComponentOnly: true,
+      minMaskAreaRatio: 0.02,
+      temporalSmoothingAlpha: 0.7,
+    },
   };
 }
 
