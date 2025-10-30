@@ -359,6 +359,9 @@ export function CameraSettings() {
 
   // Effect to apply processors with caching - IMMEDIATE application for privacy
   React.useEffect(() => {
+    // Track if this effect is still active
+    let isEffectActive = true;
+    
     const track = cameraTrack?.track;
     
     // Only process if track exists, is local, and is in 'live' state
@@ -412,6 +415,24 @@ export function CameraSettings() {
         isApplyingProcessorRef.current = true;
         setIsApplyingProcessor(true);
         
+        // CRITICAL: Mute the track to prevent showing unprocessed video
+        // This ensures user's background is never exposed during processor transitions
+        const wasEnabled = !track.isMuted;
+        if (wasEnabled) {
+          await track.mute();
+          console.log('[CameraSettings] Muted video track before applying processor');
+        }
+        
+        // Check if effect was cancelled during mute
+        if (!isEffectActive) {
+          console.log('[CameraSettings] Effect cancelled during mute, aborting');
+          if (wasEnabled && isLocalTrack(track)) {
+            try { await track.unmute(); } catch (e) {}
+          }
+          setIsApplyingProcessor(false);
+          return;
+        }
+        
         // Suppress MediaPipe initialization warnings
         // MediaPipe logs benign OpenGL warnings during WebGL context initialization
         const originalWarn = console.warn;
@@ -431,13 +452,23 @@ export function CameraSettings() {
             console.warn = originalWarn;
           }, 1000);
         };
+        
+        // Restore video track after processor is applied
+        const restoreVideoTrack = async () => {
+          if (wasEnabled) {
+            // Only check if track is still valid, don't re-check readyState
+            // The track was already validated as 'live' before we muted it
+            try {
+              await track.unmute();
+              console.log('[CameraSettings] Unmuted video track - effect is ready');
+            } catch (err) {
+              console.warn('[CameraSettings] Could not unmute track:', err);
+            }
+          }
+        };
 
         if (backgroundType === 'blur') {
-          // Final check before applying processor
-          if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
-            console.warn('[CameraSettings] Stream state changed before applying blur, aborting');
-            return;
-          }
+          // Track state was already validated - proceed with applying blur
           
           // Get advanced blur configuration - use custom settings if enabled
           const config = getBlurConfig(
@@ -448,6 +479,13 @@ export function CameraSettings() {
           const cacheKey = useCustomSegmentation && customSegmentation
             ? `custom-${JSON.stringify(customSegmentation)}`
             : blurQuality;
+          
+          // Check effect is still active before creating processor
+          if (!isEffectActive) {
+            console.log('[CameraSettings] Effect cancelled before blur processor creation');
+            await restoreVideoTrack();
+            return;
+          }
           
           // CRITICAL FIX: Always create a FRESH processor when quality changes
           // DO NOT reuse cached processors - they have stale state that causes issues
@@ -465,18 +503,38 @@ export function CameraSettings() {
           // Update cache with new processor (for reference only, not reused)
           processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
           
+          // Check effect is still active after processor creation
+          if (!isEffectActive) {
+            console.log('[CameraSettings] Effect cancelled after blur processor creation');
+            restoreConsoleWarn();
+            await restoreVideoTrack();
+            return;
+          }
+          
           try {
-            // One more check right before setProcessor
-            if (mediaStreamTrack.readyState !== 'live') {
-              console.warn('[CameraSettings] Stream closed right before setProcessor, aborting');
-              return;
-            }
-            
             // setProcessor() handles stopping the old processor internally without closing the stream
             await track.setProcessor(blurProcessor);
             
-            // Give the processor a brief moment to initialize
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Check effect is still active after setProcessor
+            if (!isEffectActive) {
+              console.log('[CameraSettings] Effect cancelled after setProcessor');
+              restoreConsoleWarn();
+              await restoreVideoTrack();
+              return;
+            }
+            
+            // CRITICAL: Wait for processor to fully initialize before showing video
+            // The blur processor needs time (300ms) to process initial frames and stabilize
+            // This prevents showing unblurred or partially processed frames to other participants
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Final check before marking as complete
+            if (!isEffectActive) {
+              console.log('[CameraSettings] Effect cancelled during processor initialization');
+              restoreConsoleWarn();
+              await restoreVideoTrack();
+              return;
+            }
             
             currentProcessorRef.current = { 
               type: 'blur', 
@@ -486,8 +544,12 @@ export function CameraSettings() {
             };
             console.log('[CameraSettings] Blur processor applied successfully, stream remains active');
             restoreConsoleWarn();
+            
+            // Unmute track now that blur is ready
+            await restoreVideoTrack();
           } catch (processorError) {
             restoreConsoleWarn();
+            await restoreVideoTrack(); // Always restore video on error
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying blur processor:', processorError.message);
               return;
@@ -496,11 +558,7 @@ export function CameraSettings() {
           }
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
-          // Final check before applying processor
-          if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
-            console.warn('[CameraSettings] Stream state changed before applying virtual background, aborting');
-            return;
-          }
+          // Track state was already validated - proceed with applying virtual background
           
           // Generate cache key
           const cacheKey = `${backgroundType}:${virtualBackgroundImagePath}`;
@@ -520,23 +578,22 @@ export function CameraSettings() {
           processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
           
           try {
-            // One more check right before setProcessor
-            if (mediaStreamTrack.readyState !== 'live') {
-              console.warn('[CameraSettings] Stream closed right before setProcessor, aborting');
-              return;
-            }
-            
             // setProcessor() handles stopping the old processor internally
             await track.setProcessor(virtualBgProcessor);
             
-            // Give the processor a brief moment to initialize
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Wait for processor to fully initialize before showing video
+            // Virtual backgrounds also need time to process and stabilize
+            await new Promise(resolve => setTimeout(resolve, 300));
             
             currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
             console.log('[CameraSettings] Virtual background applied successfully, stream remains active');
             restoreConsoleWarn();
+            
+            // Unmute track now that effect is ready
+            await restoreVideoTrack();
           } catch (processorError) {
             restoreConsoleWarn();
+            await restoreVideoTrack(); // Always restore video on error
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying virtual background:', processorError.message);
               return;
@@ -545,11 +602,7 @@ export function CameraSettings() {
           }
           
         } else if ((backgroundType === 'custom-video' || backgroundType === 'custom-image') && selectedCustomBgId) {
-          // Final check before applying processor
-          if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
-            console.warn('[CameraSettings] Stream state changed before applying custom background, aborting');
-            return;
-          }
+          // Track state was already validated - proceed with applying custom background
           
           // Handle custom backgrounds from IndexedDB
           const customBg = customBackgrounds.find(bg => bg.id === selectedCustomBgId);
@@ -567,23 +620,22 @@ export function CameraSettings() {
             processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
             
             try {
-              // One more check right before setProcessor
-              if (mediaStreamTrack.readyState !== 'live') {
-                console.warn('[CameraSettings] Stream closed right before setProcessor, aborting');
-                return;
-              }
-              
               // setProcessor() handles stopping the old processor internally
               await track.setProcessor(virtualBgProcessor);
               
-              // Give the processor a brief moment to initialize
-              await new Promise(resolve => setTimeout(resolve, 50));
+              // Wait for processor to fully initialize before showing video
+              // Custom backgrounds also need time to process and stabilize
+              await new Promise(resolve => setTimeout(resolve, 300));
               
               currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
               console.log('[CameraSettings] Custom background applied successfully, stream remains active:', customBg.name);
               restoreConsoleWarn();
+              
+              // Unmute track now that effect is ready
+              await restoreVideoTrack();
             } catch (processorError) {
               restoreConsoleWarn();
+              await restoreVideoTrack(); // Always restore video on error
               if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
                 console.warn('[CameraSettings] Stream closed while applying custom background:', processorError.message);
                 return;
@@ -601,8 +653,12 @@ export function CameraSettings() {
               currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
               console.log('[CameraSettings] Processor stopped successfully');
               restoreConsoleWarn();
+              
+              // Unmute track since no effect is being applied
+              await restoreVideoTrack();
             } catch (stopError) {
               restoreConsoleWarn();
+              await restoreVideoTrack(); // Always restore video even on error
               if (stopError instanceof DOMException && stopError.name === 'InvalidStateError') {
                 console.warn('[CameraSettings] Stream closed while stopping processor:', stopError.message);
               } else {
@@ -613,15 +669,27 @@ export function CameraSettings() {
             console.warn('[CameraSettings] Cannot stop processor - stream is not live');
             currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
             restoreConsoleWarn();
+            await restoreVideoTrack(); // Always restore video
           }
         }
         
       } catch (error) {
-        // Handle errors gracefully
+        // Handle errors gracefully and always restore video
         if (error instanceof DOMException && error.name === 'InvalidStateError') {
           console.warn('[CameraSettings] Track is in invalid state (stream closed), skipping processor update');
         } else {
           console.error('[CameraSettings] Error setting video processor:', error);
+        }
+        
+        // CRITICAL: Always unmute the video track on error to prevent permanent black screen
+        const track = cameraTrack?.track;
+        if (isLocalTrack(track) && track.isMuted) {
+          const mediaStreamTrack = track.mediaStreamTrack;
+          if (mediaStreamTrack?.readyState === 'live') {
+            track.unmute().catch(unmuteError => {
+              console.warn('[CameraSettings] Error unmuting track after processor error:', unmuteError);
+            });
+          }
         }
       } finally {
         // Always clear the applying flag
@@ -632,6 +700,11 @@ export function CameraSettings() {
 
     // Apply immediately - no debounce to prevent background exposure
     applyProcessor();
+    
+    // Cleanup function to cancel ongoing operations
+    return () => {
+      isEffectActive = false;
+    };
   }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation]);
 
   // Cleanup processors on unmount
