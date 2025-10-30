@@ -39,10 +39,60 @@ export function CustomPreJoin({
     defaults?.audioEnabled ?? savedPrefs.audioEnabled ?? true
   );
 
+  // Validate that saved devices are still available
+  const [validatedDeviceIds, setValidatedDeviceIds] = React.useState<{
+    video?: string;
+    audio?: string;
+  }>({
+    video: savedPrefs.videoDeviceId,
+    audio: savedPrefs.audioDeviceId,
+  });
+
+  // Validate devices on mount
+  React.useEffect(() => {
+    const validateDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        const audioDevices = devices.filter(d => d.kind === 'audioinput');
+        
+        let videoIdValid = !savedPrefs.videoDeviceId;
+        let audioIdValid = !savedPrefs.audioDeviceId;
+        
+        if (savedPrefs.videoDeviceId) {
+          videoIdValid = videoDevices.some(d => d.deviceId === savedPrefs.videoDeviceId);
+          if (!videoIdValid) {
+            console.log('[CustomPreJoin] Saved video device not found, will use default');
+            saveUserPreferences({ videoDeviceId: undefined });
+          }
+        }
+        
+        if (savedPrefs.audioDeviceId) {
+          audioIdValid = audioDevices.some(d => d.deviceId === savedPrefs.audioDeviceId);
+          if (!audioIdValid) {
+            console.log('[CustomPreJoin] Saved audio device not found, will use default');
+            saveUserPreferences({ audioDeviceId: undefined });
+          }
+        }
+        
+        setValidatedDeviceIds({
+          video: videoIdValid ? savedPrefs.videoDeviceId : undefined,
+          audio: audioIdValid ? savedPrefs.audioDeviceId : undefined,
+        });
+      } catch (error) {
+        console.error('[CustomPreJoin] Error validating devices:', error);
+        // Clear invalid devices
+        setValidatedDeviceIds({ video: undefined, audio: undefined });
+      }
+    };
+    
+    validateDevices();
+  }, []);
+
   const tracks = usePreviewTracks(
     {
-      audio: audioEnabled ? { deviceId: savedPrefs.audioDeviceId } : false,
-      video: videoEnabled ? { deviceId: savedPrefs.videoDeviceId } : false,
+      audio: audioEnabled ? { deviceId: validatedDeviceIds.audio } : false,
+      video: videoEnabled ? { deviceId: validatedDeviceIds.video } : false,
     },
     onError,
   );

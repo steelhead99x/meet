@@ -1,94 +1,209 @@
-/* Screen Share PIP Mode Styles */
+/* Screen Share PIP Overlay Styles */
 
-/* When in PIP mode, make the entire app compact and always visible */
-body.pip-mode {
-  /* Ensure the window stays in a compact, fixed size */
+/* Floating PIP container */
+.screenshare-pip-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 480px;
+  max-width: 854px;
+  min-width: 320px;
+  z-index: 10000;
+  background: rgba(15, 15, 15, 0.98);
+  border: 2px solid rgba(59, 130, 246, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  user-select: none;
+  transition: box-shadow 0.2s ease;
+}
+
+.screenshare-pip-container:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.9),
+              0 0 0 2px rgba(59, 130, 246, 0.8);
+}
+
+/* Drag handle at the top */
+.pip-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.15);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  cursor: grab;
+}
+
+.pip-drag-handle:active {
+  cursor: grabbing;
+}
+
+.pip-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pip-drag-icon {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: bold;
+  letter-spacing: -2px;
+}
+
+/* Content area */
+.pip-content {
+  padding: 8px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Grid layout for participants */
+.pip-grid {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  width: 100%;
+}
+
+/* Responsive grid based on number of participants */
+.pip-grid:has(.pip-participant:nth-child(1):last-child) {
+  grid-template-columns: 1fr;
+}
+
+.pip-grid:has(.pip-participant:nth-child(2)) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.pip-grid:has(.pip-participant:nth-child(3)),
+.pip-grid:has(.pip-participant:nth-child(4)) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.pip-grid:has(.pip-participant:nth-child(5)),
+.pip-grid:has(.pip-participant:nth-child(6)) {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.pip-grid:has(.pip-participant:nth-child(7)) {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Individual participant tile */
+.pip-participant {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+/* Style the participant tiles inside PIP */
+.pip-participant .lk-participant-tile {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 6px !important;
   overflow: hidden;
 }
 
-body.pip-mode .lk-room-container {
-  width: 100vw !important;
-  height: 100vh !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  z-index: 999999 !important;
-  background: rgba(0, 0, 0, 0.95) !important;
-  border: 2px solid #3b82f6 !important;
-  border-radius: 8px !important;
+/* Make participant names smaller in PIP */
+.pip-participant .lk-participant-metadata {
+  font-size: 10px !important;
 }
 
-/* Make video tiles smaller and more compact in PIP mode */
-body.pip-mode [data-lk-theme] .lk-grid-layout {
-  padding: 8px !important;
-  gap: 4px !important;
+.pip-participant .lk-participant-name {
+  font-size: 10px !important;
+  padding: 4px 6px !important;
 }
 
-body.pip-mode [data-lk-theme] .lk-participant-tile {
-  border-radius: 6px !important;
+.pip-participant .lk-participant-metadata-item {
+  padding: 3px 6px !important;
+  font-size: 10px !important;
 }
 
-/* Hide chat in PIP mode to save space */
-body.pip-mode [data-lk-theme] .lk-chat,
-body.pip-mode [data-lk-theme] .lk-chat-toggle {
+/* Hide connection quality in PIP to save space */
+.pip-participant .lk-connection-quality {
   display: none !important;
 }
 
-/* Keep control bar compact */
-body.pip-mode [data-lk-theme] .lk-control-bar {
-  padding: 8px !important;
-  min-height: 60px !important;
+/* Empty state */
+.pip-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  text-align: center;
+  padding: 20px;
 }
 
-/* Hide settings menu in PIP mode */
-body.pip-mode [data-lk-theme] .lk-settings-menu-toggle,
-body.pip-mode [data-lk-theme] button[aria-label*="Settings"] {
-  display: none !important;
+/* When screen sharing is active, ensure the main video conference shows the screen share prominently */
+body.screenshare-pip-active [data-lk-theme] .lk-focus-layout {
+  /* Screen share should be in focus layout automatically */
 }
 
-/* Make buttons slightly smaller in PIP mode */
-body.pip-mode [data-lk-theme] .lk-control-bar button {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
+/* Hide the regular grid of camera feeds when PIP is showing them */
+body.screenshare-pip-active [data-lk-theme] .lk-grid-layout .lk-participant-tile[data-lk-source="camera"] {
+  /* Don't hide - let LiveKit handle layout, PIP shows additional view */
 }
 
-/* Add a visual indicator that we're in PIP mode */
-body.pip-mode::before {
-  content: 'PIP MODE - Screen Sharing Active';
-  position: fixed;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #3b82f6;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  z-index: 1000000;
-  pointer-events: none;
-  letter-spacing: 0.5px;
+/* Ensure screen share takes prominent position */
+body.screenshare-pip-active [data-lk-theme] .lk-participant-tile[data-lk-source="screen_share"] {
+  /* Screen share should be prominent in main view */
 }
 
-/* Ensure participant names are still visible but smaller */
-body.pip-mode [data-lk-theme] .lk-participant-metadata {
-  font-size: 11px !important;
+/* Scrollbar styling for PIP content */
+.pip-content::-webkit-scrollbar {
+  width: 6px;
 }
 
-body.pip-mode [data-lk-theme] .lk-participant-name {
-  font-size: 11px !important;
+.pip-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
-/* Hide non-essential UI elements */
-body.pip-mode [data-lk-theme] .lk-focus-toggle,
-body.pip-mode [data-lk-theme] .lk-start-audio-button {
-  display: none !important;
+.pip-content::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 3px;
 }
 
-/* Make the screen share track not display in PIP view to save space */
-body.pip-mode [data-lk-theme] .lk-participant-tile[data-lk-source="screen_share"] {
-  display: none !important;
+.pip-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* Resize handle (optional - can add later) */
+.pip-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(59, 130, 246, 0.5) 50%);
+}
+
+/* Animation for PIP appearance */
+@keyframes pipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(var(--pip-x, 20px), var(--pip-y, 20px)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(var(--pip-x, 20px), var(--pip-y, 20px)) scale(1);
+  }
+}
+
+.screenshare-pip-container {
+  animation: pipFadeIn 0.3s ease-out;
 }
 

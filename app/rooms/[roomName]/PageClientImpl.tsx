@@ -35,6 +35,7 @@ import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
+import { CarouselNavigation } from '@/lib/CarouselNavigation';
 // Note: LiveKit v2 chat uses native sendChatMessage() API
 // E2EE only applies to media tracks, not chat messages
 
@@ -319,10 +320,38 @@ function VideoConferenceComponent(props: {
       const errorMessage = error instanceof Error && error.message 
         ? error.message 
         : 'An unexpected error occurred';
-      toast.error(`Encountered an unexpected error: ${errorMessage}`, {
-        duration: 5000,
-        position: 'top-center',
-      });
+      const errorName = error instanceof Error ? error.name : '';
+      
+      // Provide better error messages based on error type
+      if (errorName === 'NotReadableError') {
+        // NotReadableError typically occurs with screen sharing or when device is in use
+        toast.error('Could not access media device. It may be in use by another application or tab.', {
+          duration: 7000,
+          position: 'top-center',
+        });
+      } else if (errorMessage.includes('Could not start video source') || 
+                 errorMessage.includes('Timeout starting video source') ||
+                 (error instanceof Error && error.name === 'AbortError')) {
+        toast.error('Camera or screen share failed to start. Please check permissions and try again.', {
+          duration: 7000,
+          position: 'top-center',
+        });
+      } else if (errorName === 'NotAllowedError' || errorMessage.includes('Permission denied')) {
+        toast.error('Permission denied. Please allow camera/microphone access and try again.', {
+          duration: 6000,
+          position: 'top-center',
+        });
+      } else if (errorName === 'NotFoundError') {
+        toast.error('Camera or microphone not found. Please check your device connections.', {
+          duration: 6000,
+          position: 'top-center',
+        });
+      } else {
+        toast.error(`Encountered an unexpected error: ${errorMessage}`, {
+          duration: 5000,
+          position: 'top-center',
+        });
+      }
     },
     handleEncryptionError: (error: Error | unknown) => {
       console.error(error);
@@ -380,11 +409,58 @@ function VideoConferenceComponent(props: {
         // Enable tracks - CameraSettings will apply blur immediately when tracks become available
         // The blur will be applied before the track is published to other participants
         if (audioEnabled) {
-          await room.localParticipant.setMicrophoneEnabled(true);
+          try {
+            await room.localParticipant.setMicrophoneEnabled(true);
+          } catch (error) {
+            console.error('Failed to enable microphone:', error);
+            toast.error('Could not enable microphone', {
+              duration: 4000,
+              position: 'top-center',
+            });
+          }
         }
         
         if (videoEnabled) {
-          await room.localParticipant.setCameraEnabled(true);
+          try {
+            await room.localParticipant.setCameraEnabled(true);
+          } catch (error) {
+            console.error('Failed to enable camera with selected device:', error);
+            
+            // If camera fails (likely due to invalid deviceId), try with default device
+            if (videoDeviceId) {
+              console.log('Retrying camera with default device...');
+              try {
+                // Clear the problematic deviceId from localStorage
+                const { saveUserPreferences } = await import('@/lib/userPreferences');
+                saveUserPreferences({ videoDeviceId: undefined });
+                
+                // Recreate room without specific deviceId
+                const roomOptions = room.options;
+                if (roomOptions.videoCaptureDefaults) {
+                  roomOptions.videoCaptureDefaults.deviceId = undefined;
+                }
+                
+                // Try enabling camera again (LiveKit will use default device)
+                await room.localParticipant.setCameraEnabled(true);
+                
+                toast.success('Switched to default camera', {
+                  duration: 3000,
+                  position: 'top-center',
+                });
+              } catch (retryError) {
+                console.error('Failed to enable camera with default device:', retryError);
+                toast.error('Camera could not be started. Please check permissions.', {
+                  duration: 5000,
+                  position: 'top-center',
+                });
+              }
+            } else {
+              toast.error('Camera could not be started. Please check permissions.', {
+                duration: 5000,
+                position: 'top-center',
+              });
+            }
+          }
         }
         
         // Reassert E2EE key after connection to ensure worker picks up keys for local participant
@@ -401,7 +477,7 @@ function VideoConferenceComponent(props: {
     };
     
     connectToRoom();
-  }, [room, e2eeSetupComplete, connectOptions, e2eeEnabled, keyProvider, e2eePassphrase, serverUrl, participantToken, videoEnabled, audioEnabled]);
+  }, [room, e2eeSetupComplete, connectOptions, e2eeEnabled, keyProvider, e2eePassphrase, serverUrl, participantToken, videoEnabled, audioEnabled, videoDeviceId]);
 
   // Cleanup - let LiveKit handle track cleanup automatically
   React.useEffect(() => {
@@ -438,6 +514,7 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
       <ReconnectionBanner />
       <ConnectionQualityTooltip />
       <ScreenSharePIP />
+      <CarouselNavigation />
       <VideoConference
         SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         chatMessageFormatter={formatChatMessageLinks}

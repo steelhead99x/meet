@@ -1,0 +1,82 @@
+/* Carousel Navigation Arrows */
+
+.carouselNavButton {
+  position: fixed;
+  bottom: 85px; /* Position vertically centered with carousel */
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20; /* Above carousel (z-index: 10) */
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.carouselNavButton:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.carouselNavButton:active {
+  transform: scale(0.95);
+}
+
+.carouselNavButton svg {
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+/* Position left arrow */
+.carouselNavLeft {
+  right: calc(280px + 30px); /* Carousel width + spacing */
+}
+
+/* Position right arrow */
+.carouselNavRight {
+  right: 10px; /* Close to right edge */
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .carouselNavButton {
+    width: 32px;
+    height: 32px;
+    bottom: 125px; /* Adjust for mobile carousel position */
+  }
+
+  .carouselNavButton svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .carouselNavLeft {
+    right: calc(120px + 20px); /* Mobile carousel width + spacing */
+  }
+
+  .carouselNavRight {
+    right: 8px;
+  }
+}
+
+/* Hide arrows on very small screens */
+@media (max-width: 480px) {
+  .carouselNavButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .carouselNavButton svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+

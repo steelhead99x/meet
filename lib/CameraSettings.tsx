@@ -11,6 +11,14 @@ import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent } from 'li
 import { detectDeviceCapabilities } from './client-utils';
 import { getBlurConfig, getRecommendedBlurQuality, BlurQuality } from './BlurConfig';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
+import {
+  saveCustomBackground,
+  getAllCustomBackgrounds,
+  deleteCustomBackground,
+  getTotalStorageUsed,
+  formatBytes,
+  CustomBackground,
+} from './customBackgrounds';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -47,7 +55,7 @@ const GRADIENT_BACKGROUNDS = [
 ];
 
 // Background options
-type BackgroundType = 'none' | 'blur' | 'image' | 'gradient';
+type BackgroundType = 'none' | 'blur' | 'image' | 'gradient' | 'custom-video' | 'custom-image';
 
 // Helper function to create a canvas with gradient for VirtualBackground
 // Placed outside component to avoid recreation
@@ -78,6 +86,12 @@ const createGradientCanvas = (gradient: string): string => {
 export function CameraSettings() {
   const { cameraTrack, localParticipant } = useLocalParticipant();
   
+  // Custom backgrounds state
+  const [customBackgrounds, setCustomBackgrounds] = React.useState<CustomBackground[]>([]);
+  const [storageUsed, setStorageUsed] = React.useState<number>(0);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
   // Initialize from saved preferences - BLUR ENABLED BY DEFAULT
   const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(() => {
     if (typeof window === 'undefined') return 'blur';
@@ -95,7 +109,29 @@ export function CameraSettings() {
     const prefs = loadUserPreferences();
     return prefs.backgroundPath || null;
   });
+  
+  // Custom background ID for tracking which custom background is selected
+  const [selectedCustomBgId, setSelectedCustomBgId] = React.useState<string | null>(null);
 
+  // Load custom backgrounds on mount
+  React.useEffect(() => {
+    loadCustomBackgrounds();
+  }, []);
+  
+  const loadCustomBackgrounds = async () => {
+    try {
+      const backgrounds = await getAllCustomBackgrounds();
+      setCustomBackgrounds(backgrounds);
+      
+      const storage = await getTotalStorageUsed();
+      setStorageUsed(storage);
+      
+      console.log('[CameraSettings] Loaded custom backgrounds:', backgrounds.length);
+    } catch (error) {
+      console.error('Failed to load custom backgrounds:', error);
+    }
+  };
+  
   // Detect device capabilities and determine recommended blur quality
   const [blurQuality, setBlurQuality] = React.useState<BlurQuality>(() => {
     if (typeof window === 'undefined') return 'medium';
@@ -286,7 +322,7 @@ export function CameraSettings() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      {camTrackRef && (
+      {camTrackRef ? (
         <VideoTrack
           style={{
             maxHeight: '280px',
@@ -295,6 +331,21 @@ export function CameraSettings() {
             transform: 'scaleX(-1)',
           }}
           trackRef={camTrackRef}
+        />
+      ) : (
+        <video
+          className="lk-participant-media-video"
+          data-lk-local-participant="true"
+          data-lk-source="camera"
+          data-lk-orientation="landscape"
+          style={{
+            maxHeight: '280px',
+            objectFit: 'contain',
+            objectPosition: 'right center',
+            transform: 'scaleX(-1)',
+          }}
+          autoPlay
+          playsInline
         />
       )}
 

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Icon Demo - Before & After</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+      color: white;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 60px;
+      font-size: 1.1rem;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 60px;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .section .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    .tag.old {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .tag.new {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .button-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .size-label {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    /* Old button styles - fixed size */
+    .btn-old {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-old:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-old svg {
+      width: 16px !important;
+      height: 16px !important;
+      fill: currentColor;
+      color: white;
+    }
+
+    /* New button styles - responsive */
+    .btn-new {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .btn-new:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px) scale(1.05);
+    }
+
+    .btn-new svg {
+      width: clamp(18px, 4vw, 24px) !important;
+      height: clamp(18px, 4vw, 24px) !important;
+      fill: currentColor;
+      color: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform 0.2s ease;
+    }
+
+    .btn-new:hover svg {
+      transform: translate(-50%, -50%) rotate(90deg) scale(1.1);
+    }
+
+    .info-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 40px;
+    }
+
+    .info-box h3 {
+      color: #60a5fa;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .info-box li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .info-box li:before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    .responsive-demo {
+      margin-top: 60px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px;
+    }
+
+    .responsive-demo h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.8rem;
+    }
+
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .device-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .device-card h4 {
+      color: #60a5fa;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+
+    .device-card .size-range {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .device-card button {
+      margin: 10px auto;
+    }
+
+    @media (max-width: 768px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .device-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #60a5fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Responsive Icon Improvements</h1>
+    <p class="subtitle">Dynamic scaling for better UX across all devices</p>
+
+    <div class="comparison">
+      <div class="section">
+        <h2>Before</h2>
+        <span class="tag old">Fixed Size</span>
+        
+        <div class="button-showcase">
+          <div>
+            <div class="size-label">Desktop (1920px+)</div>
+            <button class="btn-old" aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+              </svg>
+            </button>
+            <div class="size-label">Icon: 16px (Fixed)</div>
+          </div>
+
+          <div>
+            <div class="size-label">Mobile (375px)</div>
+            <button class="btn-old" aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+              </svg>
+            </button>
+            <div class="size-label">Icon: 16px (Fixed)</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">
+          <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
+            ❌ Same size on all devices<br>
+            ❌ No hover animation<br>
+            ❌ Hard-coded dimensions
+          </p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>After</h2>
+        <span class="tag new">Responsive</span>
+        
+        <div class="button-showcase">
+          <div>
+            <div class="size-label">Desktop (1920px+)</div>
+            <button class="btn-new" aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+              </svg>
+            </button>
+            <div class="size-label">Icon: 20-24px (Adaptive)</div>
+          </div>
+
+          <div>
+            <div class="size-label">Mobile (375px)</div>
+            <button class="btn-new" aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+              </svg>
+            </button>
+            <div class="size-label">Icon: 16-18px (Adaptive)</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
+          <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
+            ✓ Scales with screen size<br>
+            ✓ Rotate animation on hover<br>
+            ✓ CSS-controlled sizing
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <h3>🚀 Key Improvements</h3>
+      <ul>
+        <li>Uses <code>clamp(18px, 4vw, 24px)</code> for fluid, responsive sizing</li>
+        <li>90° rotation animation on hover for better visual feedback</li>
+        <li>Automatic scaling across all devices without JavaScript</li>
+        <li>Maintains WCAG 2.1 touch target size (44x44px minimum)</li>
+        <li>Works with <code>currentColor</code> for theme compatibility</li>
+        <li>Smooth transitions for professional feel</li>
+      </ul>
+    </div>
+
+    <div class="responsive-demo">
+      <h2>📱 Device-Specific Scaling</h2>
+      
+      <div class="device-grid">
+        <div class="device-card">
+          <h4>🖥️ Desktop</h4>
+          <div class="size-range">Screen: >1024px<br>Icon: 20-24px</div>
+          <button class="btn-new" aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="device-card">
+          <h4>💻 Tablet</h4>
+          <div class="size-range">Screen: 769-1024px<br>Icon: 18-20px</div>
+          <button class="btn-new" aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="device-card">
+          <h4>📱 Mobile</h4>
+          <div class="size-range">Screen: 481-768px<br>Icon: 18-20px</div>
+          <button class="btn-new" aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="device-card">
+          <h4>📲 Small Mobile</h4>
+          <div class="size-range">Screen: ≤480px<br>Icon: 16-18px</div>
+          <button class="btn-new" aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M4.99 3.99a1 1 0 0 0-.697 1.717L10.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414L12 13.414l6.293 6.293a1 1 0 1 0 1.414-1.414L13.414 12l6.293-6.293a1 1 0 0 0-.727-1.717 1 1 0 0 0-.687.303L12 10.586 5.707 4.293a1 1 0 0 0-.717-.303z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 60px; padding: 30px; background: rgba(59, 130, 246, 0.05); border-radius: 12px;">
+      <h3 style="color: #60a5fa; margin-bottom: 15px;">💡 Pro Tip</h3>
+      <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.6;">
+        Try resizing your browser window to see the icons scale in real-time!<br>
+        Hover over the "After" buttons to see the rotation animation.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+

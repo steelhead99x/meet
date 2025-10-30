@@ -23,6 +23,7 @@ import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { ConnectionQualityTooltip } from '@/lib/ConnectionQualityTooltip';
 import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
+import { CarouselNavigation } from '@/lib/CarouselNavigation';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -145,10 +146,39 @@ export function VideoConferenceClientImpl(props: {
   const handlersRef = useRef({
     handleError: (error: Error) => {
       console.error('Room error:', error);
-      toast.error(`Error: ${error.message}`, {
-        duration: 5000,
-        position: 'top-center',
-      });
+      const errorMessage = error.message || 'An unexpected error occurred';
+      const errorName = error.name || '';
+      
+      // Provide better error messages based on error type
+      if (errorName === 'NotReadableError') {
+        // NotReadableError typically occurs with screen sharing or when device is in use
+        toast.error('Could not access media device. It may be in use by another application or tab.', {
+          duration: 7000,
+          position: 'top-center',
+        });
+      } else if (errorMessage.includes('Could not start video source') || 
+                 errorMessage.includes('Timeout starting video source') ||
+                 errorName === 'AbortError') {
+        toast.error('Camera or screen share failed to start. Please check permissions and try again.', {
+          duration: 7000,
+          position: 'top-center',
+        });
+      } else if (errorName === 'NotAllowedError' || errorMessage.includes('Permission denied')) {
+        toast.error('Permission denied. Please allow camera/microphone access and try again.', {
+          duration: 6000,
+          position: 'top-center',
+        });
+      } else if (errorName === 'NotFoundError') {
+        toast.error('Camera or microphone not found. Please check your device connections.', {
+          duration: 6000,
+          position: 'top-center',
+        });
+      } else {
+        toast.error(`Error: ${errorMessage}`, {
+          duration: 5000,
+          position: 'top-center',
+        });
+      }
     },
   });
 
@@ -223,6 +253,7 @@ export function VideoConferenceClientImpl(props: {
           <ReconnectionBanner />
           <ConnectionQualityTooltip />
           <ScreenSharePIP />
+          <CarouselNavigation />
           <VideoConference
             SettingsComponent={
               process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
