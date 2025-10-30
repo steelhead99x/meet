@@ -267,14 +267,24 @@ export function CameraSettings() {
   };
   
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[CameraSettings] File input changed');
     const file = event.target.files?.[0];
-    if (!file) return;
     
+    if (!file) {
+      console.log('[CameraSettings] No file selected');
+      return;
+    }
+    
+    console.log('[CameraSettings] File selected:', file.name, file.type, file.size);
     setIsUploading(true);
     
     try {
+      console.log('[CameraSettings] Saving custom background...');
       const customBg = await saveCustomBackground(file);
+      console.log('[CameraSettings] Custom background saved:', customBg);
+      
       await loadCustomBackgrounds();
+      console.log('[CameraSettings] Custom backgrounds reloaded');
       
       // Auto-select the newly uploaded background
       const bgType = customBg.type === 'video' ? 'custom-video' : 'custom-image';
@@ -282,7 +292,7 @@ export function CameraSettings() {
       
       console.log('[CameraSettings] Uploaded custom background:', customBg.name);
     } catch (error) {
-      console.error('Failed to upload custom background:', error);
+      console.error('[CameraSettings] Failed to upload custom background:', error);
       alert(error instanceof Error ? error.message : 'Failed to upload file');
     } finally {
       setIsUploading(false);
@@ -360,53 +370,55 @@ export function CameraSettings() {
             ? `custom-${JSON.stringify(customSegmentation)}`
             : blurQuality;
           
-          // Get or create blur processor for current configuration
-          let blurProcessor = processorCacheRef.current.blur?.get(cacheKey as any);
-          if (!blurProcessor) {
-            console.log(`[BlurConfig] Creating blur processor with config:`, config);
-            
-            // Create blur processor with quality-specific or custom settings
-            blurProcessor = BackgroundProcessor({
-              blurRadius: config.blurRadius,
-              segmenterOptions: {
-                delegate: config.segmenterOptions.delegate,
-              },
-            }, 'background-blur');
-            
-            processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
-          }
+          // CRITICAL FIX: Always create a FRESH processor when quality changes
+          // DO NOT reuse cached processors - they have stale state that causes issues
+          // DO NOT call stopProcessor() first - it closes the stream and causes black screen
+          // LiveKit's setProcessor() will handle stopping the old processor internally
+          console.log(`[CameraSettings] Creating fresh blur processor for quality:`, blurQuality, config);
           
+          const blurProcessor = BackgroundProcessor({
+            blurRadius: config.blurRadius,
+            segmenterOptions: {
+              delegate: config.segmenterOptions.delegate,
+            },
+          }, 'background-blur');
+          
+          // Update cache with new processor (for reference only, not reused)
+          processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
+          
+          // setProcessor() handles stopping the old processor internally without closing the stream
           await track.setProcessor(blurProcessor);
+          
           currentProcessorRef.current = { 
             type: 'blur', 
             path: null, 
             quality: blurQuality,
             customSettings: customSettingsStr
           };
-          console.log('[CameraSettings] Blur applied immediately to protect privacy');
+          console.log('[CameraSettings] Blur processor applied successfully, stream remains active');
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
           // Generate cache key
           const cacheKey = `${backgroundType}:${virtualBackgroundImagePath}`;
           
-          // Get or create virtual background processor
-          let virtualBgProcessor = processorCacheRef.current.virtualBackground?.get(cacheKey);
-          if (!virtualBgProcessor) {
-            let imagePath = virtualBackgroundImagePath;
-            
-            // For gradient, generate the canvas data URL
-            if (backgroundType === 'gradient') {
-              imagePath = createGradientCanvas(virtualBackgroundImagePath);
-            }
-            
-            virtualBgProcessor = VirtualBackground(imagePath, {
-              delegate: 'GPU',
-            });
-            processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
+          // Always create fresh virtual background processor to avoid state issues
+          let imagePath = virtualBackgroundImagePath;
+          
+          // For gradient, generate the canvas data URL
+          if (backgroundType === 'gradient') {
+            imagePath = createGradientCanvas(virtualBackgroundImagePath);
           }
           
+          console.log('[CameraSettings] Creating fresh virtual background processor');
+          const virtualBgProcessor = VirtualBackground(imagePath, {
+            delegate: 'GPU',
+          });
+          processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
+          
+          // setProcessor() handles stopping the old processor internally
           await track.setProcessor(virtualBgProcessor);
           currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
+          console.log('[CameraSettings] Virtual background applied successfully, stream remains active');
           
         } else if ((backgroundType === 'custom-video' || backgroundType === 'custom-image') && selectedCustomBgId) {
           // Handle custom backgrounds from IndexedDB
@@ -414,20 +426,20 @@ export function CameraSettings() {
           if (customBg) {
             const cacheKey = `custom:${selectedCustomBgId}`;
             
-            let virtualBgProcessor = processorCacheRef.current.virtualBackground?.get(cacheKey);
-            if (!virtualBgProcessor) {
-              // Create object URL from blob
-              const blobUrl = URL.createObjectURL(customBg.data);
-              
-              virtualBgProcessor = VirtualBackground(blobUrl, {
-                delegate: 'GPU',
-              });
-              processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
-            }
+            // Always create fresh custom background processor to avoid state issues
+            // Create object URL from blob
+            const blobUrl = URL.createObjectURL(customBg.data);
             
+            console.log('[CameraSettings] Creating fresh custom background processor:', customBg.name);
+            const virtualBgProcessor = VirtualBackground(blobUrl, {
+              delegate: 'GPU',
+            });
+            processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
+            
+            // setProcessor() handles stopping the old processor internally
             await track.setProcessor(virtualBgProcessor);
             currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
-            console.log('[CameraSettings] Custom background applied:', customBg.name);
+            console.log('[CameraSettings] Custom background applied successfully, stream remains active:', customBg.name);
           }
           
         } else {
@@ -521,7 +533,7 @@ export function CameraSettings() {
             Background Effects
           </div>
           <div
-            title="Tips for best results:&#10;• Use good front lighting&#10;• Avoid backlighting&#10;• Keep background simple&#10;• Adjust Edge Quality slider"
+            title="Tips for best person detection:&#10;&#10;LIGHTING (Most Important):&#10;• Use bright, even lighting from the front&#10;• Avoid windows or bright lights behind you&#10;• Side lighting can create harsh shadows&#10;&#10;CAMERA POSITION:&#10;• Center yourself in the frame&#10;• Keep 1-2 feet of space above your head&#10;• Position camera at eye level&#10;&#10;BACKGROUND:&#10;• Use simple, uncluttered backgrounds&#10;• Avoid complex patterns or textures&#10;• Keep background objects away from you&#10;• Solid walls work better than shelves&#10;&#10;CLOTHING:&#10;• Wear colors that contrast with background&#10;• Avoid patterns that blend with surroundings&#10;&#10;ADVANCED:&#10;• Enable 'High' or 'Ultra' quality in settings&#10;• Use Settings > Advanced > Custom Segmentation&#10;• Enable temporal smoothing to reduce flicker"
             style={{
               cursor: 'help',
               fontSize: '14px',
@@ -722,10 +734,8 @@ export function CameraSettings() {
             );
           })}
           
-          {/* Upload button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
+          {/* Upload button with direct file input */}
+          <label
             className="lk-button lk-button-visual"
             aria-label="Upload custom background"
             style={{
@@ -740,6 +750,7 @@ export function CameraSettings() {
               padding: '8px',
               cursor: isUploading ? 'not-allowed' : 'pointer',
               opacity: isUploading ? 0.6 : 1,
+              position: 'relative',
             }}
           >
             {isUploading ? (
@@ -756,16 +767,30 @@ export function CameraSettings() {
                 </div>
               </>
             )}
-          </button>
-          
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/*,image/*"
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-          />
+            
+            {/* Direct file input that captures clicks */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/ogg"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+              style={{ 
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                zIndex: 1,
+              }}
+              onClick={(e) => {
+                console.log('[CameraSettings] File input clicked directly');
+                e.stopPropagation();
+              }}
+            />
+          </label>
         </div>
         
         {/* Storage info */}

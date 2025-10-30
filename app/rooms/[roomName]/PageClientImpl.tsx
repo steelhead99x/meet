@@ -200,14 +200,35 @@ function VideoConferenceComponent(props: {
 
         const videoCaptureDefaults: VideoCaptureOptions = {
           deviceId: videoDeviceId ?? undefined,
-          resolution: props.hq ? VideoPresets.h2160 : VideoPresets.h720,
+          resolution: props.hq 
+            ? { width: 1920, height: 1080, frameRate: 30 }
+            : { width: 1280, height: 720, frameRate: 30 },
         };
 
         const publishDefaults: TrackPublishDefaults = {
           dtx: true,
+          // Enhanced video encoding for better quality
+          videoEncoding: props.hq 
+            ? {
+                maxBitrate: 3_000_000, // 3 Mbps for high quality
+                maxFramerate: 30,
+              }
+            : {
+                maxBitrate: 2_000_000, // 2 Mbps for standard quality
+                maxFramerate: 30,
+              },
+          // Better simulcast layers with higher bitrates
           videoSimulcastLayers: props.hq
-            ? [VideoPresets.h1080, VideoPresets.h720]
-            : [VideoPresets.h540, VideoPresets.h216],
+            ? [
+                VideoPresets.h1080,
+                VideoPresets.h720,
+                VideoPresets.h360,
+              ]
+            : [
+                VideoPresets.h720,
+                VideoPresets.h360,
+                VideoPresets.h180,
+              ],
           red: !e2eeEnabled,
           videoCodec,
         };
@@ -270,13 +291,34 @@ function VideoConferenceComponent(props: {
         const roomOptions: RoomOptions = {
           videoCaptureDefaults: {
             deviceId: videoDeviceId ?? undefined,
-            resolution: props.hq ? VideoPresets.h2160 : VideoPresets.h720,
+            resolution: props.hq 
+              ? { width: 1920, height: 1080, frameRate: 30 }
+              : { width: 1280, height: 720, frameRate: 30 },
           },
           publishDefaults: {
             dtx: true,
+            // Enhanced video encoding for better quality
+            videoEncoding: props.hq 
+              ? {
+                  maxBitrate: 3_000_000, // 3 Mbps for high quality
+                  maxFramerate: 30,
+                }
+              : {
+                  maxBitrate: 2_000_000, // 2 Mbps for standard quality
+                  maxFramerate: 30,
+                },
+            // Better simulcast layers with higher bitrates
             videoSimulcastLayers: props.hq
-              ? [VideoPresets.h1080, VideoPresets.h720]
-              : [VideoPresets.h540, VideoPresets.h216],
+              ? [
+                  VideoPresets.h1080,
+                  VideoPresets.h720,
+                  VideoPresets.h360,
+                ]
+              : [
+                  VideoPresets.h720,
+                  VideoPresets.h360,
+                  VideoPresets.h180,
+                ],
             red: true,
             videoCodec: props.codec,
           },

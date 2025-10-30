@@ -31,18 +31,19 @@ export function ConnectionQualityTooltip() {
           bottom: calc(100% + 8px);
           left: 50%;
           transform: translateX(-50%);
-          background-color: rgba(0, 0, 0, 0.9);
+          background-color: rgba(0, 0, 0, 0.95);
           color: white;
-          padding: 12px 16px;
+          padding: 14px 18px;
           border-radius: 8px;
           font-size: 12px;
-          white-space: nowrap;
-          z-index: 250;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          white-space: normal;
+          z-index: 9999;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
           pointer-events: none;
           opacity: 0;
           transition: opacity 0.2s;
-          min-width: 200px;
+          min-width: 280px;
+          max-width: 320px;
         }
 
         .lk-connection-quality-wrapper:hover .lk-connection-quality-tooltip {
@@ -59,7 +60,7 @@ export function ConnectionQualityTooltip() {
           height: 0;
           border-left: 6px solid transparent;
           border-right: 6px solid transparent;
-          border-top: 6px solid rgba(0, 0, 0, 0.9);
+          border-top: 6px solid rgba(0, 0, 0, 0.95);
         }
 
         .lk-connection-quality-tooltip-title {
@@ -67,20 +68,23 @@ export function ConnectionQualityTooltip() {
           margin-bottom: 8px;
           border-bottom: 1px solid rgba(255,255,255,0.2);
           padding-bottom: 4px;
+          font-size: 13px;
         }
 
         .lk-connection-quality-tooltip-stats {
           display: grid;
-          gap: 4px;
+          gap: 6px;
         }
 
         .lk-connection-quality-tooltip-row {
           display: flex;
           justify-content: space-between;
+          align-items: baseline;
         }
 
         .lk-connection-quality-tooltip-label {
           opacity: 0.8;
+          flex: 1;
         }
 
         .lk-connection-quality-tooltip-value {
@@ -95,6 +99,27 @@ export function ConnectionQualityTooltip() {
           font-size: 10px;
           opacity: 0.6;
           text-align: center;
+        }
+
+        .lk-connection-quality-tooltip-info {
+          margin-top: 8px;
+          padding-top: 8px;
+          border-top: 1px solid rgba(255,255,255,0.2);
+          font-size: 10px;
+          opacity: 0.7;
+          line-height: 1.4;
+        }
+
+        .lk-stat-good {
+          color: #4ade80;
+        }
+
+        .lk-stat-fair {
+          color: #fbbf24;
+        }
+
+        .lk-stat-poor {
+          color: #f87171;
         }
       `;
       document.head.appendChild(style);
@@ -131,37 +156,68 @@ export function ConnectionQualityTooltip() {
       wrapper.addEventListener('mouseenter', async () => {
         try {
           const stats = await fetchParticipantStats(participant);
+          
+          // Determine quality classes for each metric
+          const videoBitrateClass = stats.videoBitrate > 1500 ? 'lk-stat-good' : 
+                                   stats.videoBitrate > 500 ? 'lk-stat-fair' : 'lk-stat-poor';
+          const audioBitrateClass = stats.audioBitrate > 64 ? 'lk-stat-good' : 
+                                   stats.audioBitrate > 32 ? 'lk-stat-fair' : 'lk-stat-poor';
+          const videoLossClass = stats.videoPacketsLost < 10 ? 'lk-stat-good' : 
+                                stats.videoPacketsLost < 50 ? 'lk-stat-fair' : 'lk-stat-poor';
+          const audioLossClass = stats.audioPacketsLost < 5 ? 'lk-stat-good' : 
+                                stats.audioPacketsLost < 20 ? 'lk-stat-fair' : 'lk-stat-poor';
+          const videoJitterClass = stats.videoJitter < 30 ? 'lk-stat-good' : 
+                                  stats.videoJitter < 100 ? 'lk-stat-fair' : 'lk-stat-poor';
+          const audioJitterClass = stats.audioJitter < 30 ? 'lk-stat-good' : 
+                                  stats.audioJitter < 100 ? 'lk-stat-fair' : 'lk-stat-poor';
+          
           tooltip.innerHTML = `
             <div class="lk-connection-quality-tooltip-title">${stats.qualityLabel}</div>
             <div class="lk-connection-quality-tooltip-stats">
               <div class="lk-connection-quality-tooltip-row">
                 <span class="lk-connection-quality-tooltip-label">Video Bitrate:</span>
-                <span class="lk-connection-quality-tooltip-value">${stats.videoBitrate} kbps</span>
+                <span class="lk-connection-quality-tooltip-value ${videoBitrateClass}">
+                  ${stats.videoBitrate} kbps
+                </span>
               </div>
               <div class="lk-connection-quality-tooltip-row">
                 <span class="lk-connection-quality-tooltip-label">Audio Bitrate:</span>
-                <span class="lk-connection-quality-tooltip-value">${stats.audioBitrate} kbps</span>
+                <span class="lk-connection-quality-tooltip-value ${audioBitrateClass}">
+                  ${stats.audioBitrate} kbps
+                </span>
               </div>
               <div class="lk-connection-quality-tooltip-row">
                 <span class="lk-connection-quality-tooltip-label">Video Loss:</span>
-                <span class="lk-connection-quality-tooltip-value" style="${stats.videoPacketsLost > 10 ? 'color: #ff6b6b' : ''}">${stats.videoPacketsLost} packets</span>
+                <span class="lk-connection-quality-tooltip-value ${videoLossClass}">
+                  ${stats.videoPacketsLost} packets
+                </span>
               </div>
               <div class="lk-connection-quality-tooltip-row">
                 <span class="lk-connection-quality-tooltip-label">Audio Loss:</span>
-                <span class="lk-connection-quality-tooltip-value" style="${stats.audioPacketsLost > 10 ? 'color: #ff6b6b' : ''}">${stats.audioPacketsLost} packets</span>
+                <span class="lk-connection-quality-tooltip-value ${audioLossClass}">
+                  ${stats.audioPacketsLost} packets
+                </span>
               </div>
               ${stats.videoJitter > 0 ? `
                 <div class="lk-connection-quality-tooltip-row">
                   <span class="lk-connection-quality-tooltip-label">Video Jitter:</span>
-                  <span class="lk-connection-quality-tooltip-value">${stats.videoJitter} ms</span>
+                  <span class="lk-connection-quality-tooltip-value ${videoJitterClass}">
+                    ${stats.videoJitter} ms
+                  </span>
                 </div>
               ` : ''}
               ${stats.audioJitter > 0 ? `
                 <div class="lk-connection-quality-tooltip-row">
                   <span class="lk-connection-quality-tooltip-label">Audio Jitter:</span>
-                  <span class="lk-connection-quality-tooltip-value">${stats.audioJitter} ms</span>
+                  <span class="lk-connection-quality-tooltip-value ${audioJitterClass}">
+                    ${stats.audioJitter} ms
+                  </span>
                 </div>
               ` : ''}
+            </div>
+            <div class="lk-connection-quality-tooltip-info">
+              <strong>Good connection:</strong> High bitrate (video >1500 kbps, audio >64 kbps), low packet loss (<10), low jitter (<30ms).
+              <br><strong>Poor connection:</strong> Low bitrate, high packet loss (>50), high jitter (>100ms).
             </div>
             <div class="lk-connection-quality-tooltip-footer">
               Updated: ${new Date().toLocaleTimeString()}
@@ -169,6 +225,14 @@ export function ConnectionQualityTooltip() {
           `;
         } catch (error) {
           console.error('Failed to fetch stats:', error);
+          tooltip.innerHTML = `
+            <div class="lk-connection-quality-tooltip-title">Connection Quality</div>
+            <div class="lk-connection-quality-tooltip-stats">
+              <div class="lk-connection-quality-tooltip-row">
+                <span class="lk-connection-quality-tooltip-label">Unable to fetch stats</span>
+              </div>
+            </div>
+          `;
         }
       });
     };
@@ -193,25 +257,49 @@ export function ConnectionQualityTooltip() {
         if (!participant) return;
 
         // Find connection quality indicator (try multiple approaches)
-        const indicator = 
+        // LiveKit v2 uses different class naming patterns
+        let indicator = 
           tile.querySelector('.lk-connection-quality') ||
-          tile.querySelector('[class*="connection"]') ||
-          Array.from(tile.querySelectorAll('svg')).find(svg => 
-            svg.querySelector('path[d*="M0 11.5"]')
-          );
+          tile.querySelector('[class*="connection-quality"]') ||
+          tile.querySelector('[data-lk-connection-quality]') ||
+          tile.querySelector('[class*="ConnectionQuality"]') ||
+          // Look for SVG with typical connection bars pattern
+          Array.from(tile.querySelectorAll('svg')).find(svg => {
+            const paths = svg.querySelectorAll('path, rect');
+            // Connection quality typically has 3-5 bars/paths
+            return paths.length >= 2 && paths.length <= 6 && svg.getAttribute('viewBox')?.includes('0 0');
+          });
 
         if (indicator) {
           console.log('[ConnectionQualityTooltip] Found indicator for', participantIdentity);
           wrapIndicator(indicator, participant);
+        } else {
+          // Log what elements are in the tile for debugging
+          const classes = Array.from(tile.querySelectorAll('[class]')).map(el => el.className).filter(Boolean);
+          console.log('[ConnectionQualityTooltip] No indicator found for', participantIdentity, 'Available classes:', classes);
         }
       });
     };
 
-    // Run with retries
+    // Run with retries and more logging
+    console.log('[ConnectionQualityTooltip] Starting indicator detection');
     processIndicators();
-    setTimeout(processIndicators, 100);
-    setTimeout(processIndicators, 500);
-    setTimeout(processIndicators, 1000);
+    setTimeout(() => {
+      console.log('[ConnectionQualityTooltip] Retry 1 (100ms)');
+      processIndicators();
+    }, 100);
+    setTimeout(() => {
+      console.log('[ConnectionQualityTooltip] Retry 2 (500ms)');
+      processIndicators();
+    }, 500);
+    setTimeout(() => {
+      console.log('[ConnectionQualityTooltip] Retry 3 (1000ms)');
+      processIndicators();
+    }, 1000);
+    setTimeout(() => {
+      console.log('[ConnectionQualityTooltip] Retry 4 (2000ms)');
+      processIndicators();
+    }, 2000);
 
     // Watch for DOM changes
     const observer = new MutationObserver(() => {

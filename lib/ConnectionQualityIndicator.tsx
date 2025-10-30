@@ -158,16 +158,17 @@ export function ConnectionQualityIndicator({ participant }: { participant: Parti
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: '8px',
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
             color: 'white',
-            padding: '12px 16px',
+            padding: '14px 18px',
             borderRadius: '8px',
             fontSize: '12px',
-            whiteSpace: 'nowrap',
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            whiteSpace: 'normal',
+            zIndex: 9999,
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
             pointerEvents: 'none',
-            minWidth: '200px',
+            minWidth: '280px',
+            maxWidth: '320px',
           }}
         >
           <div style={{ fontWeight: 'bold', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '4px' }}>
@@ -180,27 +181,47 @@ export function ConnectionQualityIndicator({ participant }: { participant: Parti
             </div>
           ) : (
             <>
-              <div style={{ display: 'grid', gap: '4px' }}>
+              <div style={{ display: 'grid', gap: '6px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ opacity: 0.8 }}>Video Bitrate:</span>
-                  <span style={{ fontWeight: 500, marginLeft: '12px' }}>{stats.videoBitrate} kbps</span>
+                  <span style={{ 
+                    fontWeight: 500, 
+                    marginLeft: '12px',
+                    color: stats.videoBitrate > 1500 ? '#4ade80' : stats.videoBitrate > 500 ? '#fbbf24' : '#f87171'
+                  }}>
+                    {stats.videoBitrate} kbps
+                  </span>
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ opacity: 0.8 }}>Audio Bitrate:</span>
-                  <span style={{ fontWeight: 500, marginLeft: '12px' }}>{stats.audioBitrate} kbps</span>
+                  <span style={{ 
+                    fontWeight: 500, 
+                    marginLeft: '12px',
+                    color: stats.audioBitrate > 64 ? '#4ade80' : stats.audioBitrate > 32 ? '#fbbf24' : '#f87171'
+                  }}>
+                    {stats.audioBitrate} kbps
+                  </span>
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ opacity: 0.8 }}>Video Loss:</span>
-                  <span style={{ fontWeight: 500, marginLeft: '12px', color: stats.videoPacketsLost > 10 ? '#ff6b6b' : 'inherit' }}>
+                  <span style={{ 
+                    fontWeight: 500, 
+                    marginLeft: '12px',
+                    color: stats.videoPacketsLost < 10 ? '#4ade80' : stats.videoPacketsLost < 50 ? '#fbbf24' : '#f87171'
+                  }}>
                     {stats.videoPacketsLost} packets
                   </span>
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ opacity: 0.8 }}>Audio Loss:</span>
-                  <span style={{ fontWeight: 500, marginLeft: '12px', color: stats.audioPacketsLost > 10 ? '#ff6b6b' : 'inherit' }}>
+                  <span style={{ 
+                    fontWeight: 500, 
+                    marginLeft: '12px',
+                    color: stats.audioPacketsLost < 5 ? '#4ade80' : stats.audioPacketsLost < 20 ? '#fbbf24' : '#f87171'
+                  }}>
                     {stats.audioPacketsLost} packets
                   </span>
                 </div>
@@ -208,16 +229,41 @@ export function ConnectionQualityIndicator({ participant }: { participant: Parti
                 {stats.videoJitter > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ opacity: 0.8 }}>Video Jitter:</span>
-                    <span style={{ fontWeight: 500, marginLeft: '12px' }}>{stats.videoJitter} ms</span>
+                    <span style={{ 
+                      fontWeight: 500, 
+                      marginLeft: '12px',
+                      color: stats.videoJitter < 30 ? '#4ade80' : stats.videoJitter < 100 ? '#fbbf24' : '#f87171'
+                    }}>
+                      {stats.videoJitter} ms
+                    </span>
                   </div>
                 )}
                 
                 {stats.audioJitter > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ opacity: 0.8 }}>Audio Jitter:</span>
-                    <span style={{ fontWeight: 500, marginLeft: '12px' }}>{stats.audioJitter} ms</span>
+                    <span style={{ 
+                      fontWeight: 500, 
+                      marginLeft: '12px',
+                      color: stats.audioJitter < 30 ? '#4ade80' : stats.audioJitter < 100 ? '#fbbf24' : '#f87171'
+                    }}>
+                      {stats.audioJitter} ms
+                    </span>
                   </div>
                 )}
+              </div>
+              
+              <div style={{ 
+                marginTop: '8px', 
+                paddingTop: '8px', 
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '10px',
+                opacity: 0.7,
+                lineHeight: 1.4
+              }}>
+                <strong>Good:</strong> Video &gt;1500 kbps, Audio &gt;64 kbps, Loss &lt;10, Jitter &lt;30ms
+                <br/>
+                <strong>Poor:</strong> Low bitrate, Loss &gt;50, Jitter &gt;100ms
               </div>
               
               <div style={{ 
@@ -244,7 +290,7 @@ export function ConnectionQualityIndicator({ participant }: { participant: Parti
               height: 0,
               borderLeft: '6px solid transparent',
               borderRight: '6px solid transparent',
-              borderTop: '6px solid rgba(0, 0, 0, 0.9)',
+              borderTop: '6px solid rgba(0, 0, 0, 0.95)',
             }}
           />
         </div>

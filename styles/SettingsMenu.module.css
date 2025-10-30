@@ -1,9 +1,6 @@
 .tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  padding-bottom: 0.5rem;
 }
 
 .tab {
@@ -25,3 +22,45 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.sectionHeader {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin: 8px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.sectionHeader:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sectionHeader:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.expandIcon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.expandIcon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Spinner animation for "Applying changes..." indicator */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}

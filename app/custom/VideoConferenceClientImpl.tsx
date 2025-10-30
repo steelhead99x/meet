@@ -65,8 +65,20 @@ export function VideoConferenceClientImpl(props: {
 
         // Step 2: Create room options with E2EE config
         const roomOptions: RoomOptions = {
+          videoCaptureDefaults: {
+            resolution: { width: 1280, height: 720, frameRate: 30 },
+          },
           publishDefaults: {
-            videoSimulcastLayers: [VideoPresets.h540, VideoPresets.h216],
+            // Enhanced video encoding for better quality
+            videoEncoding: {
+              maxBitrate: 2_000_000, // 2 Mbps for better quality
+              maxFramerate: 30,
+            },
+            videoSimulcastLayers: [
+              VideoPresets.h720,
+              VideoPresets.h360,
+              VideoPresets.h180,
+            ],
             red: !e2eeEnabled,
             videoCodec: props.codec,
           },

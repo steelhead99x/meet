@@ -133,6 +133,28 @@ button[title*="encryption" i] {
   }
 }
 
+@-webkit-keyframes spin {
+  from {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
 /* ===================================
    16:9 Placeholder for Participants
    =================================== */
@@ -197,6 +219,27 @@ button[title*="encryption" i] {
   width: 100%;
   height: 100%;
   border-radius: 8px;
+  
+  /* Enhanced video appearance - HDR-like tone mapping */
+  /* Slightly increase brightness for better facial visibility */
+  /* Boost contrast for more depth and definition */
+  /* Subtle saturation increase for more vibrant skin tones */
+  filter: brightness(1.08) contrast(1.12) saturate(1.15);
+  
+  /* Smooth transitions when video quality changes */
+  transition: filter 0.3s ease;
+  
+  /* Improve video sharpness on high-DPI displays */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Optional: High-DPI specific optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .lk-participant-tile video {
+    /* Slightly sharper on retina displays */
+    image-rendering: auto;
+  }
 }
 
 /* Style for when there's no video - show a proper placeholder */
