@@ -37,6 +37,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#070707',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5, // Allow zoom for accessibility
+  userScalable: true, // Allow users to zoom
+  viewportFit: 'cover', // For iPhone notch/safe areas
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

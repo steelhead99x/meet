@@ -253,16 +253,20 @@
 /* Room input field */
 .roomInput {
   width: 100%;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   color: white;
-  font-size: 1rem;
+  font-size: 16px; /* 16px minimum prevents iOS zoom on focus */
   font-weight: 500;
   transition: all 0.2s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  -webkit-appearance: none; /* Remove iOS default styling */
+  appearance: none;
+  min-height: 52px; /* Larger touch target for mobile */
+  touch-action: manipulation; /* Prevents double-tap zoom */
 }
 
 .roomInput::placeholder {
@@ -336,13 +340,67 @@
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
+  .main {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
   .customRoomActions {
     flex-direction: column;
   }
-  
+
   .joinButton,
   .cancelButton {
     width: 100%;
+    min-height: 52px; /* Larger touch target */
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .startButton {
+    min-height: 64px; /* Even larger primary button */
+    width: 100%;
+  }
+
+  .customButton {
+    min-height: 56px;
+    font-size: 16px;
+  }
+
+  .roomInput {
+    font-size: 16px; /* Critical: prevents zoom on iOS */
+    padding: 18px 20px; /* Larger touch target */
+    min-height: 56px;
+  }
+}
+
+/* Additional touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* These styles apply only to touch devices */
+  .startButton,
+  .customButton,
+  .joinButton,
+  .cancelButton {
+    min-height: 52px;
+    padding: 16px 24px !important;
+  }
+
+  .roomInput {
+    min-height: 52px;
+    font-size: 16px;
+    padding: 16px 18px;
+  }
+
+  .passphraseInput {
+    min-height: 52px;
+    font-size: 16px;
+    padding: 16px 18px;
   }
 }
 

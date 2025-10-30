@@ -879,14 +879,24 @@ export function CustomPreJoin({
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
+          autoComplete="name"
+          autoCapitalize="words"
+          autoCorrect="off"
+          spellCheck="false"
+          inputMode="text"
+          enterKeyHint="done"
           style={{
             width: '100%',
-            padding: '12px 16px',
+            padding: '16px 18px',
             borderRadius: '10px',
             border: '1px solid rgba(255, 255, 255, 0.15)',
             background: 'rgba(255, 255, 255, 0.08)',
             color: 'white',
-            fontSize: '15px',
+            fontSize: '16px', // 16px minimum prevents iOS zoom
+            minHeight: '52px', // Larger touch target
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            touchAction: 'manipulation',
           }}
         />
 
@@ -895,18 +905,20 @@ export function CustomPreJoin({
           type="submit"
           style={{
             width: '100%',
-            padding: '14px',
+            padding: '16px',
             borderRadius: '10px',
             border: 'none',
             background: '#3b82f6',
             color: 'white',
-            fontSize: '16px',
+            fontSize: '16px', // Prevent zoom on iOS
             fontWeight: 600,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
+            minHeight: '52px', // Larger touch target
+            touchAction: 'manipulation',
           }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

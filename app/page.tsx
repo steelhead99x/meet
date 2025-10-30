@@ -25,7 +25,7 @@ export default function Page() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       joinCustomRoom();
     }
@@ -83,9 +83,15 @@ export default function Page() {
                 placeholder="Enter room name..."
                 value={customRoomName}
                 onChange={(e) => setCustomRoomName(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 autoFocus
                 aria-label="Custom room name"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                inputMode="text"
+                enterKeyHint="go"
               />
               <div className={styles.customRoomActions}>
                 <button
