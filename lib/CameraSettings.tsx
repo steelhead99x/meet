@@ -92,6 +92,10 @@ export function CameraSettings() {
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
+  // Track when we're applying a processor to hide video during transition
+  const [isApplyingProcessor, setIsApplyingProcessor] = React.useState(false);
+  const isApplyingProcessorRef = React.useRef(false);
+  
   // Initialize from saved preferences - BLUR ENABLED BY DEFAULT
   const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(() => {
     if (typeof window === 'undefined') return 'blur';
@@ -202,6 +206,33 @@ export function CameraSettings() {
     const prefs = loadUserPreferences();
     return prefs.customSegmentation || null;
   });
+
+  // Initialize and save default settings on first mount
+  // This ensures first-time users have blur settings saved to localStorage
+  const hasInitializedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      
+      // Check if this is first time (no saved preferences)
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('livekit-user-preferences') : null;
+      if (!stored) {
+        // First time - save all default settings including blur
+        const prefs = loadUserPreferences();
+        saveUserPreferences({
+          backgroundType: prefs.backgroundType,
+          backgroundPath: prefs.backgroundPath,
+          blurQuality: prefs.blurQuality,
+          useCustomSegmentation: prefs.useCustomSegmentation,
+          customSegmentation: prefs.customSegmentation,
+          videoEnabled: prefs.videoEnabled,
+          audioEnabled: prefs.audioEnabled,
+          noiseFilterEnabled: prefs.noiseFilterEnabled,
+        });
+        console.log('[CameraSettings] First visit - saved default preferences including blur:', prefs);
+      }
+    }
+  }, []);
 
   // Expose blur quality and custom segmentation setters for SettingsMenu
   React.useEffect(() => {
@@ -352,14 +383,42 @@ export function CameraSettings() {
 
     // Apply processor immediately for privacy - no debounce
     const applyProcessor = async () => {
+      // Prevent concurrent processor applications
+      if (isApplyingProcessorRef.current) {
+        console.log('[CameraSettings] Already applying a processor, skipping');
+        return;
+      }
+      
       try {
         // Re-check track state to prevent race conditions
-        if (!isLocalTrack(track) || track.mediaStreamTrack?.readyState !== 'live') {
-          console.warn('Track is no longer valid, skipping processor update');
+        if (!isLocalTrack(track)) {
+          console.warn('[CameraSettings] Track is not a local track, skipping processor update');
           return;
         }
+        
+        const mediaStreamTrack = track.mediaStreamTrack;
+        if (!mediaStreamTrack) {
+          console.warn('[CameraSettings] MediaStreamTrack is null, skipping processor update');
+          return;
+        }
+        
+        // Check readyState - must be 'live' for video processing
+        if (mediaStreamTrack.readyState !== 'live') {
+          console.warn('[CameraSettings] MediaStreamTrack is not live (state:', mediaStreamTrack.readyState, '), skipping processor update');
+          return;
+        }
+        
+        // Mark that we're applying a processor
+        isApplyingProcessorRef.current = true;
+        setIsApplyingProcessor(true);
 
         if (backgroundType === 'blur') {
+          // Final check before applying processor
+          if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
+            console.warn('[CameraSettings] Stream state changed before applying blur, aborting');
+            return;
+          }
+          
           // Get advanced blur configuration - use custom settings if enabled
           const config = getBlurConfig(
             blurQuality, 
@@ -386,18 +445,41 @@ export function CameraSettings() {
           // Update cache with new processor (for reference only, not reused)
           processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
           
-          // setProcessor() handles stopping the old processor internally without closing the stream
-          await track.setProcessor(blurProcessor);
-          
-          currentProcessorRef.current = { 
-            type: 'blur', 
-            path: null, 
-            quality: blurQuality,
-            customSettings: customSettingsStr
-          };
-          console.log('[CameraSettings] Blur processor applied successfully, stream remains active');
+          try {
+            // One more check right before setProcessor
+            if (mediaStreamTrack.readyState !== 'live') {
+              console.warn('[CameraSettings] Stream closed right before setProcessor, aborting');
+              return;
+            }
+            
+            // setProcessor() handles stopping the old processor internally without closing the stream
+            await track.setProcessor(blurProcessor);
+            
+            // Give the processor a brief moment to initialize
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            currentProcessorRef.current = { 
+              type: 'blur', 
+              path: null, 
+              quality: blurQuality,
+              customSettings: customSettingsStr
+            };
+            console.log('[CameraSettings] Blur processor applied successfully, stream remains active');
+          } catch (processorError) {
+            if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
+              console.warn('[CameraSettings] Stream closed while applying blur processor:', processorError.message);
+              return;
+            }
+            throw processorError; // Re-throw other errors
+          }
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
+          // Final check before applying processor
+          if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
+            console.warn('[CameraSettings] Stream state changed before applying virtual background, aborting');
+            return;
+          }
+          
           // Generate cache key
           const cacheKey = `${backgroundType}:${virtualBackgroundImagePath}`;
           
@@ -415,12 +497,36 @@ export function CameraSettings() {
           });
           processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
           
-          // setProcessor() handles stopping the old processor internally
-          await track.setProcessor(virtualBgProcessor);
-          currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
-          console.log('[CameraSettings] Virtual background applied successfully, stream remains active');
+          try {
+            // One more check right before setProcessor
+            if (mediaStreamTrack.readyState !== 'live') {
+              console.warn('[CameraSettings] Stream closed right before setProcessor, aborting');
+              return;
+            }
+            
+            // setProcessor() handles stopping the old processor internally
+            await track.setProcessor(virtualBgProcessor);
+            
+            // Give the processor a brief moment to initialize
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
+            console.log('[CameraSettings] Virtual background applied successfully, stream remains active');
+          } catch (processorError) {
+            if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
+              console.warn('[CameraSettings] Stream closed while applying virtual background:', processorError.message);
+              return;
+            }
+            throw processorError; // Re-throw other errors
+          }
           
         } else if ((backgroundType === 'custom-video' || backgroundType === 'custom-image') && selectedCustomBgId) {
+          // Final check before applying processor
+          if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
+            console.warn('[CameraSettings] Stream state changed before applying custom background, aborting');
+            return;
+          }
+          
           // Handle custom backgrounds from IndexedDB
           const customBg = customBackgrounds.find(bg => bg.id === selectedCustomBgId);
           if (customBg) {
@@ -436,24 +542,62 @@ export function CameraSettings() {
             });
             processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
             
-            // setProcessor() handles stopping the old processor internally
-            await track.setProcessor(virtualBgProcessor);
-            currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
-            console.log('[CameraSettings] Custom background applied successfully, stream remains active:', customBg.name);
+            try {
+              // One more check right before setProcessor
+              if (mediaStreamTrack.readyState !== 'live') {
+                console.warn('[CameraSettings] Stream closed right before setProcessor, aborting');
+                return;
+              }
+              
+              // setProcessor() handles stopping the old processor internally
+              await track.setProcessor(virtualBgProcessor);
+              
+              // Give the processor a brief moment to initialize
+              await new Promise(resolve => setTimeout(resolve, 50));
+              
+              currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
+              console.log('[CameraSettings] Custom background applied successfully, stream remains active:', customBg.name);
+            } catch (processorError) {
+              if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
+                console.warn('[CameraSettings] Stream closed while applying custom background:', processorError.message);
+                return;
+              }
+              throw processorError; // Re-throw other errors
+            }
           }
           
         } else {
           // No effect - stop processor
-          await track.stopProcessor();
-          currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
+          // Check stream state before stopping processor
+          if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
+            try {
+              await track.stopProcessor();
+              currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
+              console.log('[CameraSettings] Processor stopped successfully');
+            } catch (stopError) {
+              if (stopError instanceof DOMException && stopError.name === 'InvalidStateError') {
+                console.warn('[CameraSettings] Stream closed while stopping processor:', stopError.message);
+              } else {
+                console.error('[CameraSettings] Error stopping processor:', stopError);
+              }
+            }
+          } else {
+            console.warn('[CameraSettings] Cannot stop processor - stream is not live');
+            currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
+          }
         }
+        
       } catch (error) {
         // Handle errors gracefully
         if (error instanceof DOMException && error.name === 'InvalidStateError') {
-          console.warn('Track is in invalid state, skipping processor update');
+          console.warn('[CameraSettings] Track is in invalid state (stream closed), skipping processor update');
         } else {
-          console.error('Error setting video processor:', error);
+          console.error('[CameraSettings] Error setting video processor:', error);
         }
+      } finally {
+        // Always clear the applying flag
+        isApplyingProcessorRef.current = false;
+        setIsApplyingProcessor(false);
       }
     };
 
@@ -466,9 +610,18 @@ export function CameraSettings() {
     return () => {
       const track = cameraTrack?.track;
       if (isLocalTrack(track)) {
-        track.stopProcessor().catch((err) => {
-          console.warn('Error stopping processor on cleanup:', err);
-        });
+        // Check if track is still valid before stopping processor
+        const mediaStreamTrack = track.mediaStreamTrack;
+        if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
+          track.stopProcessor().catch((err) => {
+            // Silently handle errors during cleanup
+            if (err instanceof DOMException && err.name === 'InvalidStateError') {
+              console.warn('[CameraSettings] Stream already closed during cleanup');
+            } else {
+              console.warn('[CameraSettings] Error stopping processor on cleanup:', err);
+            }
+          });
+        }
       }
       
       // Clear processor cache
@@ -482,32 +635,68 @@ export function CameraSettings() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      {camTrackRef ? (
-        <VideoTrack
-          style={{
-            maxHeight: '280px',
-            objectFit: 'contain',
-            objectPosition: 'right',
-            transform: 'scaleX(-1)',
-          }}
-          trackRef={camTrackRef}
-        />
-      ) : (
-        <video
-          className="lk-participant-media-video"
-          data-lk-local-participant="true"
-          data-lk-source="camera"
-          data-lk-orientation="landscape"
-          style={{
-            maxHeight: '280px',
-            objectFit: 'contain',
-            objectPosition: 'right center',
-            transform: 'scaleX(-1)',
-          }}
-          autoPlay
-          playsInline
-        />
-      )}
+      <div style={{ position: 'relative' }}>
+        {camTrackRef ? (
+          <VideoTrack
+            style={{
+              maxHeight: '280px',
+              objectFit: 'contain',
+              objectPosition: 'right',
+              transform: 'scaleX(-1)',
+            }}
+            trackRef={camTrackRef}
+          />
+        ) : (
+          <video
+            className="lk-participant-media-video"
+            data-lk-local-participant="true"
+            data-lk-source="camera"
+            data-lk-orientation="landscape"
+            style={{
+              maxHeight: '280px',
+              objectFit: 'contain',
+              objectPosition: 'right center',
+              transform: 'scaleX(-1)',
+            }}
+            autoPlay
+            playsInline
+          />
+        )}
+        
+        {/* Loading overlay when applying processor */}
+        {isApplyingProcessor && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: '12px',
+            zIndex: 10,
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid rgba(255, 255, 255, 0.2)',
+              borderTop: '4px solid #3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }} />
+            <div style={{
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+            }}>
+              Applying effect...
+            </div>
+          </div>
+        )}
+      </div>
 
       <section className="lk-button-group">
         <TrackToggle aria-label="Toggle camera" source={Track.Source.Camera} />
@@ -553,10 +742,11 @@ export function CameraSettings() {
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
-            onClick={() => selectBackground('none')}
+            onClick={() => !isApplyingProcessor && selectBackground('none')}
             className="lk-button lk-button-visual"
             aria-label="No background effect"
             aria-pressed={backgroundType === 'none'}
+            disabled={isApplyingProcessor}
             style={{
               border: backgroundType === 'none' ? '2px solid #3b82f6' : '2px solid rgba(255, 255, 255, 0.15)',
               background: 'rgba(255, 255, 255, 0.08)',
@@ -566,6 +756,8 @@ export function CameraSettings() {
               minWidth: '60px',
               minHeight: '60px',
               padding: '0',
+              opacity: isApplyingProcessor ? 0.5 : 1,
+              cursor: isApplyingProcessor ? 'not-allowed' : 'pointer',
             }}
           >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -574,10 +766,11 @@ export function CameraSettings() {
           </button>
 
           <button
-            onClick={() => selectBackground('blur')}
+            onClick={() => !isApplyingProcessor && selectBackground('blur')}
             className="lk-button lk-button-visual"
             aria-label="Blur background effect"
             aria-pressed={backgroundType === 'blur'}
+            disabled={isApplyingProcessor}
             style={{
               border: backgroundType === 'blur' ? '2px solid #3b82f6' : '2px solid rgba(255, 255, 255, 0.15)',
               backgroundColor: '#e0e0e0',
@@ -589,6 +782,8 @@ export function CameraSettings() {
               minWidth: '60px',
               minHeight: '60px',
               padding: '0',
+              opacity: isApplyingProcessor ? 0.5 : 1,
+              cursor: isApplyingProcessor ? 'not-allowed' : 'pointer',
             }}
           >
             <div
@@ -615,12 +810,13 @@ export function CameraSettings() {
           {GRADIENT_BACKGROUNDS.map((gradientBg) => (
             <button
               key={gradientBg.name}
-              onClick={() => selectBackground('gradient', gradientBg.gradient)}
+              onClick={() => !isApplyingProcessor && selectBackground('gradient', gradientBg.gradient)}
               className="lk-button lk-button-visual"
               aria-label={`${gradientBg.name} gradient background`}
               aria-pressed={
                 backgroundType === 'gradient' && virtualBackgroundImagePath === gradientBg.gradient
               }
+              disabled={isApplyingProcessor}
               style={{
                 background: gradientBg.gradient,
                 border:
@@ -630,6 +826,8 @@ export function CameraSettings() {
                 minWidth: '60px',
                 minHeight: '60px',
                 padding: '0',
+                opacity: isApplyingProcessor ? 0.5 : 1,
+                cursor: isApplyingProcessor ? 'not-allowed' : 'pointer',
               }}
             >
             </button>
@@ -638,12 +836,13 @@ export function CameraSettings() {
           {BACKGROUND_IMAGES.map((image) => (
             <button
               key={image.path}
-              onClick={() => selectBackground('image', image.path)}
+              onClick={() => !isApplyingProcessor && selectBackground('image', image.path)}
               className="lk-button lk-button-visual"
               aria-label={`${image.name} background image`}
               aria-pressed={
                 backgroundType === 'image' && virtualBackgroundImagePath === image.path
               }
+              disabled={isApplyingProcessor}
               style={{
                 backgroundImage: `url(${image.path})`,
                 backgroundSize: 'cover',
@@ -655,6 +854,8 @@ export function CameraSettings() {
                 minWidth: '60px',
                 minHeight: '60px',
                 padding: '0',
+                opacity: isApplyingProcessor ? 0.5 : 1,
+                cursor: isApplyingProcessor ? 'not-allowed' : 'pointer',
               }}
             >
             </button>
@@ -668,10 +869,11 @@ export function CameraSettings() {
             return (
               <button
                 key={customBg.id}
-                onClick={() => selectBackground(bgType, undefined, customBg.id)}
+                onClick={() => !isApplyingProcessor && selectBackground(bgType, undefined, customBg.id)}
                 className="lk-button lk-button-visual"
                 aria-label={`Custom ${customBg.type}: ${customBg.name}`}
                 aria-pressed={isSelected}
+                disabled={isApplyingProcessor}
                 style={{
                   backgroundImage: `url(${customBg.thumbnail})`,
                   backgroundSize: 'cover',
@@ -683,6 +885,8 @@ export function CameraSettings() {
                   minHeight: '60px',
                   padding: '0',
                   position: 'relative',
+                  opacity: isApplyingProcessor ? 0.5 : 1,
+                  cursor: isApplyingProcessor ? 'not-allowed' : 'pointer',
                 }}
               >
                 {/* Video indicator */}

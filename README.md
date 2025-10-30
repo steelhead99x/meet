@@ -5,6 +5,7 @@ A modern video conferencing application built with LiveKit, Next.js, and React. 
 ## ✨ Features
 
 - 🎥 HD video conferencing with screen sharing
+- 🪟 **Zoom-like PIP window** - Always-on-top participant window during screen sharing (Chrome 116+)
 - 🔒 End-to-end encryption (E2EE)
 - 🎨 Virtual backgrounds (blur, gradients, images)
 - 💬 Real-time chat
@@ -200,6 +201,17 @@ meet/
    - **Blur**: Blur your background
    - **Gradients**: Beautiful gradient backgrounds
    - **Images**: Custom background images
+
+### Screen Sharing with PIP Window
+
+**Chrome/Edge/Brave 116+ only** - When you share your screen, a separate always-on-top window automatically opens showing all participants. This stays visible above all applications, just like Zoom!
+
+1. Click the screen share button
+2. A PIP window opens automatically with all participant videos
+3. Present your content - the participant window stays on top
+4. Stop sharing - the window closes automatically
+
+**See detailed guide**: `SCREENSHARE_PIP_GUIDE.md`
 
 ## 🔍 Troubleshooting
 

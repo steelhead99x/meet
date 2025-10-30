@@ -23,6 +23,7 @@ import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { ConnectionQualityTooltip } from '@/lib/ConnectionQualityTooltip';
 import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
+import { BrowserWindowPIP } from '@/lib/BrowserWindowPIP';
 import { CarouselNavigation } from '@/lib/CarouselNavigation';
 
 export function VideoConferenceClientImpl(props: {
@@ -264,7 +265,7 @@ export function VideoConferenceClientImpl(props: {
           <KeyboardShortcuts />
           <ReconnectionBanner />
           <ConnectionQualityTooltip />
-          <ScreenSharePIP />
+          <BrowserWindowPIP />
           <CarouselNavigation />
           <VideoConference
             SettingsComponent={

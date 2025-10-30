@@ -102,6 +102,33 @@ export function CustomPreJoin({
   const blurProcessorRef = React.useRef<any>(null);
   const blurAppliedRef = React.useRef(false);
 
+  // Initialize and save default settings on first mount (preview stage)
+  // This ensures first-time users have blur settings saved to localStorage
+  const hasInitializedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      
+      // Check if this is first time (no saved preferences)
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('livekit-user-preferences') : null;
+      if (!stored) {
+        // First time - save all default settings including blur
+        const prefs = loadUserPreferences();
+        saveUserPreferences({
+          backgroundType: prefs.backgroundType,
+          backgroundPath: prefs.backgroundPath,
+          blurQuality: prefs.blurQuality,
+          useCustomSegmentation: prefs.useCustomSegmentation,
+          customSegmentation: prefs.customSegmentation,
+          videoEnabled: prefs.videoEnabled,
+          audioEnabled: prefs.audioEnabled,
+          noiseFilterEnabled: prefs.noiseFilterEnabled,
+        });
+        console.log('[CustomPreJoin] First visit - saved default preferences including blur:', prefs);
+      }
+    }
+  }, []);
+
   // Apply blur to preview track IMMEDIATELY before displaying
   React.useEffect(() => {
     const applyPreviewBlur = async () => {
@@ -112,6 +139,18 @@ export function CustomPreJoin({
       
       if (backgroundType === 'blur' && videoTrack instanceof LocalVideoTrack) {
         try {
+          // Verify track is in valid state
+          const mediaStreamTrack = videoTrack.mediaStreamTrack;
+          if (!mediaStreamTrack) {
+            console.warn('[CustomPreJoin] MediaStreamTrack is null, cannot apply blur');
+            return;
+          }
+          
+          if (mediaStreamTrack.readyState !== 'live') {
+            console.warn('[CustomPreJoin] MediaStreamTrack is not live (state:', mediaStreamTrack.readyState, '), skipping blur');
+            return;
+          }
+          
           // Determine blur quality
           const blurQuality = savedPrefs.blurQuality || 
             getRecommendedBlurQuality(detectDeviceCapabilities());
@@ -132,11 +171,21 @@ export function CustomPreJoin({
             },
           }, 'background-blur');
           
+          // Final check before applying
+          if (mediaStreamTrack.readyState !== 'live') {
+            console.warn('[CustomPreJoin] Stream state changed before applying blur');
+            return;
+          }
+          
           await videoTrack.setProcessor(blurProcessorRef.current);
           blurAppliedRef.current = true;
           console.log('[CustomPreJoin] Blur applied to preview track');
         } catch (error) {
-          console.error('[CustomPreJoin] Error applying blur to preview:', error);
+          if (error instanceof DOMException && error.name === 'InvalidStateError') {
+            console.warn('[CustomPreJoin] Stream closed while applying blur to preview:', error.message);
+          } else {
+            console.error('[CustomPreJoin] Error applying blur to preview:', error);
+          }
         }
       }
     };
@@ -146,9 +195,16 @@ export function CustomPreJoin({
     return () => {
       // Cleanup blur processor
       if (videoTrack instanceof LocalVideoTrack && blurProcessorRef.current) {
-        videoTrack.stopProcessor().catch(err => 
-          console.warn('[CustomPreJoin] Error stopping preview processor:', err)
-        );
+        const mediaStreamTrack = videoTrack.mediaStreamTrack;
+        if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
+          videoTrack.stopProcessor().catch(err => {
+            if (err instanceof DOMException && err.name === 'InvalidStateError') {
+              console.warn('[CustomPreJoin] Stream closed while stopping preview processor');
+            } else {
+              console.warn('[CustomPreJoin] Error stopping preview processor:', err);
+            }
+          });
+        }
         blurAppliedRef.current = false;
       }
     };
@@ -201,16 +257,25 @@ export function CustomPreJoin({
       return;
     }
 
-    // Save preferences when user joins
+    // Save ALL preferences when user joins, including background settings
+    // This ensures first-time users have their default blur settings saved
+    const currentPrefs = loadUserPreferences();
     saveUserPreferences({
       username,
       videoEnabled,
       audioEnabled,
       videoDeviceId,
       audioDeviceId,
+      // Preserve existing background settings (including defaults like blur)
+      backgroundType: currentPrefs.backgroundType,
+      backgroundPath: currentPrefs.backgroundPath,
+      blurQuality: currentPrefs.blurQuality,
+      useCustomSegmentation: currentPrefs.useCustomSegmentation,
+      customSegmentation: currentPrefs.customSegmentation,
+      noiseFilterEnabled: currentPrefs.noiseFilterEnabled,
     });
     
-    console.log('[CustomPreJoin] Saved user preferences:', values);
+    console.log('[CustomPreJoin] Saved complete user preferences:', currentPrefs);
 
     onSubmit?.(values);
   };
