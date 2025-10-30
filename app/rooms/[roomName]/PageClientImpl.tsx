@@ -37,6 +37,8 @@ import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
 import { BrowserWindowPIP } from '@/lib/BrowserWindowPIP';
 import { CarouselNavigation } from '@/lib/CarouselNavigation';
+import { ProcessorLoadingProvider } from '@/lib/ProcessorLoadingContext';
+import { ProcessorLoadingOverlay } from '@/lib/ProcessorLoadingOverlay';
 // Note: LiveKit v2 chat uses native sendChatMessage() API
 // E2EE only applies to media tracks, not chat messages
 
@@ -552,20 +554,23 @@ function VideoConferenceComponent(props: {
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
 
   return (
-    <RoomContext.Provider value={room}>
-      <KeyboardShortcuts />
-      <ReconnectionBanner />
-      <ConnectionQualityTooltip />
-      <BrowserWindowPIP />
-      <CarouselNavigation />
-      <VideoConference
-        SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
-        chatMessageFormatter={formatChatMessageLinks}
-      />
-      <RoomAudioRenderer />
-      <DebugMode />
-      <RecordingIndicator />
-    </RoomContext.Provider>
+    <ProcessorLoadingProvider>
+      <RoomContext.Provider value={room}>
+        <KeyboardShortcuts />
+        <ReconnectionBanner />
+        <ConnectionQualityTooltip />
+        <BrowserWindowPIP />
+        <CarouselNavigation />
+        <VideoConference
+          SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
+          chatMessageFormatter={formatChatMessageLinks}
+        />
+        <RoomAudioRenderer />
+        <DebugMode />
+        <RecordingIndicator />
+        <ProcessorLoadingOverlay />
+      </RoomContext.Provider>
+    </ProcessorLoadingProvider>
   );
 }
 

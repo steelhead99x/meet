@@ -20,6 +20,7 @@ import {
   CustomBackground,
 } from './customBackgrounds';
 import { waitForProcessorWithFallback } from './videoProcessorUtils';
+import { useProcessorLoading } from './ProcessorLoadingContext';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -93,8 +94,8 @@ export function CameraSettings() {
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
-  // Track when we're applying a processor to hide video during transition
-  const [isApplyingProcessor, setIsApplyingProcessor] = React.useState(false);
+  // Use shared loading state from context to show overlay in room
+  const { isApplyingProcessor, setIsApplyingProcessor } = useProcessorLoading();
   const isApplyingProcessorRef = React.useRef(false);
   
   // Initialize from saved preferences - BLUR ENABLED BY DEFAULT
