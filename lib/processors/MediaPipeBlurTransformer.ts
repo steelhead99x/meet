@@ -206,9 +206,12 @@ export default class MediaPipeBlurTransformer {
     if (shouldProcessSegmentation || !this.lastProcessedMask) {
       // Run segmentation
       const segStart = performance.now();
+      // Use VideoFrame timestamp (in microseconds) or frame count as timestamp
+      // MediaPipe expects monotonically increasing timestamps in milliseconds
+      const timestamp = inputFrame.timestamp ? Math.floor(inputFrame.timestamp / 1000) : this.frameCount * 33;
       const segmentationResult = this.segmenter.segmentForVideo(
         inputFrame,
-        Date.now()
+        timestamp
       );
       const segTime = performance.now() - segStart;
 
