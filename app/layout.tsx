@@ -39,9 +39,8 @@ export const viewport: Viewport = {
   themeColor: '#070707',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5, // Allow zoom for accessibility
-  userScalable: true, // Allow users to zoom
-  viewportFit: 'cover', // For iPhone notch/safe areas
+  maximumScale: 5,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
