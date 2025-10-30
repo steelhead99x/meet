@@ -747,7 +747,7 @@ export function CameraSettings() {
     return () => {
       isEffectActive = false;
     };
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation, setIsApplyingProcessor]);
 
   // Cleanup processors on unmount
   React.useEffect(() => {

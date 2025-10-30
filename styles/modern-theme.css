@@ -2014,22 +2014,26 @@
     gap: 4px;
     padding: 4px;
     grid-template-columns: 1fr !important;
+    grid-auto-rows: auto !important; /* Let rows size based on content aspect ratio */
+    align-content: center; /* Center videos vertically */
   }
 
-  /* 2 participants on mobile - side by side */
+  /* 2 participants on mobile - side by side maintaining aspect ratio */
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(2):last-child) {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 4px;
+    grid-auto-rows: auto !important; /* Maintain aspect ratio */
   }
 
-  /* 3-4 participants on mobile - 2x2 */
+  /* 3-4 participants on mobile - 2x2 maintaining aspect ratio */
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(3):last-child),
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(4):last-child) {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 4px;
+    grid-auto-rows: auto !important; /* Maintain aspect ratio */
   }
 
-  /* 5-9 participants on mobile - 3 columns */
+  /* 5-9 participants on mobile - 3 columns maintaining aspect ratio */
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(5):last-child),
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(6):last-child),
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(7):last-child),
@@ -2037,6 +2041,7 @@
   [data-lk-theme] .lk-grid-layout:has(> :nth-child(9):last-child) {
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 3px;
+    grid-auto-rows: auto !important; /* Maintain aspect ratio */
   }
 
   /* 10+ participants on mobile - auto-fit with smaller tiles */
@@ -2044,6 +2049,7 @@
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
     gap: 2px;
     padding: 2px;
+    grid-auto-rows: auto !important; /* Maintain aspect ratio */
   }
 
   /* On mobile, chat should overlay instead of split view */
@@ -2074,6 +2080,24 @@
   /* Mobile video conference - stack vertically when chat overlay */
   [data-lk-theme] .lk-video-conference {
     flex-direction: column;
+  }
+}
+
+/* Fullscreen portrait mode - allow videos to fill screen */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* When in fullscreen, allow single video to stretch */
+  :fullscreen [data-lk-theme] .lk-grid-layout:has(> :nth-child(1):last-child) .lk-participant-tile,
+  :-webkit-full-screen [data-lk-theme] .lk-grid-layout:has(> :nth-child(1):last-child) .lk-participant-tile,
+  :-moz-full-screen [data-lk-theme] .lk-grid-layout:has(> :nth-child(1):last-child) .lk-participant-tile {
+    aspect-ratio: unset !important;
+    height: 100% !important;
+  }
+
+  /* Multiple participants in fullscreen maintain aspect ratio */
+  :fullscreen [data-lk-theme] .lk-grid-layout,
+  :-webkit-full-screen [data-lk-theme] .lk-grid-layout,
+  :-moz-full-screen [data-lk-theme] .lk-grid-layout {
+    align-content: start; /* Align to top in fullscreen for better space usage */
   }
 }
 

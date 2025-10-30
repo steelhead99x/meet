@@ -165,6 +165,7 @@ button[title*="encryption" i] {
   aspect-ratio: 16 / 9;
   min-height: 0; /* Allow flex items to shrink below content size */
   width: 100%;
+  height: auto; /* Let height be determined by aspect ratio */
   overflow: hidden;
   z-index: 1; /* Base content layer - ensures videos stay behind menus */
 }
