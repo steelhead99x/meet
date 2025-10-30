@@ -806,40 +806,6 @@ export function CameraSettings() {
             playsInline
           />
         )}
-        
-        {/* Loading overlay when applying processor */}
-        {isApplyingProcessor && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            gap: '12px',
-            zIndex: 10,
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              border: '4px solid rgba(255, 255, 255, 0.2)',
-              borderTop: '4px solid #3b82f6',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }} />
-            <div style={{
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-            }}>
-              Applying effect...
-            </div>
-          </div>
-        )}
       </div>
 
       <section className="lk-button-group">
