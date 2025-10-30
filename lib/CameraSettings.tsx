@@ -830,30 +830,64 @@ export function CameraSettings() {
           // CRITICAL: Revoke blob URLs when switching to no effect
           revokeBlobUrls();
 
-          // Check stream state before stopping processor
-          if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
-            try {
-              await track.stopProcessor();
-              // Note: currentProcessorRef.current already updated at start of applyProcessor
-              console.log('[CameraSettings] Processor stopped successfully');
-              restoreConsoleWarn();
+          // MOBILE FIX: On mobile devices (especially Android), stopProcessor() can leave
+          // the video track in a broken state that prevents effects from working when re-enabled.
+          // Instead, we'll use setProcessor(BackgroundProcessor with 0 blur) which maintains
+          // track health while effectively removing the visual effect.
+          const deviceCapabilities = detectDeviceCapabilities();
+          const isMobileDevice = deviceCapabilities.deviceType === 'mobile';
 
-              // Unmute track since no effect is being applied
-              await restoreVideoTrack();
-            } catch (stopError) {
+          if (isMobileDevice) {
+            // Mobile workaround: Apply a minimal "passthrough-like" processor
+            // This keeps the track pipeline active and healthy for future effects
+            console.log('[CameraSettings] Mobile device detected - using minimal processor instead of stopProcessor()');
+
+            try {
+              // Create a minimal blur processor (0px = no effect)
+              // This keeps the processing pipeline active without visual changes
+              const passthroughProcessor = BackgroundProcessor({
+                blurRadius: 0,
+                segmenterOptions: {
+                  delegate: 'GPU',
+                },
+              }, 'passthrough');
+
+              await track.setProcessor(passthroughProcessor);
+              console.log('[CameraSettings] Passthrough processor applied (mobile)');
               restoreConsoleWarn();
-              await restoreVideoTrack(); // Always restore video even on error
-              if (stopError instanceof DOMException && stopError.name === 'InvalidStateError') {
-                console.warn('[CameraSettings] Stream closed while stopping processor:', stopError.message);
-              } else {
-                console.error('[CameraSettings] Error stopping processor:', stopError);
-              }
+              await restoreVideoTrack();
+            } catch (error) {
+              console.error('[CameraSettings] Error applying passthrough processor:', error);
+              restoreConsoleWarn();
+              await restoreVideoTrack();
             }
           } else {
-            console.warn('[CameraSettings] Cannot stop processor - stream is not live');
-            // Note: currentProcessorRef.current already updated at start of applyProcessor
-            restoreConsoleWarn();
-            await restoreVideoTrack(); // Always restore video
+            // Desktop: Use normal stopProcessor() approach
+            // Check stream state before stopping processor
+            if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
+              try {
+                await track.stopProcessor();
+                // Note: currentProcessorRef.current already updated at start of applyProcessor
+                console.log('[CameraSettings] Processor stopped successfully');
+                restoreConsoleWarn();
+
+                // Unmute track since no effect is being applied
+                await restoreVideoTrack();
+              } catch (stopError) {
+                restoreConsoleWarn();
+                await restoreVideoTrack(); // Always restore video even on error
+                if (stopError instanceof DOMException && stopError.name === 'InvalidStateError') {
+                  console.warn('[CameraSettings] Stream closed while stopping processor:', stopError.message);
+                } else {
+                  console.error('[CameraSettings] Error stopping processor:', stopError);
+                }
+              }
+            } else {
+              console.warn('[CameraSettings] Cannot stop processor - stream is not live');
+              // Note: currentProcessorRef.current already updated at start of applyProcessor
+              restoreConsoleWarn();
+              await restoreVideoTrack(); // Always restore video
+            }
           }
         }
         
@@ -931,6 +965,77 @@ export function CameraSettings() {
       console.log('[CameraSettings] Cleanup complete');
     };
   }, [cameraTrack, revokeBlobUrls]);
+
+  // Handle device orientation changes (mobile)
+  // When user rotates phone, ensure processor adapts to new dimensions
+  React.useEffect(() => {
+    // Only needed on mobile devices
+    const deviceCapabilities = detectDeviceCapabilities();
+    if (deviceCapabilities.deviceType !== 'mobile') {
+      return; // Skip orientation handling on desktop/tablet
+    }
+
+    console.log('[CameraSettings] Setting up orientation change handler for mobile');
+
+    // Track last known dimensions to detect actual changes
+    let lastWidth = 0;
+    let lastHeight = 0;
+
+    const handleOrientationChange = async () => {
+      console.log('[CameraSettings] Orientation change detected');
+
+      // Wait a bit for the camera to adjust to new orientation
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const track = cameraTrack?.track;
+      if (!isLocalTrack(track)) return;
+
+      const mediaStreamTrack = track.mediaStreamTrack;
+      if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') return;
+
+      // Get current video dimensions
+      const settings = mediaStreamTrack.getSettings();
+      const currentWidth = settings.width || 0;
+      const currentHeight = settings.height || 0;
+
+      // Check if dimensions actually changed
+      if (currentWidth !== lastWidth || currentHeight !== lastHeight) {
+        console.log(`[CameraSettings] Video dimensions changed: ${lastWidth}x${lastHeight} → ${currentWidth}x${currentHeight}`);
+        lastWidth = currentWidth;
+        lastHeight = currentHeight;
+
+        // If there's an active effect, the processor will handle the dimension change automatically
+        // MediaPipeBlurTransformer and BackgroundProcessor both handle dynamic resizing
+        // No need to restart the processor - just log it
+        if (backgroundType !== 'none') {
+          console.log('[CameraSettings] Active effect will adapt to new dimensions automatically');
+        }
+      }
+    };
+
+    // Listen for orientation changes
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    // Also listen for resize as a backup (some devices don't fire orientationchange)
+    window.addEventListener('resize', handleOrientationChange);
+
+    // Get initial dimensions
+    const track = cameraTrack?.track;
+    if (isLocalTrack(track)) {
+      const settings = track.mediaStreamTrack?.getSettings();
+      if (settings) {
+        lastWidth = settings.width || 0;
+        lastHeight = settings.height || 0;
+        console.log(`[CameraSettings] Initial video dimensions: ${lastWidth}x${lastHeight}`);
+      }
+    }
+
+    return () => {
+      console.log('[CameraSettings] Removing orientation change handlers');
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, [cameraTrack, backgroundType]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
