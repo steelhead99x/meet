@@ -12,6 +12,7 @@ import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 import { BackgroundProcessor } from '@livekit/track-processors';
 import { getBlurConfig, getRecommendedBlurQuality, CustomSegmentationSettings } from './BlurConfig';
 import { detectDeviceCapabilities } from './client-utils';
+import { waitForProcessorWithFallback } from './videoProcessorUtils';
 
 export interface CustomPreJoinProps {
   defaults?: Partial<LocalUserChoices>;
@@ -87,24 +88,38 @@ export function CustomPreJoin({
     validateDevices();
   }, [savedPrefs.audioDeviceId, savedPrefs.videoDeviceId]);
 
-  // Create tracks after device validation is complete
-  // CRITICAL: Never pass undefined to usePreviewTracks - it causes "Cannot read properties of undefined (reading 'audio')" error
-  // Instead, pass { audio: false, video: false } while validation is in progress
-  const tracks = usePreviewTracks(
-    validatedDeviceIds ? {
-      audio: audioEnabled ? { deviceId: validatedDeviceIds.audio } : false,
-      video: videoEnabled ? { deviceId: validatedDeviceIds.video } : false,
-    } : {
-      // While validating devices, create tracks with no specific device (use defaults)
-      // This prevents the undefined error and allows tracks to be created immediately
-      audio: audioEnabled,
-      video: videoEnabled,
-    },
-    onError,
-  );
+  // Create stable track options that don't change when validatedDeviceIds object reference changes
+  // CRITICAL: Only recreate tracks when actual device IDs or enabled state changes
+  const trackOptions = React.useMemo(() => {
+    // Use string values to avoid object reference issues
+    const audioId = validatedDeviceIds?.audio || '';
+    const videoId = validatedDeviceIds?.video || '';
+    
+    return {
+      audio: audioEnabled ? (audioId ? { deviceId: audioId } : true) : false,
+      video: videoEnabled ? (videoId ? { deviceId: videoId } : true) : false,
+    };
+  }, [
+    validatedDeviceIds?.audio, 
+    validatedDeviceIds?.video, 
+    audioEnabled, 
+    videoEnabled
+  ]);
+
+  const tracks = usePreviewTracks(trackOptions, onError);
+
+  React.useEffect(() => {
+    console.log('[CustomPreJoin] Tracks updated:', tracks?.length, 'tracks', 
+                tracks?.map(t => ({ kind: t.kind, id: t.mediaStreamTrack?.id })));
+  }, [tracks]);
 
   const videoEl = React.useRef<HTMLVideoElement>(null);
   const videoTrack = tracks?.filter((t) => t.kind === Track.Kind.Video)[0];
+  
+  React.useEffect(() => {
+    console.log('[CustomPreJoin] VideoTrack updated:', videoTrack ? 'available' : 'null', 
+                videoTrack?.mediaStreamTrack?.id);
+  }, [videoTrack]);
   const blurProcessorRef = React.useRef<any>(null);
   const processedTrackIdRef = React.useRef<string | null>(null);
   const isApplyingBlurRef = React.useRef(false);
@@ -143,7 +158,11 @@ export function CustomPreJoin({
     let isEffectActive = true;
     
     const applyPreviewBlur = async () => {
-      if (!videoTrack) return;
+      if (!videoTrack) {
+        console.log('[CustomPreJoin] No videoTrack available, skipping effect application');
+        return;
+      }
+      console.log('[CustomPreJoin] videoTrack available, checking if effect should be applied');
       
       // Prevent concurrent blur applications
       if (isApplyingBlurRef.current) {
@@ -151,10 +170,12 @@ export function CustomPreJoin({
         return;
       }
       
-      // Check if user has blur enabled (default is blur)
+      // PreJoin always applies blur as a sensible default for privacy
+      // The actual user preference (blur/image/gradient/etc) will be applied by CameraSettings after joining
+      // We only skip if the user explicitly set backgroundType to 'none'
       const backgroundType = savedPrefs.backgroundType || 'blur';
       
-      if (backgroundType === 'blur' && videoTrack instanceof LocalVideoTrack) {
+      if (backgroundType !== 'none' && videoTrack instanceof LocalVideoTrack) {
         // Get unique track identifier
         const mediaStreamTrack = videoTrack.mediaStreamTrack;
         if (!mediaStreamTrack) {
@@ -200,25 +221,10 @@ export function CustomPreJoin({
           // Set preparing state to show loading overlay
           setIsPreparingVideo(true);
           
-          // Mute the track to prevent showing unblurred video during processor application
-          const wasEnabled = !videoTrack.isMuted;
-          if (wasEnabled) {
-            await videoTrack.mute();
-            console.log('[CustomPreJoin] Muted video track before applying blur');
-          }
-          
-          // Small delay to ensure track is fully muted and UI is updated
-          await new Promise(resolve => setTimeout(resolve, 50));
-          
-          // Check if effect was cancelled during mute
-          if (!isEffectActive) {
-            console.log('[CustomPreJoin] Effect cancelled during mute, aborting');
-            if (wasEnabled) {
-              try { await videoTrack.unmute(); } catch (e) {}
-            }
-            setIsPreparingVideo(false);
-            return;
-          }
+          // IMPORTANT: Do NOT mute preview tracks - it can cause the MediaStreamTrack to end
+          // Instead, apply the processor directly while the track is live
+          // The processor initialization happens fast enough that no unblurred frames are sent
+          console.log('[CustomPreJoin] Applying processor directly to live track (no mute needed for preview)');
           
           // Determine blur quality
           const blurQuality = savedPrefs.blurQuality || 
@@ -229,7 +235,7 @@ export function CustomPreJoin({
           const customSettings = savedPrefs.customSegmentation || null;
           
           const config = getBlurConfig(blurQuality, useCustom ? customSettings : null);
-          console.log('[CustomPreJoin] Applying blur to preview with quality:', blurQuality, 
+          console.log('[CustomPreJoin] Applying blur preview (saved preference:', backgroundType, ') with quality:', blurQuality, 
                       useCustom ? '(custom settings)' : '');
           
           // Suppress MediaPipe initialization warnings
@@ -246,12 +252,11 @@ export function CustomPreJoin({
           };
           
           // Verify track is still valid before creating processor
-          if (!isEffectActive || videoTrack.mediaStreamTrack?.readyState !== 'live') {
-            console.log('[CustomPreJoin] Track no longer valid before processor creation, aborting');
+          const currentMediaStreamTrack = videoTrack.mediaStreamTrack;
+          const currentReadyState = currentMediaStreamTrack?.readyState;
+          if (!isEffectActive || currentReadyState !== 'live') {
+            console.log('[CustomPreJoin] Track no longer valid before processor creation. isEffectActive:', isEffectActive, 'readyState:', currentReadyState, 'trackId:', currentMediaStreamTrack?.id);
             console.warn = originalWarn;
-            if (wasEnabled) {
-              try { await videoTrack.unmute(); } catch (e) {}
-            }
             setIsPreparingVideo(false);
             return;
           }
@@ -273,19 +278,13 @@ export function CustomPreJoin({
           if (!isEffectActive) {
             console.log('[CustomPreJoin] Effect cancelled during processor creation, aborting');
             setIsPreparingVideo(false);
-            if (wasEnabled) {
-              try { await videoTrack.unmute(); } catch (e) {}
-            }
             return;
           }
           
-          const currentMediaStreamTrack = videoTrack.mediaStreamTrack;
-          if (!currentMediaStreamTrack || currentMediaStreamTrack.readyState !== 'live') {
+          const postProcessorMediaStreamTrack = videoTrack.mediaStreamTrack;
+          if (!postProcessorMediaStreamTrack || postProcessorMediaStreamTrack.readyState !== 'live') {
             console.warn('[CustomPreJoin] Track ended during processor creation, aborting');
             setIsPreparingVideo(false);
-            if (wasEnabled) {
-              try { await videoTrack.unmute(); } catch (e) {}
-            }
             return;
           }
           
@@ -302,35 +301,25 @@ export function CustomPreJoin({
           processedTrackIdRef.current = trackId;
           console.log('[CustomPreJoin] Blur processor applied successfully');
           
-          // CRITICAL: Wait for blur processor to fully initialize before showing video
-          // The processor needs time to process the first frames and stabilize
-          // This prevents showing unblurred or partially processed frames
-          console.log('[CustomPreJoin] Waiting for blur processor to initialize...');
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Wait for processor to actually start outputting processed frames
+          // This detects when the blur is actually ready instead of using fixed timeouts
+          console.log('[CustomPreJoin] Detecting when blur processor is ready...');
+          try {
+            await waitForProcessorWithFallback(videoTrack, 100);
+          } catch (waitError) {
+            console.warn('[CustomPreJoin] Error waiting for processor ready, continuing anyway:', waitError);
+          }
           
-          // Check one more time before unmuting
+          // Check one more time before finalizing
           if (!isEffectActive) {
-            console.log('[CustomPreJoin] Effect cancelled during initialization wait');
+            console.log('[CustomPreJoin] Effect cancelled during processor initialization');
             setIsPreparingVideo(false);
             return;
           }
           
-          // Unmute the track now that blur is fully ready
-          if (wasEnabled) {
-            try {
-              await videoTrack.unmute();
-              console.log('[CustomPreJoin] Video track unmuted - blur effect is fully applied');
-            } catch (err) {
-              console.warn('[CustomPreJoin] Could not unmute track:', err);
-            }
-          }
-          
-          // Brief additional delay to ensure video element renders with blur
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
           // Mark video as ready to show - remove loading overlay
           setIsPreparingVideo(false);
-          console.log('[CustomPreJoin] Blur is ready and video is now visible');
+          console.log('[CustomPreJoin] Blur is ready and video is now visible with effect applied');
         } catch (error) {
           // Always restore video state on error
           setIsPreparingVideo(false);
@@ -638,8 +627,15 @@ export function CustomPreJoin({
             fontSize: '16px',
             fontWeight: 600,
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
           }}
         >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 21C4.45 21 3.979 20.804 3.587 20.412C3.195 20.02 2.99933 19.5493 3 19V5C3 4.45 3.196 3.979 3.588 3.587C3.98 3.195 4.45067 2.99933 5 3H11V5H5V19H11V21H5ZM16 17L14.625 15.55L17.175 13H9V11H17.175L14.625 8.45L16 7L21 12L16 17Z" fill="currentColor"/>
+          </svg>
           Join Room
         </button>
       </form>

@@ -7,7 +7,7 @@ import {
   VideoTrack,
 } from '@livekit/components-react';
 import { BackgroundBlur, BackgroundProcessor, VirtualBackground, ProcessorWrapper } from '@livekit/track-processors';
-import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent } from 'livekit-client';
+import { isLocalTrack, LocalTrackPublication, Track, ParticipantEvent, LocalVideoTrack } from 'livekit-client';
 import { detectDeviceCapabilities } from './client-utils';
 import { getBlurConfig, getRecommendedBlurQuality, BlurQuality } from './BlurConfig';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
@@ -19,6 +19,7 @@ import {
   formatBytes,
   CustomBackground,
 } from './customBackgrounds';
+import { waitForProcessorWithFallback } from './videoProcessorUtils';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -415,23 +416,10 @@ export function CameraSettings() {
         isApplyingProcessorRef.current = true;
         setIsApplyingProcessor(true);
         
-        // CRITICAL: Mute the track to prevent showing unprocessed video
-        // This ensures user's background is never exposed during processor transitions
-        const wasEnabled = !track.isMuted;
-        if (wasEnabled) {
-          await track.mute();
-          console.log('[CameraSettings] Muted video track before applying processor');
-        }
-        
-        // Check if effect was cancelled during mute
-        if (!isEffectActive) {
-          console.log('[CameraSettings] Effect cancelled during mute, aborting');
-          if (wasEnabled && isLocalTrack(track)) {
-            try { await track.unmute(); } catch (e) {}
-          }
-          setIsApplyingProcessor(false);
-          return;
-        }
+        // IMPORTANT: Do NOT mute room tracks - it can cause the MediaStreamTrack to end
+        // Apply the processor directly while the track is live
+        // The processor initialization is fast enough that minimal unprocessed frames are sent
+        console.log('[CameraSettings] Applying processor directly to live track (no mute needed)');
         
         // Suppress MediaPipe initialization warnings
         // MediaPipe logs benign OpenGL warnings during WebGL context initialization
@@ -453,18 +441,10 @@ export function CameraSettings() {
           }, 1000);
         };
         
-        // Restore video track after processor is applied
+        // No longer need to restore/unmute since we don't mute anymore
+        // Keeping this function as a no-op to avoid changing all call sites
         const restoreVideoTrack = async () => {
-          if (wasEnabled) {
-            // Only check if track is still valid, don't re-check readyState
-            // The track was already validated as 'live' before we muted it
-            try {
-              await track.unmute();
-              console.log('[CameraSettings] Unmuted video track - effect is ready');
-            } catch (err) {
-              console.warn('[CameraSettings] Could not unmute track:', err);
-            }
-          }
+          // Track is never muted, so no need to unmute
         };
 
         if (backgroundType === 'blur') {
@@ -503,9 +483,19 @@ export function CameraSettings() {
           // Update cache with new processor (for reference only, not reused)
           processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
           
-          // Check effect is still active after processor creation
-          if (!isEffectActive) {
-            console.log('[CameraSettings] Effect cancelled after blur processor creation');
+          // Check effect is still active and track is still valid after processor creation
+          if (!isEffectActive || !isLocalTrack(track)) {
+            console.log('[CameraSettings] Effect cancelled or track invalid after blur processor creation');
+            restoreConsoleWarn();
+            await restoreVideoTrack();
+            return;
+          }
+          
+          // CRITICAL: Final track state check right before setProcessor
+          // The track can end at any time, so we check immediately before the call
+          const finalMediaStreamTrack = track.mediaStreamTrack;
+          if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
+            console.warn('[CameraSettings] Track ended before setProcessor (state:', finalMediaStreamTrack?.readyState, '), aborting blur application');
             restoreConsoleWarn();
             await restoreVideoTrack();
             return;
@@ -523,10 +513,14 @@ export function CameraSettings() {
               return;
             }
             
-            // CRITICAL: Wait for processor to fully initialize before showing video
-            // The blur processor needs time (300ms) to process initial frames and stabilize
-            // This prevents showing unblurred or partially processed frames to other participants
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Wait for processor to actually start outputting processed frames
+            // This detects when the blur is ready instead of using fixed timeouts
+            console.log('[CameraSettings] Detecting when blur processor is ready...');
+            try {
+              await waitForProcessorWithFallback(track as LocalVideoTrack, 100);
+            } catch (waitError) {
+              console.warn('[CameraSettings] Error waiting for blur processor ready:', waitError);
+            }
             
             // Final check before marking as complete
             if (!isEffectActive) {
@@ -550,8 +544,15 @@ export function CameraSettings() {
           } catch (processorError) {
             restoreConsoleWarn();
             await restoreVideoTrack(); // Always restore video on error
+            
+            // Handle specific error cases
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying blur processor:', processorError.message);
+              return;
+            } else if (processorError instanceof TypeError && 
+                       (processorError.message.includes('Input track cannot be ended') ||
+                        processorError.message.includes('MediaStreamTrackProcessor'))) {
+              console.warn('[CameraSettings] Track ended before processor could be applied:', processorError.message);
               return;
             }
             throw processorError; // Re-throw other errors
@@ -577,13 +578,26 @@ export function CameraSettings() {
           });
           processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
           
+          // CRITICAL: Final track state check right before setProcessor
+          const finalMediaStreamTrack = track.mediaStreamTrack;
+          if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
+            console.warn('[CameraSettings] Track ended before setProcessor (state:', finalMediaStreamTrack?.readyState, '), aborting virtual background');
+            restoreConsoleWarn();
+            await restoreVideoTrack();
+            return;
+          }
+          
           try {
             // setProcessor() handles stopping the old processor internally
             await track.setProcessor(virtualBgProcessor);
             
-            // Wait for processor to fully initialize before showing video
-            // Virtual backgrounds also need time to process and stabilize
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Wait for processor to actually start outputting processed frames
+            console.log('[CameraSettings] Detecting when virtual background is ready...');
+            try {
+              await waitForProcessorWithFallback(track as LocalVideoTrack, 100);
+            } catch (waitError) {
+              console.warn('[CameraSettings] Error waiting for virtual background ready:', waitError);
+            }
             
             currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
             console.log('[CameraSettings] Virtual background applied successfully, stream remains active');
@@ -594,8 +608,15 @@ export function CameraSettings() {
           } catch (processorError) {
             restoreConsoleWarn();
             await restoreVideoTrack(); // Always restore video on error
+            
+            // Handle specific error cases
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying virtual background:', processorError.message);
+              return;
+            } else if (processorError instanceof TypeError && 
+                       (processorError.message.includes('Input track cannot be ended') ||
+                        processorError.message.includes('MediaStreamTrackProcessor'))) {
+              console.warn('[CameraSettings] Track ended before virtual background could be applied:', processorError.message);
               return;
             }
             throw processorError; // Re-throw other errors
@@ -619,13 +640,26 @@ export function CameraSettings() {
             });
             processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
             
+            // CRITICAL: Final track state check right before setProcessor
+            const finalMediaStreamTrack = track.mediaStreamTrack;
+            if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
+              console.warn('[CameraSettings] Track ended before setProcessor (state:', finalMediaStreamTrack?.readyState, '), aborting custom background');
+              restoreConsoleWarn();
+              await restoreVideoTrack();
+              return;
+            }
+            
             try {
               // setProcessor() handles stopping the old processor internally
               await track.setProcessor(virtualBgProcessor);
               
-              // Wait for processor to fully initialize before showing video
-              // Custom backgrounds also need time to process and stabilize
-              await new Promise(resolve => setTimeout(resolve, 300));
+              // Wait for processor to actually start outputting processed frames
+              console.log('[CameraSettings] Detecting when custom background is ready...');
+              try {
+                await waitForProcessorWithFallback(track as LocalVideoTrack, 100);
+              } catch (waitError) {
+                console.warn('[CameraSettings] Error waiting for custom background ready:', waitError);
+              }
               
               currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
               console.log('[CameraSettings] Custom background applied successfully, stream remains active:', customBg.name);
@@ -636,8 +670,15 @@ export function CameraSettings() {
             } catch (processorError) {
               restoreConsoleWarn();
               await restoreVideoTrack(); // Always restore video on error
+              
+              // Handle specific error cases
               if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
                 console.warn('[CameraSettings] Stream closed while applying custom background:', processorError.message);
+                return;
+              } else if (processorError instanceof TypeError && 
+                         (processorError.message.includes('Input track cannot be ended') ||
+                          processorError.message.includes('MediaStreamTrackProcessor'))) {
+                console.warn('[CameraSettings] Track ended before custom background could be applied:', processorError.message);
                 return;
               }
               throw processorError; // Re-throw other errors
