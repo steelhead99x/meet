@@ -112,11 +112,11 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Minimal blur for performance
    * - CPU processing as fallback
    * - Basic edge handling
-   * - Uses MediaPipe Image Segmenter for better quality
+   * - Uses LiveKit default for reliability
    */
   low: {
     blurRadius: 15,
-    processorType: 'mediapipe-image',
+    processorType: 'livekit-default',
     segmenterOptions: {
       delegate: 'CPU',
     },
@@ -126,7 +126,7 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
       temporalSmoothing: false,
     },
     enhancedPersonDetection: {
-      enabled: true,
+      enabled: false,
       confidenceThreshold: 0.6,
       morphologyEnabled: false,
       morphologyKernelSize: 3,
@@ -140,21 +140,21 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Moderate blur with GPU acceleration
    * - Basic edge smoothing
    * - Good balance of quality and performance
-   * - Uses MediaPipe Image Segmenter for better quality
+   * - Uses LiveKit default for reliability
    */
   medium: {
     blurRadius: 45,
-    processorType: 'mediapipe-image',
+    processorType: 'livekit-default',
     segmenterOptions: {
       delegate: 'GPU',
     },
     edgeRefinement: {
-      enabled: true,
+      enabled: false,
       featherAmount: 0.2,
       temporalSmoothing: false,
     },
     enhancedPersonDetection: {
-      enabled: true,
+      enabled: false,
       confidenceThreshold: 0.65,
       morphologyEnabled: true,
       morphologyKernelSize: 3,
@@ -168,21 +168,21 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Strong blur with advanced edge smoothing
    * - GPU-accelerated processing
    * - Enhanced edge refinement
-   * - Uses MediaPipe Image Segmenter for better quality
+   * - Uses MediaPipe Image Segmenter with ProcessorWrapper
    */
   high: {
     blurRadius: 90,
-    processorType: 'mediapipe-image',
+    processorType: 'livekit-default',
     segmenterOptions: {
       delegate: 'GPU',
     },
     edgeRefinement: {
-      enabled: true,
+      enabled: false,
       featherAmount: 0.35,
-      temporalSmoothing: true,
+      temporalSmoothing: false,
     },
     enhancedPersonDetection: {
-      enabled: true,
+      enabled: false,
       confidenceThreshold: 0.7,
       morphologyEnabled: true,
       morphologyKernelSize: 5,
@@ -196,21 +196,21 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
    * - Maximum blur for best background separation
    * - Advanced edge processing with temporal smoothing
    * - Utilizes all available GPU resources
-   * - Uses MediaPipe Image Segmenter for superior quality
+   * - Uses reliable LiveKit default processor
    */
   ultra: {
     blurRadius: 150,
-    processorType: 'mediapipe-image',
+    processorType: 'livekit-default',
     segmenterOptions: {
       delegate: 'GPU',
     },
     edgeRefinement: {
-      enabled: true,
+      enabled: false,
       featherAmount: 0.5,
-      temporalSmoothing: true,
+      temporalSmoothing: false,
     },
     enhancedPersonDetection: {
-      enabled: true,
+      enabled: false,
       confidenceThreshold: 0.75,
       morphologyEnabled: true,
       morphologyKernelSize: 7,

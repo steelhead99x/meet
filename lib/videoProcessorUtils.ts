@@ -158,19 +158,10 @@ export async function waitForTrackPlayback(
     videoElement.muted = true;
     videoElement.playsInline = true;
     videoElement.autoplay = true;
-    
+
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
     let resolved = false;
-    
-    const cleanup = () => {
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-      track.detach(videoElement);
-      videoElement.remove();
-    };
-    
+
     const handlePlaying = () => {
       if (resolved) return;
       resolved = true;
@@ -178,7 +169,7 @@ export async function waitForTrackPlayback(
       cleanup();
       resolve();
     };
-    
+
     const handleTimeUpdate = () => {
       // TimeUpdate fires when frames are being rendered
       if (resolved) return;
@@ -189,7 +180,19 @@ export async function waitForTrackPlayback(
         resolve();
       }
     };
-    
+
+    const cleanup = () => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+        timeoutHandle = null;
+      }
+      // CRITICAL: Remove event listeners to prevent memory leaks
+      videoElement.removeEventListener('playing', handlePlaying);
+      videoElement.removeEventListener('timeupdate', handleTimeUpdate);
+      track.detach(videoElement);
+      videoElement.remove();
+    };
+
     videoElement.addEventListener('playing', handlePlaying);
     videoElement.addEventListener('timeupdate', handleTimeUpdate);
     

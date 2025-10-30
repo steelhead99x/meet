@@ -22,6 +22,7 @@ import {
 import { waitForProcessorWithFallback } from './videoProcessorUtils';
 import { useProcessorLoading } from './ProcessorLoadingContext';
 import { MediaPipeImageSegmenterProcessor } from './processors/MediaPipeImageSegmenter';
+import MediaPipeBlurTransformer from './processors/MediaPipeBlurTransformer';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -98,7 +99,60 @@ export function CameraSettings() {
   // Use shared loading state from context to show overlay in room
   const { isApplyingProcessor, setIsApplyingProcessor } = useProcessorLoading();
   const isApplyingProcessorRef = React.useRef(false);
-  
+
+  // Track blob URLs to prevent memory leaks
+  const activeBlobUrlsRef = React.useRef<Set<string>>(new Set());
+
+  // Helper function to revoke blob URLs and prevent memory leaks
+  const revokeBlobUrls = React.useCallback(() => {
+    activeBlobUrlsRef.current.forEach((url) => {
+      try {
+        URL.revokeObjectURL(url);
+        console.log('[CameraSettings] Revoked blob URL:', url.substring(0, 50) + '...');
+      } catch (error) {
+        console.warn('[CameraSettings] Error revoking blob URL:', error);
+      }
+    });
+    activeBlobUrlsRef.current.clear();
+  }, []);
+
+  // Track console.warn override timeout to prevent memory leaks
+  const consoleWarnTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const originalConsoleWarnRef = React.useRef<typeof console.warn>(console.warn);
+
+  // Helper function to suppress MediaPipe warnings with proper cleanup
+  const suppressMediaPipeWarnings = React.useCallback(() => {
+    // Clear any existing timeout
+    if (consoleWarnTimeoutRef.current) {
+      clearTimeout(consoleWarnTimeoutRef.current);
+      consoleWarnTimeoutRef.current = null;
+    }
+
+    // Store the current console.warn
+    const currentWarn = console.warn;
+
+    // Override console.warn to filter MediaPipe warnings
+    console.warn = (...args: any[]) => {
+      const message = args.join(' ');
+      // Filter out MediaPipe OpenGL warnings
+      if (message.includes('OpenGL error checking') || message.includes('gl_context.cc')) {
+        return; // Suppress this specific warning
+      }
+      currentWarn.apply(console, args);
+    };
+
+    // Return a cleanup function that restores console.warn
+    return () => {
+      // Clear the timeout if it exists
+      if (consoleWarnTimeoutRef.current) {
+        clearTimeout(consoleWarnTimeoutRef.current);
+        consoleWarnTimeoutRef.current = null;
+      }
+      // Restore console.warn immediately
+      console.warn = currentWarn;
+    };
+  }, []);
+
   // Initialize from saved preferences - BLUR ENABLED BY DEFAULT
   const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(() => {
     if (typeof window === 'undefined') return 'blur';
@@ -171,16 +225,6 @@ export function CameraSettings() {
     console.log('[BlurConfig] Device capabilities:', capabilities);
     console.log('[BlurConfig] Recommended blur quality:', recommended);
     return recommended;
-  });
-
-  // Cache processor instances to avoid recreating them
-  // Map blur quality to processor instance
-  const processorCacheRef = React.useRef<{
-    blur?: Map<BlurQuality, ProcessorWrapper<Record<string, unknown>>>;
-    virtualBackground?: Map<string, ProcessorWrapper<Record<string, unknown>>>;
-  }>({
-    blur: new Map(),
-    virtualBackground: new Map(),
   });
 
   // Track the currently applied processor configuration to avoid reapplying the same one
@@ -439,27 +483,10 @@ export function CameraSettings() {
         // Apply the processor directly while the track is live
         // The processor initialization is fast enough that minimal unprocessed frames are sent
         console.log('[CameraSettings] Applying processor directly to live track (no mute needed)');
-        
-        // Suppress MediaPipe initialization warnings
-        // MediaPipe logs benign OpenGL warnings during WebGL context initialization
-        const originalWarn = console.warn;
-        console.warn = (...args: any[]) => {
-          const message = args.join(' ');
-          // Filter out MediaPipe OpenGL warnings
-          if (message.includes('OpenGL error checking') || 
-              message.includes('gl_context.cc')) {
-            return; // Suppress this specific warning
-          }
-          originalWarn.apply(console, args);
-        };
-        
-        // Restore console.warn after processor initialization
-        const restoreConsoleWarn = () => {
-          setTimeout(() => {
-            console.warn = originalWarn;
-          }, 1000);
-        };
-        
+
+        // Suppress MediaPipe initialization warnings with proper cleanup
+        const restoreConsoleWarn = suppressMediaPipeWarnings();
+
         // No longer need to restore/unmute since we don't mute anymore
         // Keeping this function as a no-op to avoid changing all call sites
         const restoreVideoTrack = async () => {
@@ -468,17 +495,16 @@ export function CameraSettings() {
 
         if (backgroundType === 'blur') {
           // Track state was already validated - proceed with applying blur
-          
+
+          // CRITICAL: Revoke blob URLs when switching away from custom backgrounds
+          revokeBlobUrls();
+
           // Get advanced blur configuration - use custom settings if enabled
           const config = getBlurConfig(
-            blurQuality, 
+            blurQuality,
             useCustomSegmentation ? customSegmentation : null
           );
-          
-          const cacheKey = useCustomSegmentation && customSegmentation
-            ? `custom-${JSON.stringify(customSegmentation)}`
-            : blurQuality;
-          
+
           // Check effect is still active before creating processor
           if (!isEffectActive) {
             console.log('[CameraSettings] Effect cancelled before blur processor creation');
@@ -496,56 +522,45 @@ export function CameraSettings() {
           
           // Choose processor based on configuration
           if (config.processorType === 'mediapipe-image') {
-            // ⭐ NEW: Use MediaPipe Image Segmenter for better quality
-            console.log(`[CameraSettings] Using MediaPipe Image Segmenter for enhanced quality`);
-            
+            // ⭐ ENHANCED: Use MediaPipe Image Segmenter for better quality (HIGH/ULTRA only)
+            console.log(`[CameraSettings] ========================================`);
+            console.log(`[CameraSettings] Using MediaPipe Image Segmenter (Enhanced Quality)`);
+            console.log(`[CameraSettings] Blur radius: ${config.blurRadius}px`);
+            console.log(`[CameraSettings] Delegate: ${config.segmenterOptions.delegate}`);
+            console.log(`[CameraSettings] Quality: ${blurQuality}`);
+            console.log(`[CameraSettings] Enhanced person detection: ${config.enhancedPersonDetection?.enabled}`);
+            console.log(`[CameraSettings] ========================================`);
+
             // Extract temporal smoothing alpha from custom settings if available
             const temporalAlpha = customSegmentation?.mediaPipeSettings?.temporalSmoothingAlpha;
-            
-            const customProcessor = new MediaPipeImageSegmenterProcessor({
-              blurRadius: config.blurRadius,
-              delegate: config.segmenterOptions.delegate,
-              enhancedPersonDetection: config.enhancedPersonDetection,
-              temporalSmoothingAlpha: temporalAlpha,
-            });
-            
-            // Wrap in ProcessorWrapper interface for LiveKit compatibility
-            // CRITICAL: Must include init(), processFrame(), and destroy() methods
+
             try {
-              blurProcessor = {
-                name: 'mediapipe-image-blur',
-                async init() {
-                  console.log('[CameraSettings] Initializing MediaPipe Image Segmenter...');
-                  // Initialize the MediaPipe processor
-                  await customProcessor.initialize();
-                  console.log('[CameraSettings] MediaPipe Image Segmenter initialized successfully');
-                },
-                async processFrame(frame: VideoFrame): Promise<VideoFrame> {
-                  try {
-                    return await customProcessor.processFrame(frame);
-                  } catch (error) {
-                    console.warn('[CameraSettings] Frame processing error, returning original frame:', error);
-                    return frame;
-                  }
-                },
-                async destroy() {
-                  console.log('[CameraSettings] Destroying MediaPipe Image Segmenter...');
-                  try {
-                    await customProcessor.destroy();
-                    console.log('[CameraSettings] MediaPipe Image Segmenter destroyed successfully');
-                  } catch (error) {
-                    console.warn('[CameraSettings] Error destroying MediaPipe processor:', error);
-                  }
-                },
-              };
-              
-              console.log(`[BlurConfig] ✅ Applied ${blurQuality} quality: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing, MediaPipe Image Segmenter`);
-              
+              // Create the MediaPipe blur transformer
+              console.log('[MediaPipe] Creating MediaPipeBlurTransformer...');
+              const transformer = new MediaPipeBlurTransformer({
+                blurRadius: config.blurRadius,
+                delegate: config.segmenterOptions.delegate,
+                enhancedPersonDetection: config.enhancedPersonDetection,
+                temporalSmoothingAlpha: temporalAlpha,
+              });
+
+              // Wrap with LiveKit's ProcessorWrapper
+              console.log('[MediaPipe] Wrapping transformer with ProcessorWrapper...');
+              blurProcessor = new ProcessorWrapper(transformer, 'mediapipe-blur');
+
+              console.log(`[BlurConfig] ✅ MediaPipe processor created successfully`);
+              console.log(`[BlurConfig] ✅ Applied ${blurQuality} quality: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing`);
+
               if (config.enhancedPersonDetection?.enabled) {
-                console.log('[BlurConfig] ✅ Enhanced person detection ACTIVE with MediaPipe processor');
+                console.log('[BlurConfig] ✅ Enhanced person detection ACTIVE with settings:', {
+                  confidenceThreshold: config.enhancedPersonDetection.confidenceThreshold,
+                  morphologyEnabled: config.enhancedPersonDetection.morphologyEnabled,
+                  keepLargestComponent: config.enhancedPersonDetection.keepLargestComponentOnly,
+                });
               }
             } catch (error) {
-              console.error('[CameraSettings] MediaPipe initialization failed, falling back to default:', error);
+              console.error('[CameraSettings] ❌ MediaPipe processor creation failed, falling back to default:', error);
+              console.warn('[CameraSettings] ⚠️  Using LiveKit default processor instead');
               // Fallback to LiveKit default on error
               blurProcessor = BackgroundProcessor({
                 blurRadius: config.blurRadius,
@@ -553,33 +568,36 @@ export function CameraSettings() {
                   delegate: config.segmenterOptions.delegate,
                 },
               }, 'background-blur');
+              console.log('[CameraSettings] ✅ Fallback processor created');
             }
             
           } else {
             // Use existing LiveKit processor (default)
-            console.log(`[CameraSettings] Using LiveKit BackgroundProcessor (default)`);
-            blurProcessor = BackgroundProcessor({
-              blurRadius: config.blurRadius,
-              segmenterOptions: {
-                delegate: config.segmenterOptions.delegate,
-              },
-            }, 'background-blur');
-            
+            console.log(`[CameraSettings] ========================================`);
+            console.log(`[CameraSettings] Creating LiveKit BackgroundProcessor (blur)`);
+            console.log(`[CameraSettings] Blur radius: ${config.blurRadius}px`);
+            console.log(`[CameraSettings] Delegate: ${config.segmenterOptions.delegate}`);
+            console.log(`[CameraSettings] Quality: ${blurQuality}`);
+            console.log(`[CameraSettings] ========================================`);
+
+            try {
+              blurProcessor = BackgroundProcessor({
+                blurRadius: config.blurRadius,
+                segmenterOptions: {
+                  delegate: config.segmenterOptions.delegate,
+                },
+              }, 'background-blur');
+
+              console.log(`[BlurConfig] ✅ BackgroundProcessor created successfully`);
+            } catch (createError) {
+              console.error('[CameraSettings] ❌ FAILED to create BackgroundProcessor:', createError);
+              throw createError;
+            }
+
             // Log what's actually being applied
             console.log(`[BlurConfig] ✅ Applied ${blurQuality} quality: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing`);
-            
-            // Warn about configured but unsupported features with default processor
-            if (config.enhancedPersonDetection?.enabled) {
-              console.warn('[BlurConfig] ⚠️  Enhanced person detection is configured but not integrated with default LiveKit processor');
-            }
-            if (config.edgeRefinement?.enabled) {
-              console.warn('[BlurConfig] ⚠️  Edge refinement is configured but not integrated with default LiveKit processor');
-            }
           }
-          
-          // Update cache with new processor (for reference only, not reused)
-          processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
-          
+
           // Check effect is still active and track is still valid after processor creation
           if (!isEffectActive || !isLocalTrack(track)) {
             console.log('[CameraSettings] Effect cancelled or track invalid after blur processor creation');
@@ -599,9 +617,25 @@ export function CameraSettings() {
           }
           
           try {
+            console.log('[CameraSettings] 🔄 Calling track.setProcessor() with blur processor...');
+            console.log('[CameraSettings] Track state before setProcessor:', {
+              kind: track.kind,
+              muted: track.isMuted,
+              readyState: track.mediaStreamTrack?.readyState,
+              hasProcessor: track.getProcessor() !== undefined,
+            });
+
             // setProcessor() handles stopping the old processor internally without closing the stream
             await track.setProcessor(blurProcessor);
-            
+
+            console.log('[CameraSettings] ✅ track.setProcessor() completed successfully!');
+            console.log('[CameraSettings] Track state after setProcessor:', {
+              kind: track.kind,
+              muted: track.isMuted,
+              readyState: track.mediaStreamTrack?.readyState,
+              hasProcessor: track.getProcessor() !== undefined,
+            });
+
             // Check effect is still active after setProcessor
             if (!isEffectActive) {
               console.log('[CameraSettings] Effect cancelled after setProcessor');
@@ -609,16 +643,17 @@ export function CameraSettings() {
               await restoreVideoTrack();
               return;
             }
-            
+
             // Wait for processor to actually start outputting processed frames
             // This detects when the blur is ready instead of using fixed timeouts
             console.log('[CameraSettings] Detecting when blur processor is ready...');
             try {
               await waitForProcessorWithFallback(track as LocalVideoTrack, 100);
+              console.log('[CameraSettings] ✅ Blur processor is ready and processing frames!');
             } catch (waitError) {
               console.warn('[CameraSettings] Error waiting for blur processor ready:', waitError);
             }
-            
+
             // Final check before marking as complete
             if (!isEffectActive) {
               console.log('[CameraSettings] Effect cancelled during processor initialization');
@@ -626,24 +661,31 @@ export function CameraSettings() {
               await restoreVideoTrack();
               return;
             }
-            
+
             // Note: currentProcessorRef.current already updated at start of applyProcessor
-            console.log('[CameraSettings] Blur processor applied successfully, stream remains active');
+            console.log('[CameraSettings] ✅✅✅ Blur processor applied successfully, stream remains active');
             restoreConsoleWarn();
-            
+
             // Unmute track now that blur is ready
             await restoreVideoTrack();
           } catch (processorError) {
+            console.error('[CameraSettings] ❌❌❌ ERROR in track.setProcessor():', processorError);
+            console.error('[CameraSettings] Error details:', {
+              name: (processorError as any).name,
+              message: (processorError as any).message,
+              stack: (processorError as any).stack,
+            });
+
             restoreConsoleWarn();
             await restoreVideoTrack(); // Always restore video on error
-            
+
             // Handle specific error cases
             if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
               console.warn('[CameraSettings] Stream closed while applying blur processor:', processorError.message);
               return;
-            } else if (processorError instanceof TypeError && 
-                       (processorError.message.includes('Input track cannot be ended') ||
-                        processorError.message.includes('MediaStreamTrackProcessor'))) {
+            } else if (processorError instanceof TypeError &&
+                       ((processorError as Error).message.includes('Input track cannot be ended') ||
+                        (processorError as Error).message.includes('MediaStreamTrackProcessor'))) {
               console.warn('[CameraSettings] Track ended before processor could be applied:', processorError.message);
               return;
             }
@@ -652,10 +694,10 @@ export function CameraSettings() {
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
           // Track state was already validated - proceed with applying virtual background
-          
-          // Generate cache key
-          const cacheKey = `${backgroundType}:${virtualBackgroundImagePath}`;
-          
+
+          // CRITICAL: Revoke blob URLs when switching away from custom backgrounds
+          revokeBlobUrls();
+
           // Always create fresh virtual background processor to avoid state issues
           let imagePath = virtualBackgroundImagePath;
           
@@ -668,8 +710,7 @@ export function CameraSettings() {
           const virtualBgProcessor = VirtualBackground(imagePath, {
             delegate: 'GPU',
           });
-          processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
-          
+
           // CRITICAL: Final track state check right before setProcessor
           const finalMediaStreamTrack = track.mediaStreamTrack;
           if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
@@ -716,22 +757,24 @@ export function CameraSettings() {
           
         } else if ((backgroundType === 'custom-video' || backgroundType === 'custom-image') && selectedCustomBgId) {
           // Track state was already validated - proceed with applying custom background
-          
+
           // Handle custom backgrounds from IndexedDB
           const customBg = customBackgrounds.find(bg => bg.id === selectedCustomBgId);
           if (customBg) {
-            const cacheKey = `custom:${selectedCustomBgId}`;
-            
+            // CRITICAL: Revoke previous blob URLs before creating new ones to prevent memory leaks
+            revokeBlobUrls();
+
             // Always create fresh custom background processor to avoid state issues
             // Create object URL from blob
             const blobUrl = URL.createObjectURL(customBg.data);
-            
+            activeBlobUrlsRef.current.add(blobUrl);
+            console.log('[CameraSettings] Created blob URL for custom background:', customBg.name);
+
             console.log('[CameraSettings] Creating fresh custom background processor:', customBg.name);
             const virtualBgProcessor = VirtualBackground(blobUrl, {
               delegate: 'GPU',
             });
-            processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
-            
+
             // CRITICAL: Final track state check right before setProcessor
             const finalMediaStreamTrack = track.mediaStreamTrack;
             if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
@@ -779,6 +822,10 @@ export function CameraSettings() {
           
         } else {
           // No effect - stop processor
+
+          // CRITICAL: Revoke blob URLs when switching to no effect
+          revokeBlobUrls();
+
           // Check stream state before stopping processor
           if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
             try {
@@ -786,7 +833,7 @@ export function CameraSettings() {
               // Note: currentProcessorRef.current already updated at start of applyProcessor
               console.log('[CameraSettings] Processor stopped successfully');
               restoreConsoleWarn();
-              
+
               // Unmute track since no effect is being applied
               await restoreVideoTrack();
             } catch (stopError) {
@@ -839,10 +886,13 @@ export function CameraSettings() {
       console.log('[CameraSettings] Effect cleanup triggered - cancelling ongoing processor operations');
       isEffectActive = false;
     };
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation, setIsApplyingProcessor]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings]);
 
   // Cleanup processors on unmount
   React.useEffect(() => {
+    // Copy ref value to avoid stale reference in cleanup
+    const originalWarn = originalConsoleWarnRef.current;
+
     return () => {
       console.log('[CameraSettings] Component unmount - cleaning up processors');
       const track = cameraTrack?.track;
@@ -860,16 +910,23 @@ export function CameraSettings() {
           });
         }
       }
-      
-      // Clear processor cache
-      processorCacheRef.current = {
-        blur: new Map(),
-        virtualBackground: new Map(),
-      };
+
+      // CRITICAL: Revoke all blob URLs to prevent memory leaks
+      revokeBlobUrls();
+
+      // CRITICAL: Clear any pending console.warn restore timeout
+      if (consoleWarnTimeoutRef.current) {
+        clearTimeout(consoleWarnTimeoutRef.current);
+        consoleWarnTimeoutRef.current = null;
+      }
+      // Restore original console.warn if it was overridden
+      console.warn = originalWarn;
+
+      // Clear processor configuration tracking
       currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
       console.log('[CameraSettings] Cleanup complete');
     };
-  }, [cameraTrack]);
+  }, [cameraTrack, revokeBlobUrls]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
