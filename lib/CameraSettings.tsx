@@ -531,8 +531,9 @@ export function CameraSettings() {
             console.log(`[CameraSettings] Enhanced person detection: ${config.enhancedPersonDetection?.enabled}`);
             console.log(`[CameraSettings] ========================================`);
 
-            // Extract temporal smoothing alpha from custom settings if available
-            const temporalAlpha = customSegmentation?.mediaPipeSettings?.temporalSmoothingAlpha;
+            // Extract temporal smoothing alpha from custom settings or use config value
+            const temporalAlpha = customSegmentation?.mediaPipeSettings?.temporalSmoothingAlpha
+              || config.edgeRefinement?.temporalSmoothingFactor;
 
             try {
               // Create the MediaPipe blur transformer
@@ -542,6 +543,9 @@ export function CameraSettings() {
                 delegate: config.segmenterOptions.delegate,
                 enhancedPersonDetection: config.enhancedPersonDetection,
                 temporalSmoothingAlpha: temporalAlpha,
+                outputConfidenceMasks: config.segmenterOptions.outputConfidenceMasks ?? true,
+                outputCategoryMask: config.segmenterOptions.outputCategoryMask ?? false,
+                processEveryNFrames: blurQuality === 'ultra' ? 1 : 2, // Ultra: every frame, others: every 2nd frame
               });
 
               // Wrap with LiveKit's ProcessorWrapper

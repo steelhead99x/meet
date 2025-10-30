@@ -24,16 +24,20 @@ export interface BlurConfig {
   /** Blur radius in pixels - higher values create stronger blur */
   blurRadius: number;
   /** Which segmentation processor to use */
-  processorType?: 'livekit-default' | 'mediapipe-image' | 'modnet';
+  processorType?: 'livekit-default' | 'mediapipe-image' | 'mediapipe-image-segmenter' | 'modnet';
   /** Segmentation options for MediaPipe */
   segmenterOptions: {
     /** GPU or CPU delegation */
     delegate: 'GPU' | 'CPU';
-    /** 
+    /**
      * Use a custom high-quality person segmentation model
      * This can significantly improve person detection accuracy
      */
     modelAssetPath?: string;
+    /** Output category mask for multi-class segmentation (hair, body, face, clothes) */
+    outputCategoryMask?: boolean;
+    /** Output confidence masks for each category */
+    outputConfidenceMasks?: boolean;
   };
   /** Edge refinement settings */
   edgeRefinement: {
@@ -43,6 +47,8 @@ export interface BlurConfig {
     featherAmount: number;
     /** Enable temporal smoothing between frames */
     temporalSmoothing: boolean;
+    /** Temporal smoothing factor (0-1) - higher = more smoothing */
+    temporalSmoothingFactor?: number;
   };
   /** Enhanced person detection settings */
   enhancedPersonDetection?: {
@@ -58,6 +64,8 @@ export interface BlurConfig {
     keepLargestComponentOnly: boolean;
     /** Minimum mask area ratio to be considered valid (0-1) */
     minMaskAreaRatio: number;
+    /** Enable temporal consistency to reduce flicker */
+    temporalConsistency?: boolean;
   };
 }
 
@@ -194,28 +202,35 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
   /**
    * ULTRA QUALITY - High-end desktops with powerful GPUs
    * - Maximum blur for best background separation
-   * - Advanced edge processing with temporal smoothing
+   * - Advanced edge processing with motion-aware temporal smoothing
    * - Utilizes all available GPU resources
-   * - Uses reliable LiveKit default processor
+   * - Premium processing pipeline with MediaPipe Image Segmenter
+   * - Uses confidence masks for higher precision segmentation
+   * - Processes every frame for maximum quality (no frame skipping)
+   * - Reduced temporal smoothing to minimize ghosting/trailing
    */
   ultra: {
     blurRadius: 150,
-    processorType: 'livekit-default',
+    processorType: 'mediapipe-image',
     segmenterOptions: {
       delegate: 'GPU',
+      outputCategoryMask: false,
+      outputConfidenceMasks: true,
     },
     edgeRefinement: {
-      enabled: false,
+      enabled: true,
       featherAmount: 0.5,
-      temporalSmoothing: false,
+      temporalSmoothing: true,
+      temporalSmoothingFactor: 0.35,
     },
     enhancedPersonDetection: {
-      enabled: false,
-      confidenceThreshold: 0.75,
+      enabled: true,
+      confidenceThreshold: 0.65,
       morphologyEnabled: true,
-      morphologyKernelSize: 7,
+      morphologyKernelSize: 3,
       keepLargestComponentOnly: true,
-      minMaskAreaRatio: 0.03,
+      minMaskAreaRatio: 0.02,
+      temporalConsistency: true,
     },
   },
 };

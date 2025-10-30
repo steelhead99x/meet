@@ -169,3 +169,4 @@ Users who already have saved preferences will not be affected:
 - Defaults only apply to new users or users without saved preferences
 - No data loss or reset of existing preferences
 
+

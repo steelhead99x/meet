@@ -228,7 +228,10 @@ function keepLargestComponent(data: Uint8ClampedArray, width: number, height: nu
     data[idx + 3] = 255;
   }
   
-  console.log(`[MaskProcessor] Kept largest component: ${largestComponentSize} pixels`);
+  // Reduced logging - only log occasionally to avoid console spam
+  if (Math.random() < 0.03) { // Log ~3% of frames
+    console.log(`[MaskProcessor] Kept largest component: ${largestComponentSize} pixels`);
+  }
 }
 
 /**

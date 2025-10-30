@@ -141,3 +141,4 @@ This fix complements other video processing improvements:
 - Background effect loading (BACKGROUND_EFFECT_FIX.md)
 - Blur quality configuration (BlurConfig.ts)
 
+
