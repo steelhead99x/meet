@@ -113,12 +113,8 @@ export function CameraSettings() {
   // Custom background ID for tracking which custom background is selected
   const [selectedCustomBgId, setSelectedCustomBgId] = React.useState<string | null>(null);
 
-  // Load custom backgrounds on mount
-  React.useEffect(() => {
-    loadCustomBackgrounds();
-  }, []);
-  
-  const loadCustomBackgrounds = async () => {
+  // Load custom backgrounds on mount and restore selection
+  const loadCustomBackgrounds = React.useCallback(async () => {
     try {
       const backgrounds = await getAllCustomBackgrounds();
       setCustomBackgrounds(backgrounds);
@@ -127,10 +123,29 @@ export function CameraSettings() {
       setStorageUsed(storage);
       
       console.log('[CameraSettings] Loaded custom backgrounds:', backgrounds.length);
+      
+      // Restore custom background selection if saved
+      const prefs = loadUserPreferences();
+      if ((prefs.backgroundType === 'custom-video' || prefs.backgroundType === 'custom-image') && prefs.backgroundPath) {
+        // Check if the custom background still exists
+        const customBgExists = backgrounds.some(bg => bg.id === prefs.backgroundPath);
+        if (customBgExists) {
+          setSelectedCustomBgId(prefs.backgroundPath);
+          console.log('[CameraSettings] Restored custom background:', prefs.backgroundPath);
+        } else {
+          // Custom background was deleted, fallback to blur
+          console.warn('[CameraSettings] Saved custom background not found, falling back to blur');
+          selectBackground('blur');
+        }
+      }
     } catch (error) {
       console.error('Failed to load custom backgrounds:', error);
     }
-  };
+  }, []);
+  
+  React.useEffect(() => {
+    loadCustomBackgrounds();
+  }, [loadCustomBackgrounds]);
   
   // Detect device capabilities and determine recommended blur quality
   const [blurQuality, setBlurQuality] = React.useState<BlurQuality>(() => {
@@ -166,7 +181,8 @@ export function CameraSettings() {
     type: BackgroundType;
     path: string | null;
     quality: BlurQuality | null;
-  }>({ type: 'none', path: null, quality: null });
+    customSettings: string | null; // JSON stringified custom settings for comparison
+  }>({ type: 'none', path: null, quality: null, customSettings: null });
 
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
@@ -174,7 +190,20 @@ export function CameraSettings() {
       : undefined;
   }, [localParticipant, cameraTrack]);
 
-  // Expose blur quality setter for SettingsMenu
+  // Track custom segmentation settings
+  const [useCustomSegmentation, setUseCustomSegmentation] = React.useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const prefs = loadUserPreferences();
+    return prefs.useCustomSegmentation || false;
+  });
+
+  const [customSegmentation, setCustomSegmentation] = React.useState<any>(() => {
+    if (typeof window === 'undefined') return null;
+    const prefs = loadUserPreferences();
+    return prefs.customSegmentation || null;
+  });
+
+  // Expose blur quality and custom segmentation setters for SettingsMenu
   React.useEffect(() => {
     window.__setBlurQuality = (quality: BlurQuality) => {
       setBlurQuality(quality);
@@ -183,30 +212,108 @@ export function CameraSettings() {
     };
     window.__getBlurQuality = () => blurQuality;
     
+    window.__setUseCustomSegmentation = (use: boolean) => {
+      setUseCustomSegmentation(use);
+      saveUserPreferences({ useCustomSegmentation: use });
+      console.log('[BlurConfig] Use custom segmentation:', use);
+    };
+    window.__getUseCustomSegmentation = () => useCustomSegmentation;
+    
+    window.__setCustomSegmentation = (settings: any) => {
+      setCustomSegmentation(settings);
+      saveUserPreferences({ customSegmentation: settings });
+      console.log('[BlurConfig] Custom segmentation updated:', settings);
+    };
+    window.__getCustomSegmentation = () => customSegmentation;
+    
     return () => {
       delete window.__setBlurQuality;
       delete window.__getBlurQuality;
+      delete window.__setUseCustomSegmentation;
+      delete window.__getUseCustomSegmentation;
+      delete window.__setCustomSegmentation;
+      delete window.__getCustomSegmentation;
     };
-  }, [blurQuality]);
+  }, [blurQuality, useCustomSegmentation, customSegmentation]);
 
-  const selectBackground = (type: BackgroundType, imagePath?: string) => {
+  const selectBackground = (type: BackgroundType, imagePath?: string, customBgId?: string) => {
     setBackgroundType(type);
     
     if ((type === 'image' || type === 'gradient') && imagePath) {
       setVirtualBackgroundImagePath(imagePath);
+      setSelectedCustomBgId(null);
       saveUserPreferences({ 
         backgroundType: type, 
         backgroundPath: imagePath 
       });
-    } else if (type !== 'image' && type !== 'gradient') {
+    } else if ((type === 'custom-video' || type === 'custom-image') && customBgId) {
+      // For custom backgrounds, we'll handle the path separately
+      setSelectedCustomBgId(customBgId);
       setVirtualBackgroundImagePath(null);
+      saveUserPreferences({ 
+        backgroundType: type, 
+        backgroundPath: customBgId // Store the ID
+      });
+    } else if (type !== 'image' && type !== 'gradient' && type !== 'custom-video' && type !== 'custom-image') {
+      setVirtualBackgroundImagePath(null);
+      setSelectedCustomBgId(null);
       saveUserPreferences({ 
         backgroundType: type, 
         backgroundPath: undefined 
       });
     }
     
-    console.log('[CameraSettings] Background changed to:', type, imagePath);
+    console.log('[CameraSettings] Background changed to:', type, imagePath, customBgId);
+  };
+  
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    
+    try {
+      const customBg = await saveCustomBackground(file);
+      await loadCustomBackgrounds();
+      
+      // Auto-select the newly uploaded background
+      const bgType = customBg.type === 'video' ? 'custom-video' : 'custom-image';
+      selectBackground(bgType, undefined, customBg.id);
+      
+      console.log('[CameraSettings] Uploaded custom background:', customBg.name);
+    } catch (error) {
+      console.error('Failed to upload custom background:', error);
+      alert(error instanceof Error ? error.message : 'Failed to upload file');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+  
+  const handleDeleteCustomBackground = async (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this background?')) {
+      return;
+    }
+    
+    try {
+      await deleteCustomBackground(id);
+      await loadCustomBackgrounds();
+      
+      // If the deleted background was selected, switch to blur
+      if (selectedCustomBgId === id) {
+        selectBackground('blur');
+      }
+      
+      console.log('[CameraSettings] Deleted custom background:', id);
+    } catch (error) {
+      console.error('Failed to delete custom background:', error);
+      alert('Failed to delete background');
+    }
   };
 
   // Effect to apply processors with caching - IMMEDIATE application for privacy
@@ -219,10 +326,16 @@ export function CameraSettings() {
     }
 
     // Check if we're already using this processor configuration
+    const currentPath = selectedCustomBgId || virtualBackgroundImagePath;
+    const customSettingsStr = useCustomSegmentation && customSegmentation 
+      ? JSON.stringify(customSegmentation) 
+      : null;
+    
     if (
       currentProcessorRef.current.type === backgroundType &&
-      currentProcessorRef.current.path === virtualBackgroundImagePath &&
-      currentProcessorRef.current.quality === blurQuality
+      currentProcessorRef.current.path === currentPath &&
+      currentProcessorRef.current.quality === blurQuality &&
+      currentProcessorRef.current.customSettings === customSettingsStr
     ) {
       return; // Already applied, skip
     }
@@ -237,14 +350,22 @@ export function CameraSettings() {
         }
 
         if (backgroundType === 'blur') {
-          // Get or create blur processor for current quality level
-          let blurProcessor = processorCacheRef.current.blur?.get(blurQuality);
+          // Get advanced blur configuration - use custom settings if enabled
+          const config = getBlurConfig(
+            blurQuality, 
+            useCustomSegmentation ? customSegmentation : null
+          );
+          
+          const cacheKey = useCustomSegmentation && customSegmentation
+            ? `custom-${JSON.stringify(customSegmentation)}`
+            : blurQuality;
+          
+          // Get or create blur processor for current configuration
+          let blurProcessor = processorCacheRef.current.blur?.get(cacheKey as any);
           if (!blurProcessor) {
-            // Get advanced blur configuration based on quality level
-            const config = getBlurConfig(blurQuality);
-            console.log(`[BlurConfig] Creating ${blurQuality} quality blur processor:`, config);
+            console.log(`[BlurConfig] Creating blur processor with config:`, config);
             
-            // Create blur processor with quality-specific settings
+            // Create blur processor with quality-specific or custom settings
             blurProcessor = BackgroundProcessor({
               blurRadius: config.blurRadius,
               segmenterOptions: {
@@ -252,11 +373,16 @@ export function CameraSettings() {
               },
             }, 'background-blur');
             
-            processorCacheRef.current.blur?.set(blurQuality, blurProcessor);
+            processorCacheRef.current.blur?.set(cacheKey as any, blurProcessor);
           }
           
           await track.setProcessor(blurProcessor);
-          currentProcessorRef.current = { type: 'blur', path: null, quality: blurQuality };
+          currentProcessorRef.current = { 
+            type: 'blur', 
+            path: null, 
+            quality: blurQuality,
+            customSettings: customSettingsStr
+          };
           console.log('[CameraSettings] Blur applied immediately to protect privacy');
           
         } else if ((backgroundType === 'image' || backgroundType === 'gradient') && virtualBackgroundImagePath) {
@@ -280,12 +406,34 @@ export function CameraSettings() {
           }
           
           await track.setProcessor(virtualBgProcessor);
-          currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null };
+          currentProcessorRef.current = { type: backgroundType, path: virtualBackgroundImagePath, quality: null, customSettings: null };
+          
+        } else if ((backgroundType === 'custom-video' || backgroundType === 'custom-image') && selectedCustomBgId) {
+          // Handle custom backgrounds from IndexedDB
+          const customBg = customBackgrounds.find(bg => bg.id === selectedCustomBgId);
+          if (customBg) {
+            const cacheKey = `custom:${selectedCustomBgId}`;
+            
+            let virtualBgProcessor = processorCacheRef.current.virtualBackground?.get(cacheKey);
+            if (!virtualBgProcessor) {
+              // Create object URL from blob
+              const blobUrl = URL.createObjectURL(customBg.data);
+              
+              virtualBgProcessor = VirtualBackground(blobUrl, {
+                delegate: 'GPU',
+              });
+              processorCacheRef.current.virtualBackground?.set(cacheKey, virtualBgProcessor);
+            }
+            
+            await track.setProcessor(virtualBgProcessor);
+            currentProcessorRef.current = { type: backgroundType, path: selectedCustomBgId, quality: null, customSettings: null };
+            console.log('[CameraSettings] Custom background applied:', customBg.name);
+          }
           
         } else {
           // No effect - stop processor
           await track.stopProcessor();
-          currentProcessorRef.current = { type: 'none', path: null, quality: null };
+          currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
         }
       } catch (error) {
         // Handle errors gracefully
@@ -299,7 +447,7 @@ export function CameraSettings() {
 
     // Apply immediately - no debounce to prevent background exposure
     applyProcessor();
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation]);
 
   // Cleanup processors on unmount
   React.useEffect(() => {
@@ -316,7 +464,7 @@ export function CameraSettings() {
         blur: new Map(),
         virtualBackground: new Map(),
       };
-      currentProcessorRef.current = { type: 'none', path: null, quality: null };
+      currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
     };
   }, [cameraTrack]);
 
@@ -353,7 +501,7 @@ export function CameraSettings() {
         <TrackToggle aria-label="Toggle camera" source={Track.Source.Camera} />
         <div className="lk-button-group-menu">
           <MediaDeviceMenu kind="videoinput">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </MediaDeviceMenu>
@@ -499,7 +647,141 @@ export function CameraSettings() {
             >
             </button>
           ))}
+          
+          {/* Custom uploaded backgrounds */}
+          {customBackgrounds.map((customBg) => {
+            const bgType = customBg.type === 'video' ? 'custom-video' : 'custom-image';
+            const isSelected = selectedCustomBgId === customBg.id;
+            
+            return (
+              <button
+                key={customBg.id}
+                onClick={() => selectBackground(bgType, undefined, customBg.id)}
+                className="lk-button lk-button-visual"
+                aria-label={`Custom ${customBg.type}: ${customBg.name}`}
+                aria-pressed={isSelected}
+                style={{
+                  backgroundImage: `url(${customBg.thumbnail})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  border: isSelected
+                    ? '2px solid #3b82f6'
+                    : '2px solid rgba(255, 255, 255, 0.15)',
+                  minWidth: '60px',
+                  minHeight: '60px',
+                  padding: '0',
+                  position: 'relative',
+                }}
+              >
+                {/* Video indicator */}
+                {customBg.type === 'video' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '4px',
+                      right: '4px',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      borderRadius: '4px',
+                      padding: '2px 4px',
+                      fontSize: '10px',
+                      color: 'white',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    VIDEO
+                  </div>
+                )}
+                
+                {/* Delete button */}
+                <button
+                  onClick={(e) => handleDeleteCustomBackground(customBg.id, e)}
+                  style={{
+                    position: 'absolute',
+                    top: '2px',
+                    right: '2px',
+                    background: 'rgba(220, 38, 38, 0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    padding: '0',
+                  }}
+                  aria-label="Delete custom background"
+                  title="Delete"
+                >
+                  ×
+                </button>
+              </button>
+            );
+          })}
+          
+          {/* Upload button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="lk-button lk-button-visual"
+            aria-label="Upload custom background"
+            style={{
+              border: '2px dashed rgba(255, 255, 255, 0.3)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '60px',
+              minHeight: '60px',
+              padding: '8px',
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+              opacity: isUploading ? 0.6 : 1,
+            }}
+          >
+            {isUploading ? (
+              <div style={{ fontSize: '10px', textAlign: 'center' }}>
+                Uploading...
+              </div>
+            ) : (
+              <>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div style={{ fontSize: '10px', marginTop: '4px' }}>
+                  Upload
+                </div>
+              </>
+            )}
+          </button>
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/*,image/*"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
         </div>
+        
+        {/* Storage info */}
+        {customBackgrounds.length > 0 && (
+          <div style={{
+            marginTop: '8px',
+            fontSize: '12px',
+            color: 'rgba(255, 255, 255, 0.7)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span>{customBackgrounds.length} custom background{customBackgrounds.length !== 1 ? 's' : ''}</span>
+            <span>Storage: {formatBytes(storageUsed)}</span>
+          </div>
+        )}
       </div>
     </div>
   );

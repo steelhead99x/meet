@@ -10,7 +10,7 @@ import {
 } from '@livekit/components-react';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 import { BackgroundProcessor } from '@livekit/track-processors';
-import { getBlurConfig, getRecommendedBlurQuality } from './BlurConfig';
+import { getBlurConfig, getRecommendedBlurQuality, CustomSegmentationSettings } from './BlurConfig';
 import { detectDeviceCapabilities } from './client-utils';
 
 export interface CustomPreJoinProps {
@@ -87,7 +87,7 @@ export function CustomPreJoin({
     };
     
     validateDevices();
-  }, []);
+  }, [savedPrefs.audioDeviceId, savedPrefs.videoDeviceId]);
 
   const tracks = usePreviewTracks(
     {
@@ -116,8 +116,13 @@ export function CustomPreJoin({
           const blurQuality = savedPrefs.blurQuality || 
             getRecommendedBlurQuality(detectDeviceCapabilities());
           
-          const config = getBlurConfig(blurQuality);
-          console.log('[CustomPreJoin] Applying blur to preview with quality:', blurQuality);
+          // Check if user has custom segmentation settings
+          const useCustom = savedPrefs.useCustomSegmentation || false;
+          const customSettings = savedPrefs.customSegmentation || null;
+          
+          const config = getBlurConfig(blurQuality, useCustom ? customSettings : null);
+          console.log('[CustomPreJoin] Applying blur to preview with quality:', blurQuality, 
+                      useCustom ? '(custom settings)' : '');
           
           // Create and apply blur processor
           blurProcessorRef.current = BackgroundProcessor({
@@ -147,7 +152,7 @@ export function CustomPreJoin({
         blurAppliedRef.current = false;
       }
     };
-  }, [videoTrack, savedPrefs.backgroundType, savedPrefs.blurQuality]);
+  }, [videoTrack, savedPrefs.backgroundType, savedPrefs.blurQuality, savedPrefs.useCustomSegmentation, savedPrefs.customSegmentation]);
 
   React.useEffect(() => {
     if (videoEl.current && videoTrack) {
@@ -268,7 +273,7 @@ export function CustomPreJoin({
             </button>
             <div className="lk-button-group-menu">
               <MediaDeviceMenu kind="audioinput">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </MediaDeviceMenu>
@@ -308,7 +313,7 @@ export function CustomPreJoin({
             </button>
             <div className="lk-button-group-menu">
               <MediaDeviceMenu kind="videoinput">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </MediaDeviceMenu>

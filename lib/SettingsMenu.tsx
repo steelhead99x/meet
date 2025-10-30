@@ -11,7 +11,14 @@ import {
 import styles from '../styles/SettingsMenu.module.css';
 import { CameraSettings } from './CameraSettings';
 import { MicrophoneSettings } from './MicrophoneSettings';
-import { BlurQuality, getBlurQualityDescription, getPerformanceImpact } from './BlurConfig';
+import { 
+  BlurQuality, 
+  getBlurQualityDescription, 
+  getPerformanceImpact,
+  CustomSegmentationSettings,
+  customSettingsFromPreset,
+  getDefaultCustomSettings
+} from './BlurConfig';
 import { detectDeviceCapabilities } from './client-utils';
 /**
  * @alpha
@@ -46,8 +53,15 @@ export function SettingsMenu(props: SettingsMenuProps) {
   // Blur quality control state
   const [blurQuality, setBlurQuality] = React.useState<BlurQuality>('medium');
   const [deviceInfo, setDeviceInfo] = React.useState<ReturnType<typeof detectDeviceCapabilities> | null>(null);
+  
+  // Custom segmentation state
+  const [useCustomSegmentation, setUseCustomSegmentation] = React.useState(false);
+  const [customSegmentation, setCustomSegmentation] = React.useState<CustomSegmentationSettings>(
+    getDefaultCustomSettings()
+  );
+  const [showAdvancedSettings, setShowAdvancedSettings] = React.useState(false);
 
-  // Initialize blur quality and device info
+  // Initialize blur quality, device info, and custom segmentation
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const capabilities = detectDeviceCapabilities();
@@ -57,6 +71,16 @@ export function SettingsMenu(props: SettingsMenuProps) {
       if (currentQuality) {
         setBlurQuality(currentQuality);
       }
+      
+      const useCustom = window.__getUseCustomSegmentation?.();
+      if (useCustom !== undefined) {
+        setUseCustomSegmentation(useCustom);
+      }
+      
+      const customSettings = window.__getCustomSegmentation?.();
+      if (customSettings) {
+        setCustomSegmentation(customSettings);
+      }
     }
   }, []);
 
@@ -64,6 +88,39 @@ export function SettingsMenu(props: SettingsMenuProps) {
     setBlurQuality(quality);
     if (window.__setBlurQuality) {
       window.__setBlurQuality(quality);
+    }
+    
+    // When switching presets, update custom settings to match (for reference)
+    if (!useCustomSegmentation) {
+      const presetSettings = customSettingsFromPreset(quality);
+      setCustomSegmentation(presetSettings);
+    }
+  };
+  
+  const handleToggleCustomSegmentation = (enabled: boolean) => {
+    setUseCustomSegmentation(enabled);
+    if (window.__setUseCustomSegmentation) {
+      window.__setUseCustomSegmentation(enabled);
+    }
+    
+    // If enabling custom, initialize with current preset values
+    if (enabled) {
+      const presetSettings = customSettingsFromPreset(blurQuality);
+      setCustomSegmentation(presetSettings);
+      if (window.__setCustomSegmentation) {
+        window.__setCustomSegmentation(presetSettings);
+      }
+    }
+  };
+  
+  const handleCustomSegmentationChange = (
+    field: keyof CustomSegmentationSettings,
+    value: number | boolean
+  ) => {
+    const updated = { ...customSegmentation, [field]: value };
+    setCustomSegmentation(updated);
+    if (window.__setCustomSegmentation) {
+      window.__setCustomSegmentation(updated);
     }
   };
 
@@ -244,6 +301,282 @@ export function SettingsMenu(props: SettingsMenuProps) {
                     </div>
                   </div>
                 </section>
+                
+                {/* Advanced Segmentation Controls */}
+                <h3 style={{ marginTop: '20px' }}>Advanced Segmentation Settings</h3>
+                <section>
+                  <div style={{ 
+                    marginBottom: '16px',
+                    padding: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      marginBottom: '8px',
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                          Custom Segmentation
+                        </div>
+                        <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
+                          Fine-tune blur settings for your lighting conditions
+                        </div>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={useCustomSegmentation}
+                          onChange={(e) => handleToggleCustomSegmentation(e.target.checked)}
+                          style={{ 
+                            width: '18px', 
+                            height: '18px',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </label>
+                    </div>
+                    
+                    {!useCustomSegmentation && (
+                      <div style={{ 
+                        fontSize: '11px', 
+                        opacity: 0.6,
+                        fontStyle: 'italic',
+                      }}>
+                        Enable to adjust blur strength, edge quality, and performance settings
+                      </div>
+                    )}
+                  </div>
+                  
+                  {useCustomSegmentation && (
+                    <>
+                      {/* Blur Strength Slider */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          marginBottom: '8px',
+                          alignItems: 'center',
+                        }}>
+                          <label style={{ fontWeight: '500', fontSize: '14px' }}>
+                            Blur Strength
+                          </label>
+                          <span style={{ 
+                            fontSize: '13px', 
+                            fontWeight: 'bold',
+                            color: '#60a5fa',
+                            minWidth: '35px',
+                            textAlign: 'right',
+                          }}>
+                            {customSegmentation.blurRadius}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="100"
+                          step="5"
+                          value={customSegmentation.blurRadius}
+                          onChange={(e) => handleCustomSegmentationChange('blurRadius', parseInt(e.target.value))}
+                          style={{ width: '100%', cursor: 'pointer' }}
+                        />
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          fontSize: '11px',
+                          opacity: 0.6,
+                          marginTop: '4px',
+                        }}>
+                          <span>Light (10)</span>
+                          <span>Strong (100)</span>
+                        </div>
+                        <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '6px', fontStyle: 'italic' }}>
+                          Higher values = stronger background blur
+                        </div>
+                      </div>
+                      
+                      {/* Edge Quality Slider */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          marginBottom: '8px',
+                          alignItems: 'center',
+                        }}>
+                          <label style={{ fontWeight: '500', fontSize: '14px' }}>
+                            Edge Quality (Feather)
+                          </label>
+                          <span style={{ 
+                            fontSize: '13px', 
+                            fontWeight: 'bold',
+                            color: '#60a5fa',
+                            minWidth: '35px',
+                            textAlign: 'right',
+                          }}>
+                            {(customSegmentation.edgeFeather * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={customSegmentation.edgeFeather}
+                          onChange={(e) => handleCustomSegmentationChange('edgeFeather', parseFloat(e.target.value))}
+                          style={{ width: '100%', cursor: 'pointer' }}
+                        />
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          fontSize: '11px',
+                          opacity: 0.6,
+                          marginTop: '4px',
+                        }}>
+                          <span>Sharp (0%)</span>
+                          <span>Soft (100%)</span>
+                        </div>
+                        <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '6px', fontStyle: 'italic' }}>
+                          Controls edge smoothness - increase if you see jagged edges
+                        </div>
+                      </div>
+                      
+                      {/* Toggle Options */}
+                      <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '12px',
+                        marginTop: '16px',
+                      }}>
+                        {/* Edge Refinement Toggle */}
+                        <label style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          padding: '10px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                        }}>
+                          <div>
+                            <div style={{ fontWeight: '500', fontSize: '13px' }}>
+                              Edge Refinement
+                            </div>
+                            <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>
+                              Advanced edge smoothing post-processing
+                            </div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={customSegmentation.enableEdgeRefinement}
+                            onChange={(e) => handleCustomSegmentationChange('enableEdgeRefinement', e.target.checked)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                          />
+                        </label>
+                        
+                        {/* Temporal Smoothing Toggle */}
+                        <label style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          padding: '10px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                        }}>
+                          <div>
+                            <div style={{ fontWeight: '500', fontSize: '13px' }}>
+                              Temporal Smoothing
+                            </div>
+                            <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>
+                              Reduces flickering between frames
+                            </div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={customSegmentation.temporalSmoothing}
+                            onChange={(e) => handleCustomSegmentationChange('temporalSmoothing', e.target.checked)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                          />
+                        </label>
+                        
+                        {/* GPU Acceleration Toggle */}
+                        <label style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          padding: '10px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                        }}>
+                          <div>
+                            <div style={{ fontWeight: '500', fontSize: '13px' }}>
+                              GPU Acceleration
+                            </div>
+                            <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>
+                              Use GPU for better performance (recommended)
+                            </div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={customSegmentation.useGPU}
+                            onChange={(e) => handleCustomSegmentationChange('useGPU', e.target.checked)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                          />
+                        </label>
+                      </div>
+                      
+                      {/* Reset Button */}
+                      <button
+                        onClick={() => {
+                          const presetSettings = customSettingsFromPreset(blurQuality);
+                          setCustomSegmentation(presetSettings);
+                          if (window.__setCustomSegmentation) {
+                            window.__setCustomSegmentation(presetSettings);
+                          }
+                        }}
+                        className="lk-button"
+                        style={{
+                          marginTop: '16px',
+                          width: '100%',
+                          padding: '10px',
+                          fontSize: '13px',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                        }}
+                      >
+                        Reset to {blurQuality.charAt(0).toUpperCase() + blurQuality.slice(1)} Preset
+                      </button>
+                      
+                      {/* Tips Panel */}
+                      <div style={{ 
+                        marginTop: '16px', 
+                        padding: '12px', 
+                        background: 'rgba(16, 185, 129, 0.1)', 
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                      }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#10b981' }}>
+                          💡 Optimization Tips
+                        </div>
+                        <ul style={{ 
+                          margin: '0', 
+                          paddingLeft: '20px',
+                          lineHeight: '1.6',
+                        }}>
+                          <li>Increase Edge Quality if you see jagged outlines</li>
+                          <li>Enable Temporal Smoothing to reduce flickering</li>
+                          <li>Lower Blur Strength if experiencing performance issues</li>
+                          <li>Disable GPU Acceleration if you see visual glitches</li>
+                          <li>Good lighting helps segmentation accuracy</li>
+                        </ul>
+                      </div>
+                    </>
+                  )}
+                </section>
               </>
             )}
             {settings.media && settings.media.microphone && (
@@ -277,7 +610,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
                   </span>
                   <div className="lk-button-group-menu">
                     <MediaDeviceMenu kind="audiooutput">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </MediaDeviceMenu>

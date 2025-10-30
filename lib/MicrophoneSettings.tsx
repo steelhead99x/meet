@@ -23,11 +23,11 @@ export function MicrophoneSettings() {
   );
 
   React.useEffect(() => {
-    // Load saved preference or enable Krisp by default on non-low power devices
+    // Load saved preference or enable Krisp by default on all devices
     const prefs = loadUserPreferences();
     const shouldEnable = prefs.noiseFilterEnabled !== undefined 
       ? prefs.noiseFilterEnabled 
-      : !isLowPowerDevice();
+      : true; // Always enabled by default
     
     setNoiseFilterEnabled(shouldEnable);
     console.log('[MicrophoneSettings] Noise filter enabled:', shouldEnable);
@@ -53,7 +53,7 @@ export function MicrophoneSettings() {
         <TrackToggle aria-label="Toggle microphone" source={Track.Source.Microphone} />
         <div className="lk-button-group-menu">
           <MediaDeviceMenu kind="audioinput">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </MediaDeviceMenu>

@@ -40,6 +40,23 @@ export interface BlurConfig {
 }
 
 /**
+ * Custom adjustable segmentation settings
+ * These override preset values when user wants fine control
+ */
+export interface CustomSegmentationSettings {
+  /** Custom blur radius (10-100) */
+  blurRadius: number;
+  /** Edge feather amount (0-1) - higher = softer edges */
+  edgeFeather: number;
+  /** Enable temporal smoothing to reduce flickering */
+  temporalSmoothing: boolean;
+  /** Use GPU acceleration (recommended) */
+  useGPU: boolean;
+  /** Enable edge refinement post-processing */
+  enableEdgeRefinement: boolean;
+}
+
+/**
  * Preset configurations for different quality levels
  */
 export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
@@ -153,10 +170,56 @@ export function getRecommendedBlurQuality(capabilities: DeviceCapabilities): Blu
  * Gets the blur configuration for a specific quality level
  * 
  * @param quality - Desired blur quality level
+ * @param customSettings - Optional custom settings to override preset
  * @returns Complete blur configuration
  */
-export function getBlurConfig(quality: BlurQuality): BlurConfig {
-  return { ...BLUR_PRESETS[quality] };
+export function getBlurConfig(quality: BlurQuality, customSettings?: CustomSegmentationSettings | null): BlurConfig {
+  const preset = { ...BLUR_PRESETS[quality] };
+  
+  // Apply custom settings if provided
+  if (customSettings) {
+    return {
+      blurRadius: customSettings.blurRadius,
+      segmenterOptions: {
+        delegate: customSettings.useGPU ? 'GPU' : 'CPU',
+      },
+      edgeRefinement: {
+        enabled: customSettings.enableEdgeRefinement,
+        featherAmount: customSettings.edgeFeather,
+        temporalSmoothing: customSettings.temporalSmoothing,
+      },
+    };
+  }
+  
+  return preset;
+}
+
+/**
+ * Creates custom segmentation settings from a quality preset
+ * Useful as a starting point for user customization
+ */
+export function customSettingsFromPreset(quality: BlurQuality): CustomSegmentationSettings {
+  const preset = BLUR_PRESETS[quality];
+  return {
+    blurRadius: preset.blurRadius,
+    edgeFeather: preset.edgeRefinement.featherAmount,
+    temporalSmoothing: preset.edgeRefinement.temporalSmoothing,
+    useGPU: preset.segmenterOptions.delegate === 'GPU',
+    enableEdgeRefinement: preset.edgeRefinement.enabled,
+  };
+}
+
+/**
+ * Gets default custom segmentation settings
+ */
+export function getDefaultCustomSettings(): CustomSegmentationSettings {
+  return {
+    blurRadius: 35,
+    edgeFeather: 0.25,
+    temporalSmoothing: true,
+    useGPU: true,
+    enableEdgeRefinement: true,
+  };
 }
 
 /**

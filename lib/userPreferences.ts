@@ -4,15 +4,19 @@
  * Provides utilities for saving and loading user preferences in local storage
  */
 
-import { BlurQuality } from './BlurConfig';
+import { BlurQuality, CustomSegmentationSettings } from './BlurConfig';
 
 export interface UserPreferences {
   // Video preferences
   videoEnabled: boolean;
   videoDeviceId?: string;
-  backgroundType: 'none' | 'blur' | 'image' | 'gradient';
-  backgroundPath?: string;
+  backgroundType: 'none' | 'blur' | 'image' | 'gradient' | 'custom-video' | 'custom-image';
+  backgroundPath?: string; // For static images/gradients, or custom background ID
   blurQuality: BlurQuality;
+  
+  // Segmentation customization
+  useCustomSegmentation?: boolean; // Whether to use custom settings instead of presets
+  customSegmentation?: CustomSegmentationSettings;
 
   // Audio preferences
   audioEnabled: boolean;
