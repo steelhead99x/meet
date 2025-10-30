@@ -202,35 +202,28 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
   /**
    * ULTRA QUALITY - High-end desktops with powerful GPUs
    * - Maximum blur for best background separation
-   * - Advanced edge processing with motion-aware temporal smoothing
+   * - Advanced edge processing
    * - Utilizes all available GPU resources
-   * - Premium processing pipeline with MediaPipe Image Segmenter
-   * - Uses confidence masks for higher precision segmentation
-   * - Processes every frame for maximum quality (no frame skipping)
-   * - Reduced temporal smoothing to minimize ghosting/trailing
+   * - Uses LiveKit default for reliability
    */
   ultra: {
     blurRadius: 150,
-    processorType: 'mediapipe-image',
+    processorType: 'livekit-default',
     segmenterOptions: {
       delegate: 'GPU',
-      outputCategoryMask: false,
-      outputConfidenceMasks: true,
     },
     edgeRefinement: {
-      enabled: true,
-      featherAmount: 0.5,
-      temporalSmoothing: true,
-      temporalSmoothingFactor: 0.35,
+      enabled: false,
+      featherAmount: 0.35,
+      temporalSmoothing: false,
     },
     enhancedPersonDetection: {
-      enabled: true,
-      confidenceThreshold: 0.65,
-      morphologyEnabled: true,
+      enabled: false,
+      confidenceThreshold: 0.7,
+      morphologyEnabled: false,
       morphologyKernelSize: 3,
-      keepLargestComponentOnly: true,
+      keepLargestComponentOnly: false,
       minMaskAreaRatio: 0.02,
-      temporalConsistency: true,
     },
   },
 };
