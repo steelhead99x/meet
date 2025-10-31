@@ -174,6 +174,10 @@ export function CameraSettings() {
   // Custom background ID for tracking which custom background is selected
   const [selectedCustomBgId, setSelectedCustomBgId] = React.useState<string | null>(null);
 
+  // Reapply trigger for forcing effect reapplication (e.g., on orientation change)
+  // Incrementing this value forces the effect to be recreated with fresh state
+  const [reapplyTrigger, setReapplyTrigger] = React.useState<number>(0);
+
   // Load custom backgrounds on mount and restore selection
   const loadCustomBackgrounds = React.useCallback(async () => {
     try {
@@ -924,7 +928,7 @@ export function CameraSettings() {
       console.log('[CameraSettings] Effect cleanup triggered - cancelling ongoing processor operations');
       isEffectActive = false;
     };
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, blurQuality, selectedCustomBgId, customBackgrounds, useCustomSegmentation, customSegmentation, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings, reapplyTrigger]);
 
   // Cleanup processors on unmount
   React.useEffect(() => {
@@ -1004,11 +1008,11 @@ export function CameraSettings() {
         lastWidth = currentWidth;
         lastHeight = currentHeight;
 
-        // If there's an active effect, the processor will handle the dimension change automatically
-        // MediaPipeBlurTransformer and BackgroundProcessor both handle dynamic resizing
-        // No need to restart the processor - just log it
+        // If there's an active effect, reapply it to ensure clean state for new orientation
+        // This prevents visual artifacts and ensures proper processor initialization
         if (backgroundType !== 'none') {
-          console.log('[CameraSettings] Active effect will adapt to new dimensions automatically');
+          console.log('[CameraSettings] ♻️ Reapplying effect for new orientation...');
+          setReapplyTrigger(prev => prev + 1);
         }
       }
     };
