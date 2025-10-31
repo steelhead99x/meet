@@ -437,6 +437,14 @@ export function CameraSettings() {
       ? JSON.stringify(customSegmentation)
       : null;
 
+    // Log comparison values for debugging
+    console.log('[CameraSettings] 🔍 Config comparison:');
+    console.log('  - type:', currentProcessorRef.current.type, '===', backgroundType, '?', currentProcessorRef.current.type === backgroundType);
+    console.log('  - path:', currentProcessorRef.current.path, '===', currentPath, '?', currentProcessorRef.current.path === currentPath);
+    console.log('  - quality:', currentProcessorRef.current.quality, '===', blurQuality, '?', currentProcessorRef.current.quality === blurQuality);
+    console.log('  - customSettings:', currentProcessorRef.current.customSettings, '===', customSettingsStr, '?', currentProcessorRef.current.customSettings === customSettingsStr);
+    console.log('  - reapplyTrigger:', currentProcessorRef.current.reapplyTrigger, '===', reapplyTrigger, '?', currentProcessorRef.current.reapplyTrigger === reapplyTrigger);
+
     if (
       currentProcessorRef.current.type === backgroundType &&
       currentProcessorRef.current.path === currentPath &&
@@ -444,11 +452,11 @@ export function CameraSettings() {
       currentProcessorRef.current.customSettings === customSettingsStr &&
       currentProcessorRef.current.reapplyTrigger === reapplyTrigger
     ) {
-      console.log('[CameraSettings] Processor already applied with same config, skipping');
+      console.log('[CameraSettings] ⏭️  Processor already applied with same config, skipping');
       return; // Already applied, skip
     }
 
-    console.log('[CameraSettings] 🔧 Processor config/trigger changed:', {
+    console.log('[CameraSettings] 🔧 Processor config/trigger changed - WILL APPLY:', {
       old: currentProcessorRef.current,
       new: { type: backgroundType, path: currentPath, quality: blurQuality, reapplyTrigger },
     });
