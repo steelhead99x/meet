@@ -29,14 +29,16 @@ export function AdaptiveVideoLayout() {
   const participants = useParticipants();
   const tracks = useTracks(
     [
-      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.Camera, withPlaceholder: false },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
     { onlySubscribed: false },
   );
 
-  // Filter to get camera tracks only (no screen shares)
-  const cameraTracks = tracks.filter((track) => track.source === Track.Source.Camera);
+  // Filter to get camera tracks only (no screen shares) and ensure they have publications
+  const cameraTracks = tracks.filter(
+    (track) => track.source === Track.Source.Camera && track.publication
+  );
 
   // State for orientation and layout
   const [orientation, setOrientation] = React.useState<'portrait' | 'landscape'>('landscape');
@@ -97,6 +99,8 @@ export function AdaptiveVideoLayout() {
 
   // Single participant view
   if (layoutType === 'single') {
+    const singleTrack = cameraTracks[0];
+
     return (
       <div
         style={{
@@ -108,7 +112,7 @@ export function AdaptiveVideoLayout() {
           background: '#000',
         }}
       >
-        {cameraTracks[0] && (
+        {singleTrack ? (
           <div
             style={{
               width: '100%',
@@ -117,14 +121,18 @@ export function AdaptiveVideoLayout() {
             }}
           >
             <VideoTrack
-              trackRef={cameraTracks[0]}
+              trackRef={singleTrack}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover', // Fill screen, crop sides if needed (Zoom-like)
               }}
             />
-            <ParticipantInfo participant={cameraTracks[0].participant} />
+            <ParticipantInfo participant={singleTrack.participant} />
+          </div>
+        ) : (
+          <div style={{ color: 'white', fontSize: '18px' }}>
+            Waiting for participants...
           </div>
         )}
       </div>
@@ -135,6 +143,25 @@ export function AdaptiveVideoLayout() {
   if (layoutType === 'pip') {
     const focusedTrack = cameraTracks[focusedTrackIndex] || cameraTracks[0];
     const otherTracks = cameraTracks.filter((_, index) => index !== focusedTrackIndex);
+
+    if (!focusedTrack) {
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#000',
+          }}
+        >
+          <div style={{ color: 'white', fontSize: '18px' }}>
+            Waiting for participants...
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div
