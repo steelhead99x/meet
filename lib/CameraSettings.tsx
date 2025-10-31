@@ -979,41 +979,122 @@ export function CameraSettings() {
       return; // Skip orientation handling on desktop/tablet
     }
 
-    console.log('[CameraSettings] Setting up orientation change handler for mobile');
+    console.log('[CameraSettings] 📱 Setting up robust orientation change handler for mobile');
 
     // Track last known dimensions to detect actual changes
     let lastWidth = 0;
     let lastHeight = 0;
+    let isHandlingOrientation = false;
+
+    /**
+     * Poll track dimensions until they stabilize after orientation change
+     * Returns true if dimensions changed, false if they stayed the same
+     */
+    const waitForDimensionStability = async (track: any, maxAttempts = 20, intervalMs = 150): Promise<boolean> => {
+      let stableCount = 0;
+      const requiredStableChecks = 3; // Need 3 consecutive stable readings
+      let previousWidth = 0;
+      let previousHeight = 0;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const mediaStreamTrack = track.mediaStreamTrack;
+        if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
+          console.log('[CameraSettings] Track ended during dimension polling');
+          return false;
+        }
+
+        const settings = mediaStreamTrack.getSettings();
+        const currentWidth = settings.width || 0;
+        const currentHeight = settings.height || 0;
+
+        console.log(`[CameraSettings] 🔍 Poll ${attempt + 1}/${maxAttempts}: ${currentWidth}x${currentHeight} (stable: ${stableCount}/${requiredStableChecks})`);
+
+        // Check if dimensions are stable (same as previous check)
+        if (currentWidth === previousWidth && currentHeight === previousHeight && currentWidth > 0) {
+          stableCount++;
+          if (stableCount >= requiredStableChecks) {
+            console.log(`[CameraSettings] ✅ Dimensions stabilized at ${currentWidth}x${currentHeight}`);
+
+            // Check if dimensions actually changed from last known values
+            const dimensionsChanged = (currentWidth !== lastWidth || currentHeight !== lastHeight);
+            if (dimensionsChanged) {
+              console.log(`[CameraSettings] 📐 Dimension change confirmed: ${lastWidth}x${lastHeight} → ${currentWidth}x${currentHeight}`);
+              lastWidth = currentWidth;
+              lastHeight = currentHeight;
+              return true;
+            } else {
+              console.log(`[CameraSettings] ℹ️ Dimensions unchanged (false alarm)`);
+              return false;
+            }
+          }
+        } else {
+          // Dimensions still changing, reset stable count
+          stableCount = 0;
+        }
+
+        previousWidth = currentWidth;
+        previousHeight = currentHeight;
+
+        // Wait before next check
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+
+      console.log('[CameraSettings] ⚠️ Dimension polling timed out without stabilization');
+      return false;
+    };
 
     const handleOrientationChange = async () => {
-      console.log('[CameraSettings] Orientation change detected');
+      // Prevent concurrent orientation handling
+      if (isHandlingOrientation) {
+        console.log('[CameraSettings] Already handling orientation change, skipping');
+        return;
+      }
 
-      // Wait a bit for the camera to adjust to new orientation
-      await new Promise(resolve => setTimeout(resolve, 300));
+      isHandlingOrientation = true;
+      console.log('[CameraSettings] 🔄 Orientation change event triggered');
 
-      const track = cameraTrack?.track;
-      if (!isLocalTrack(track)) return;
-
-      const mediaStreamTrack = track.mediaStreamTrack;
-      if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') return;
-
-      // Get current video dimensions
-      const settings = mediaStreamTrack.getSettings();
-      const currentWidth = settings.width || 0;
-      const currentHeight = settings.height || 0;
-
-      // Check if dimensions actually changed
-      if (currentWidth !== lastWidth || currentHeight !== lastHeight) {
-        console.log(`[CameraSettings] Video dimensions changed: ${lastWidth}x${lastHeight} → ${currentWidth}x${currentHeight}`);
-        lastWidth = currentWidth;
-        lastHeight = currentHeight;
-
-        // If there's an active effect, reapply it to ensure clean state for new orientation
-        // This prevents visual artifacts and ensures proper processor initialization
-        if (backgroundType !== 'none') {
-          console.log('[CameraSettings] ♻️ Reapplying effect for new orientation...');
-          setReapplyTrigger(prev => prev + 1);
+      try {
+        const track = cameraTrack?.track;
+        if (!isLocalTrack(track)) {
+          console.log('[CameraSettings] No local track available');
+          return;
         }
+
+        const mediaStreamTrack = track.mediaStreamTrack;
+        if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
+          console.log('[CameraSettings] Track not live');
+          return;
+        }
+
+        // Initial delay to let the OS/browser start adjusting
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Actively poll for dimension changes and wait for stability
+        const dimensionsChanged = await waitForDimensionStability(track);
+
+        if (dimensionsChanged && backgroundType !== 'none') {
+          console.log('[CameraSettings] ♻️ Reapplying effect for new orientation...');
+
+          // Stop current processor first to clean up state
+          try {
+            await track.stopProcessor();
+            console.log('[CameraSettings] Stopped old processor');
+          } catch (error) {
+            console.warn('[CameraSettings] Error stopping processor (may not have one):', error);
+          }
+
+          // Wait a bit for processor to fully stop
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Trigger reapplication
+          setReapplyTrigger(prev => prev + 1);
+        } else if (!dimensionsChanged) {
+          console.log('[CameraSettings] No dimension change detected, skipping reapply');
+        }
+      } catch (error) {
+        console.error('[CameraSettings] Error handling orientation change:', error);
+      } finally {
+        isHandlingOrientation = false;
       }
     };
 
@@ -1023,6 +1104,11 @@ export function CameraSettings() {
     // Also listen for resize as a backup (some devices don't fire orientationchange)
     window.addEventListener('resize', handleOrientationChange);
 
+    // Listen for screen orientation API changes (more reliable on some browsers)
+    if (window.screen?.orientation) {
+      window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+
     // Get initial dimensions
     const track = cameraTrack?.track;
     if (isLocalTrack(track)) {
@@ -1030,7 +1116,7 @@ export function CameraSettings() {
       if (settings) {
         lastWidth = settings.width || 0;
         lastHeight = settings.height || 0;
-        console.log(`[CameraSettings] Initial video dimensions: ${lastWidth}x${lastHeight}`);
+        console.log(`[CameraSettings] 📏 Initial video dimensions: ${lastWidth}x${lastHeight}`);
       }
     }
 
@@ -1038,8 +1124,11 @@ export function CameraSettings() {
       console.log('[CameraSettings] Removing orientation change handlers');
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
+      if (window.screen?.orientation) {
+        window.screen.orientation.removeEventListener('change', handleOrientationChange);
+      }
     };
-  }, [cameraTrack, backgroundType]);
+  }, [cameraTrack, backgroundType, setReapplyTrigger]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
