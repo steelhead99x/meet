@@ -13,10 +13,14 @@ export interface UserPreferences {
   backgroundType: 'none' | 'blur' | 'image' | 'gradient' | 'custom-video' | 'custom-image';
   backgroundPath?: string; // For static images/gradients, or custom background ID
   blurQuality: BlurQuality;
-  
+
   // Segmentation customization
   useCustomSegmentation?: boolean; // Whether to use custom settings instead of presets
   customSegmentation?: CustomSegmentationSettings;
+
+  // Layout preferences
+  videoLayout?: 'auto' | 'grid' | 'pip'; // auto = adaptive based on participant count
+  preferredOrientation?: 'portrait' | 'landscape' | 'auto'; // auto = follow device orientation
 
   // Audio preferences
   audioEnabled: boolean;
@@ -37,6 +41,8 @@ export function getDefaultPreferences(): UserPreferences {
     videoEnabled: true,
     backgroundType: 'blur', // Blur enabled by default
     blurQuality: 'medium',
+    videoLayout: 'auto', // Adaptive layout based on participant count
+    preferredOrientation: 'auto', // Follow device orientation automatically
     audioEnabled: true,
     noiseFilterEnabled: true,
   };

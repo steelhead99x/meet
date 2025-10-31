@@ -819,17 +819,19 @@ export function CustomPreJoin({
               
               {/* Gradient backgrounds */}
               {[
-                { id: 'ocean', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-                { id: 'sunset', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-                { id: 'forest', bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-                { id: 'aurora', bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+                { id: 'ocean', name: 'Ocean', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                { id: 'sunset', name: 'Sunset', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+                { id: 'forest', name: 'Forest', bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+                { id: 'aurora', name: 'Aurora', bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
+                { id: 'twilight', name: 'Twilight', bg: 'linear-gradient(135deg, #434343 0%, #000000 100%)' },
+                { id: 'galaxy', name: 'Galaxy', bg: 'linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)' },
               ].map((gradient) => (
                 <button
                   key={gradient.id}
                   type="button"
                   onClick={() => selectBackground('gradient', gradient.bg)}
                   className="lk-button lk-button-visual"
-                  aria-label={`${gradient.id} gradient background`}
+                  aria-label={`${gradient.name} gradient background`}
                   aria-pressed={backgroundType === 'gradient' && backgroundPath === gradient.bg}
                   disabled={isPreparingVideo}
                   style={{
@@ -845,8 +847,8 @@ export function CustomPreJoin({
               
               {/* Image backgrounds */}
               {[
+                { id: 'desk', name: 'Desk', path: '/background-images/samantha-gades-BlIhVfXbi9s-unsplash.jpg' },
                 { id: 'nature', name: 'Nature', path: '/background-images/ali-kazal-tbw_KQE3Cbg-unsplash.jpg' },
-                { id: 'office', name: 'Office', path: '/background-images/samantha-gades-BlIhVfXbi9s-unsplash.jpg' },
               ].map((image) => (
                 <button
                   key={image.id}

@@ -15,6 +15,9 @@ import {
   RoomAudioRenderer,
   RoomContext,
   VideoConference,
+  ControlBar,
+  Chat,
+  useTracks,
 } from '@livekit/components-react';
 import {
   ExternalE2EEKeyProvider,
@@ -27,6 +30,7 @@ import {
   RoomEvent,
   TrackPublishDefaults,
   VideoCaptureOptions,
+  Track,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
@@ -39,6 +43,7 @@ import { BrowserWindowPIP } from '@/lib/BrowserWindowPIP';
 import { CarouselNavigation } from '@/lib/CarouselNavigation';
 import { ProcessorLoadingProvider } from '@/lib/ProcessorLoadingContext';
 import { ProcessorLoadingOverlay } from '@/lib/ProcessorLoadingOverlay';
+import { AdaptiveVideoLayout } from '@/lib/AdaptiveVideoLayout';
 // Note: LiveKit v2 chat uses native sendChatMessage() API
 // E2EE only applies to media tracks, not chat messages
 
@@ -554,6 +559,14 @@ function VideoConferenceComponent(props: {
 
 // Separate component for room content to isolate hooks
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
+  // Check if anyone is screen sharing
+  const tracks = useTracks([{ source: Track.Source.ScreenShare, withPlaceholder: false }]);
+  const hasScreenShare = tracks.length > 0;
+
+  console.log('[RoomContent] Rendering', {
+    hasScreenShare,
+    screenShareCount: tracks.length,
+  });
 
   return (
     <RoomContext.Provider value={room}>
@@ -562,10 +575,71 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
       <ConnectionQualityTooltip />
       <BrowserWindowPIP />
       <CarouselNavigation />
-      <VideoConference
-        SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
-        chatMessageFormatter={formatChatMessageLinks}
-      />
+
+      {/* Custom adaptive layout with chat and controls */}
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'row',
+          position: 'relative',
+          overflow: 'hidden',
+          background: '#000',
+        }}
+      >
+        {/* Main video area - use adaptive layout when no screen share, or default VideoConference with screen share */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Videos */}
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+            {hasScreenShare ? (
+              // When screen sharing, use default VideoConference layout (better for screen share viewing)
+              <VideoConference
+                SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
+                chatMessageFormatter={formatChatMessageLinks}
+              />
+            ) : (
+              // When no screen share, use adaptive PIP layout
+              <AdaptiveVideoLayout />
+            )}
+          </div>
+
+          {/* Control bar at bottom - only show when using adaptive layout */}
+          {!hasScreenShare && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 100,
+                background: 'linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%)',
+                padding: '20px 16px 16px',
+              }}
+            >
+              <ControlBar
+                controls={{
+                  microphone: true,
+                  camera: true,
+                  screenShare: true,
+                  chat: true,
+                  leave: true,
+                  settings: SHOW_SETTINGS_MENU,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
       <RoomAudioRenderer />
       <DebugMode />
       <RecordingIndicator />
