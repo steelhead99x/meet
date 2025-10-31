@@ -237,7 +237,8 @@ export function CameraSettings() {
     path: string | null;
     quality: BlurQuality | null;
     customSettings: string | null; // JSON stringified custom settings for comparison
-  }>({ type: 'none', path: null, quality: null, customSettings: null });
+    reapplyTrigger?: number; // Track reapply trigger to force recreation on orientation changes
+  }>({ type: 'none', path: null, quality: null, customSettings: null, reapplyTrigger: 0 });
 
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
@@ -410,35 +411,46 @@ export function CameraSettings() {
 
   // Effect to apply processors with caching - IMMEDIATE application for privacy
   React.useEffect(() => {
+    console.log('[CameraSettings] 🎬 PROCESSOR EFFECT TRIGGERED');
+    console.log('[CameraSettings] Current state: backgroundType=', backgroundType, ', blurQuality=', blurQuality, ', reapplyTrigger=', reapplyTrigger);
+
     // Track if this effect is still active
     let isEffectActive = true;
-    
+
     const track = cameraTrack?.track;
-    
+
     // Only process if track exists, is local, and is in 'live' state
     if (!isLocalTrack(track) || track.mediaStreamTrack?.readyState !== 'live') {
+      console.log('[CameraSettings] ⏭️  Skipping - track not local or not live');
       return;
+    }
+
+    // Log current track dimensions
+    const currentDims = track.mediaStreamTrack?.getSettings();
+    if (currentDims) {
+      console.log('[CameraSettings] 📐 Current track dimensions:', currentDims.width, 'x', currentDims.height);
     }
 
     // Check if we're already using this processor configuration
     const currentPath = selectedCustomBgId || virtualBackgroundImagePath;
-    const customSettingsStr = useCustomSegmentation && customSegmentation 
-      ? JSON.stringify(customSegmentation) 
+    const customSettingsStr = useCustomSegmentation && customSegmentation
+      ? JSON.stringify(customSegmentation)
       : null;
-    
+
     if (
       currentProcessorRef.current.type === backgroundType &&
       currentProcessorRef.current.path === currentPath &&
       currentProcessorRef.current.quality === blurQuality &&
-      currentProcessorRef.current.customSettings === customSettingsStr
+      currentProcessorRef.current.customSettings === customSettingsStr &&
+      currentProcessorRef.current.reapplyTrigger === reapplyTrigger
     ) {
       console.log('[CameraSettings] Processor already applied with same config, skipping');
       return; // Already applied, skip
     }
-    
-    console.log('[CameraSettings] Processor config changed:', {
+
+    console.log('[CameraSettings] 🔧 Processor config/trigger changed:', {
       old: currentProcessorRef.current,
-      new: { type: backgroundType, path: currentPath, quality: blurQuality },
+      new: { type: backgroundType, path: currentPath, quality: blurQuality, reapplyTrigger },
     });
 
     // Apply processor immediately for privacy - no debounce
@@ -451,13 +463,14 @@ export function CameraSettings() {
       
       // CRITICAL: Update the processor ref BEFORE starting to prevent re-triggers
       // This tells React we're already handling this configuration
-      const targetConfig = { 
-        type: backgroundType, 
-        path: currentPath, 
+      const targetConfig = {
+        type: backgroundType,
+        path: currentPath,
         quality: blurQuality,
-        customSettings: customSettingsStr
+        customSettings: customSettingsStr,
+        reapplyTrigger: reapplyTrigger
       };
-      console.log('[CameraSettings] Updating processor ref to prevent re-triggers:', targetConfig);
+      console.log('[CameraSettings] 📝 Updating processor ref to prevent re-triggers:', targetConfig);
       currentProcessorRef.current = targetConfig;
       
       try {
@@ -626,6 +639,8 @@ export function CameraSettings() {
           
           try {
             console.log('[CameraSettings] 🔄 Calling track.setProcessor() with blur processor...');
+            const preSetProcessorDims = track.mediaStreamTrack?.getSettings();
+            console.log('[CameraSettings] 📐 Track dimensions RIGHT BEFORE setProcessor:', preSetProcessorDims?.width, 'x', preSetProcessorDims?.height);
             console.log('[CameraSettings] Track state before setProcessor:', {
               kind: track.kind,
               muted: track.isMuted,
@@ -965,7 +980,7 @@ export function CameraSettings() {
       console.warn = originalWarn;
 
       // Clear processor configuration tracking
-      currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null };
+      currentProcessorRef.current = { type: 'none', path: null, quality: null, customSettings: null, reapplyTrigger: 0 };
       console.log('[CameraSettings] Cleanup complete');
     };
   }, [cameraTrack, revokeBlobUrls]);
@@ -1073,21 +1088,33 @@ export function CameraSettings() {
         const dimensionsChanged = await waitForDimensionStability(track);
 
         if (dimensionsChanged && backgroundType !== 'none') {
-          console.log('[CameraSettings] ♻️ Reapplying effect for new orientation...');
+          console.log('[CameraSettings] ♻️♻️♻️ REAPPLYING EFFECT FOR NEW ORIENTATION ♻️♻️♻️');
+          console.log('[CameraSettings] Current backgroundType:', backgroundType);
+          console.log('[CameraSettings] Current blurQuality:', blurQuality);
+          console.log('[CameraSettings] Current virtualBackgroundImagePath:', virtualBackgroundImagePath);
 
-          // Stop current processor first to clean up state
-          try {
-            await track.stopProcessor();
-            console.log('[CameraSettings] Stopped old processor');
-          } catch (error) {
-            console.warn('[CameraSettings] Error stopping processor (may not have one):', error);
+          // DON'T manually stop processor - setProcessor() handles that internally
+          // Manually stopping can put the track in a bad state on mobile
+
+          // Add small delay to ensure track is fully stable before reapplying
+          await new Promise(resolve => setTimeout(resolve, 200));
+
+          // Verify track is still valid and dimensions are still what we expect
+          const finalCheck = track.mediaStreamTrack?.getSettings();
+          if (finalCheck) {
+            console.log('[CameraSettings] Final dimension check before reapply:', finalCheck.width, 'x', finalCheck.height);
           }
 
-          // Wait a bit for processor to fully stop
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Trigger reapplication by incrementing the trigger
+          // This will cause the main effect to run again with the new dimensions
+          console.log('[CameraSettings] Triggering effect reapplication...');
+          setReapplyTrigger(prev => {
+            const newValue = prev + 1;
+            console.log('[CameraSettings] reapplyTrigger:', prev, '→', newValue);
+            return newValue;
+          });
 
-          // Trigger reapplication
-          setReapplyTrigger(prev => prev + 1);
+          console.log('[CameraSettings] ✅ Reapply trigger set, waiting for effect to run...');
         } else if (!dimensionsChanged) {
           console.log('[CameraSettings] No dimension change detected, skipping reapply');
         }
