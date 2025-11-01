@@ -85,13 +85,13 @@
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 32px;
-  padding: 8px 4px;
+  padding: 8px 12px;
   gap: 6px;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  box-shadow: 
+  box-shadow:
     0 -8px 32px rgba(0, 0, 0, 0.4),
     0 -2px 8px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -99,16 +99,18 @@
   min-height: 64px;
   max-height: 64px;
   width: auto;
+  max-width: fit-content;
   margin: 0 auto;
   position: relative;
   z-index: 100; /* Floating controls layer */
   pointer-events: auto !important;
+  box-sizing: border-box;
 }
 
-/* Base button styling - circular icon buttons only */
+/* Base button styling - circular icon buttons only - Clean style matching prejoin */
 [data-lk-theme] .lk-control-bar .lk-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  border: none;
   border-radius: 50%;
   width: 48px !important;
   height: 48px !important;
@@ -135,8 +137,6 @@
   touch-action: manipulation !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
-              inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Ensure buttons are clickable even when nested */
@@ -146,19 +146,13 @@
 }
 
 [data-lk-theme] .lk-control-bar .lk-button:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25),
-              0 0 0 1px rgba(255, 255, 255, 0.12),
-              inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-lk-theme] .lk-control-bar .lk-button:active {
-  transform: translateY(0) scale(0.97);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2),
-              inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  transform: scale(0.95);
   transition: all 0.1s ease;
 }
 
@@ -232,10 +226,10 @@
 }
 
 [data-lk-theme] .lk-control-bar .lk-button svg {
-  width: 22px !important;
-  height: 22px !important;
-  min-width: 22px !important;
-  min-height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -243,7 +237,7 @@
   transform: translate(-50%, -50%);
   margin: 0 !important;
   padding: 0 !important;
-  font-size: 22px !important;
+  font-size: 20px !important;
   color: white !important;
   fill: currentColor !important;
   stroke: currentColor !important;
@@ -391,10 +385,10 @@
 
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"] svg,
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  min-width: 22px !important;
-  min-height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -410,20 +404,18 @@
   z-index: 1 !important;
 }
 
-/* Enabled state - Green */
+/* Enabled state - Green - Clean style */
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source][data-lk-enabled="true"] {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.4);
+  background: transparent;
 }
 
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source][data-lk-enabled="true"] svg {
   color: #22c55e;
 }
 
-/* Disabled state - Red */
+/* Disabled state - Red - Clean style */
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source][data-lk-enabled="false"] {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: transparent;
 }
 
 [data-lk-theme] .lk-control-bar .lk-button[data-lk-source][data-lk-enabled="false"] svg {
@@ -459,14 +451,13 @@
 [data-lk-theme] .lk-control-bar .lk-disconnect-button:hover,
 [data-lk-theme] .lk-control-bar button[aria-label*="Leave"]:hover {
   background: #b91c1c;
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  transform: scale(1.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-lk-theme] .lk-control-bar .lk-disconnect-button:active,
 [data-lk-theme] .lk-control-bar button[aria-label*="Leave"]:active {
-  transform: translateY(0) scale(0.98);
+  transform: scale(0.95);
 }
 
 /* Hide text in leave button, show only icon */
@@ -486,10 +477,10 @@
 
 [data-lk-theme] .lk-control-bar .lk-disconnect-button svg,
 [data-lk-theme] .lk-control-bar button[aria-label*="Leave"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  min-width: 22px !important;
-  min-height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -548,10 +539,10 @@
 }
 
 [data-lk-theme] .lk-button[data-lk-source="screen_share"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  min-width: 22px !important;
-  min-height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -565,13 +556,13 @@
   z-index: 1 !important;
 }
 
-/* Chat toggle button - circular icon only */
+/* Chat toggle button - circular icon only - Clean style */
 [data-lk-theme] .lk-chat-toggle,
 [data-lk-theme] .lk-control-bar button[aria-label*="Chat"],
 [data-lk-theme] .lk-close-button.lk-chat-toggle,
 [data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: transparent;
+  border: none;
   width: 48px !important;
   height: 48px !important;
   min-width: 48px !important;
@@ -602,10 +593,8 @@
 [data-lk-theme] .lk-control-bar button[aria-label*="Chat"]:hover,
 [data-lk-theme] .lk-close-button.lk-chat-toggle:hover,
 [data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle:hover {
-  background: rgba(59, 130, 246, 0.3);
-  border-color: rgba(59, 130, 246, 0.5);
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -613,7 +602,7 @@
 [data-lk-theme] .lk-control-bar button[aria-label*="Chat"]:active,
 [data-lk-theme] .lk-close-button.lk-chat-toggle:active,
 [data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle:active {
-  transform: translateY(0) scale(1);
+  transform: scale(0.95);
 }
 
 [data-lk-theme] .lk-chat-toggle[aria-pressed="true"],
@@ -734,10 +723,10 @@
 [data-lk-theme] .lk-settings-menu-toggle svg,
 [data-lk-theme] .lk-settings-toggle svg,
 [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
-  width: 22px !important;
-  height: 22px !important;
-  min-width: 22px !important;
-  min-height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
   flex-shrink: 0;
   position: absolute !important;
   top: 50% !important;
@@ -1074,9 +1063,9 @@
   border-radius: 12px;
   padding: 12px;
   width: auto !important;
-  min-width: 320px !important;
-  max-width: 380px !important;
-  max-height: 400px;
+  min-width: 280px !important;
+  max-width: 420px !important;
+  max-height: 450px;
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -1136,21 +1125,23 @@
 /* Device menu buttons */
 [data-lk-theme] .lk-control-bar .lk-device-menu .lk-button,
 [data-lk-theme] .lk-device-menu .lk-button,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button,
 .lk-control-bar .lk-device-menu .lk-button,
-.lk-device-menu .lk-button {
+.lk-device-menu .lk-button,
+.lk-prejoin .lk-device-menu .lk-button {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 100% !important;
   box-sizing: border-box !important;
-  height: 44px !important;
+  height: auto !important;
   min-height: 44px !important;
-  max-height: 44px !important;
+  max-height: none !important;
   border-radius: 8px !important;
-  padding: 10px 14px !important;
+  padding: 12px 14px !important;
   margin: 3px 0 !important;
   font-size: 14px !important;
   font-weight: 500 !important;
-  line-height: 1.4 !important;
+  line-height: 1.5 !important;
   text-align: left !important;
   justify-content: flex-start !important;
   color: rgba(255, 255, 255, 0.95) !important;
@@ -1163,19 +1154,29 @@
   flex-direction: row !important;
   gap: 0 !important;
   overflow: hidden !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
 }
 
-[data-lk-theme] .lk-device-menu .lk-button:hover {
+[data-lk-theme] .lk-device-menu .lk-button:hover,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button:hover,
+.lk-device-menu .lk-button:hover,
+.lk-prejoin .lk-device-menu .lk-button:hover {
   background: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(255, 255, 255, 0.25) !important;
-  transform: translateX(2px);
+  transform: scale(1.02);
   color: white !important;
 }
 
 /* Active/Selected device */
 [data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"],
-[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"] {
+[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"],
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button[aria-pressed="true"],
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button[data-lk-active="true"],
+.lk-device-menu .lk-button[aria-pressed="true"],
+.lk-device-menu .lk-button[data-lk-active="true"],
+.lk-prejoin .lk-device-menu .lk-button[aria-pressed="true"],
+.lk-prejoin .lk-device-menu .lk-button[data-lk-active="true"] {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.25)) !important;
   border-color: rgba(59, 130, 246, 0.5) !important;
   color: #93c5fd !important;
@@ -1184,7 +1185,13 @@
 }
 
 [data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"]:hover,
-[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]:hover {
+[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]:hover,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button[aria-pressed="true"]:hover,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button[data-lk-active="true"]:hover,
+.lk-device-menu .lk-button[aria-pressed="true"]:hover,
+.lk-device-menu .lk-button[data-lk-active="true"]:hover,
+.lk-prejoin .lk-device-menu .lk-button[aria-pressed="true"]:hover,
+.lk-prejoin .lk-device-menu .lk-button[data-lk-active="true"]:hover {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.3)) !important;
   border-color: rgba(59, 130, 246, 0.6) !important;
   color: #bfdbfe !important;
@@ -1192,7 +1199,13 @@
 
 /* Checkmark for active device */
 [data-lk-theme] .lk-device-menu .lk-button[aria-pressed="true"]::before,
-[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]::before {
+[data-lk-theme] .lk-device-menu .lk-button[data-lk-active="true"]::before,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button[aria-pressed="true"]::before,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button[data-lk-active="true"]::before,
+.lk-device-menu .lk-button[aria-pressed="true"]::before,
+.lk-device-menu .lk-button[data-lk-active="true"]::before,
+.lk-prejoin .lk-device-menu .lk-button[aria-pressed="true"]::before,
+.lk-prejoin .lk-device-menu .lk-button[data-lk-active="true"]::before {
   content: '✓';
   color: #60a5fa;
   font-weight: bold;
@@ -1206,11 +1219,13 @@
 
 /* Show all text and elements in device menu - override any text hiding */
 [data-lk-theme] .lk-device-menu .lk-button,
-.lk-device-menu .lk-button {
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button,
+.lk-device-menu .lk-button,
+.lk-prejoin .lk-device-menu .lk-button {
   font-size: 14px !important;
-  line-height: 1.4 !important;
+  line-height: 1.5 !important;
   text-indent: 0 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
   color: inherit !important;
 }
 
@@ -1219,26 +1234,36 @@
 [data-lk-theme] .lk-device-menu .lk-button > label,
 [data-lk-theme] .lk-device-menu .lk-button > p,
 [data-lk-theme] .lk-device-menu .lk-button > *:not(svg):not(svg *),
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button > span,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button > div,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button > label,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button > p,
+[data-lk-theme] .lk-prejoin .lk-device-menu .lk-button > *:not(svg):not(svg *),
 .lk-device-menu .lk-button > span,
 .lk-device-menu .lk-button > div,
 .lk-device-menu .lk-button > label,
 .lk-device-menu .lk-button > p,
-.lk-device-menu .lk-button > *:not(svg):not(svg *) {
-  display: inline-block !important;
+.lk-device-menu .lk-button > *:not(svg):not(svg *),
+.lk-prejoin .lk-device-menu .lk-button > span,
+.lk-prejoin .lk-device-menu .lk-button > div,
+.lk-prejoin .lk-device-menu .lk-button > label,
+.lk-prejoin .lk-device-menu .lk-button > p,
+.lk-prejoin .lk-device-menu .lk-button > *:not(svg):not(svg *) {
+  display: inline !important;
   visibility: visible !important;
   opacity: 1 !important;
   width: auto !important;
   height: auto !important;
   font-size: 14px !important;
   color: inherit !important;
-  white-space: nowrap !important;
-  line-height: 1.4 !important;
+  white-space: normal !important;
+  line-height: 1.5 !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
   padding: 0 !important;
   margin: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
   vertical-align: middle !important;
   text-indent: 0 !important;
 }
@@ -2079,23 +2104,14 @@
 }
 
 /* Individual message - Modern Enhanced styling */
+/* Note: This is for old message structure. LiveKit now uses .lk-chat-entry directly on <li> */
 [data-lk-theme] .lk-chat-message {
-  background: rgba(255, 255, 255, 0.09);
-  border-radius: 14px;
-  padding: 11px 15px;
-  max-width: 80%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  animation: messageIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12),
-              0 1px 2px rgba(0, 0, 0, 0.08),
-              inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  word-wrap: break-word;
-  position: relative;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  align-self: flex-start;
-  margin-bottom: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
 /* Message grouping - if same sender, reduce spacing */
@@ -2279,32 +2295,54 @@
 }
 
 /* Improve message list item styling */
+/* The <li> itself IS the chat entry, so remove any conflicting styles */
 [data-lk-theme] .lk-chat-messages .lk-list li,
 [data-lk-theme] .lk-list.lk-chat-messages > li {
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  list-style: none !important;
+}
+
+/* Ensure no nested elements create duplicate bubbles */
+[data-lk-theme] .lk-chat-entry > * {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Only the .lk-chat-entry itself should have the bubble styling */
+[data-lk-theme] .lk-chat-entry.lk-chat-entry,
+[data-lk-theme] li.lk-chat-entry {
+  /* All bubble styling is already defined above */
 }
 
 /* LiveKit Chat Entry (actual message container) - Enhanced styling */
 [data-lk-theme] .lk-chat-entry {
   background: rgba(255, 255, 255, 0.12) !important;
   border-radius: 18px 18px 18px 4px !important;
-  padding: 14px 18px !important;
+  padding: 12px 16px !important;
   margin: 0 !important; /* Let grouping rules handle margins */
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
               0 2px 4px rgba(0, 0, 0, 0.12),
               inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  word-wrap: break-word !important;
   position: relative !important;
   backdrop-filter: blur(12px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
   animation: messageIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  max-width: 85% !important;
+  width: fit-content !important;
+  max-width: min(85%, 500px) !important;
+  min-width: 0 !important;
   align-self: flex-start !important;
-  line-height: 1.6 !important;
-  min-height: auto !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-wrap: break-word !important;
+  overflow: hidden !important;
 }
 
 /* Message grouping - Consolidated messages from same sender */
@@ -2413,17 +2451,11 @@
   transform: translateY(-2px) translateX(-2px) scale(1.01) !important;
 }
 
-/* All messages should have consistent padding */
-[data-lk-theme] .lk-chat-entry {
-  padding: 14px 18px !important;
-}
-
-/* Grouped messages can have slightly reduced padding but still readable */
+/* Note: Base padding for .lk-chat-entry is set above (12px 16px) */
+/* Grouped messages can have slightly reduced vertical padding */
 [data-lk-theme] .lk-chat-entry[data-grouped="true"] {
-  padding-top: 12px !important;
-  padding-bottom: 12px !important;
-  padding-left: 18px !important;
-  padding-right: 18px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
 }
 
 /* Ensure message body in grouped messages has proper spacing */
@@ -2470,6 +2502,8 @@
   box-shadow: 0 5px 18px rgba(59, 130, 246, 0.3),
               0 2px 8px rgba(59, 130, 246, 0.2),
               inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  min-width: fit-content !important;
+  width: fit-content !important;
 }
 
 [data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"]:hover,
@@ -2491,11 +2525,13 @@
 [data-lk-theme] .lk-meta-data {
   color: rgba(255, 255, 255, 0.9) !important;
   font-size: 13px !important;
-  margin-bottom: 6px !important;
+  margin-bottom: 2px !important;
+  margin-top: 0 !important;
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  letter-spacing: 0.2px !important;
+  letter-spacing: normal !important;
+  line-height: 1.3 !important;
 }
 
 /* Participant name in chat */
@@ -2526,14 +2562,24 @@
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
-/* Message body text */
+/* Message body text - ensure proper text rendering and word wrapping */
 [data-lk-theme] .lk-message-body {
   color: rgba(255, 255, 255, 0.95) !important;
   font-size: 14px !important;
-  line-height: 1.6 !important;
-  margin-top: 4px !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   word-break: break-word !important;
-  letter-spacing: 0.1px !important;
+  overflow-wrap: anywhere !important;
+  word-wrap: break-word !important;
+  hyphens: auto !important;
+  letter-spacing: normal !important;
+  white-space: pre-wrap !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* Links in chat messages */
@@ -3182,16 +3228,19 @@
 
 @media (max-width: 768px) {
   [data-lk-theme] .lk-control-bar {
-    padding: 6px 3px;
+    padding: 6px 8px;
     gap: 3px;
     flex-wrap: nowrap !important;
-    justify-content: center;
-    align-items: center;
+    justify-content: center !important;
+    align-items: center !important;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    box-sizing: border-box;
+    max-width: calc(100vw - 16px);
+    margin: 0 auto;
   }
   
   [data-lk-theme] .lk-control-bar::-webkit-scrollbar {
@@ -3533,10 +3582,15 @@
 @media (max-width: 480px) {
   /* All control bar buttons even smaller on very small screens */
   [data-lk-theme] .lk-control-bar {
-    padding: 5px 2px;
+    padding: 5px 6px;
     gap: 2px;
     min-height: 56px;
     max-height: 56px;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box;
+    max-width: calc(100vw - 12px);
+    margin: 0 auto;
   }
   
   [data-lk-theme] .lk-control-bar .lk-button,

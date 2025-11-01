@@ -17,5 +17,11 @@ interface DocumentPictureInPicture extends EventTarget {
 
 interface Window {
   documentPictureInPicture?: DocumentPictureInPicture;
+  __getBlurQuality?: () => 'low' | 'medium' | 'high' | 'ultra';
+  __setBlurQuality?: (quality: 'low' | 'medium' | 'high' | 'ultra') => void;
+  __getUseCustomSegmentation?: () => boolean;
+  __setUseCustomSegmentation?: (enabled: boolean) => void;
+  __getCustomSegmentation?: () => any;
+  __setCustomSegmentation?: (settings: any) => void;
 }
 

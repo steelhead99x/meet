@@ -576,13 +576,14 @@ function VideoConferenceComponent(props: {
         if (!messageBody || !timeEl) return;
 
         const timestamp = timeEl.getAttribute('datetime');
-        const participant = participantEl?.textContent?.trim() || 
+        const participant = participantEl?.textContent?.trim() ||
                           (entry.hasAttribute('data-lk-local') ? room.localParticipant.identity : 'unknown');
-        
+
         if (!timestamp) return;
 
         // Create unique key to avoid duplicates
-        const messageKey = `${timestamp}-${participant}-${messageBody.slice(0, 50)}`;
+        const messageText = typeof messageBody === 'string' ? messageBody : messageBody.textContent?.trim() || '';
+        const messageKey = `${timestamp}-${participant}-${messageText.slice(0, 50)}`;
         
         if (savedMessages.has(messageKey)) return;
         
@@ -593,7 +594,7 @@ function VideoConferenceComponent(props: {
         // This prevents saving historical messages we're loading
         const isRecent = Date.now() - timestamp_ms < 3600000; // 1 hour
         if (isRecent || !entry.hasAttribute('data-historical')) {
-          saveMessageToDb(messageBody, participant, timestamp_ms);
+          saveMessageToDb(messageText, participant, timestamp_ms);
         }
       });
     };
@@ -668,13 +669,14 @@ function VideoConferenceComponent(props: {
         const existingEntries = Array.from(listContainer.querySelectorAll('.lk-chat-entry'));
         existingEntries.forEach((entry: Element) => {
           const timeEl = entry.querySelector('time');
-          const textEl = entry.querySelector('.lk-message-body') || 
+          const textEl = entry.querySelector('.lk-message-body') ||
                         entry.querySelector('.lk-chat-message') ||
                         entry.textContent?.trim();
           if (timeEl && textEl) {
             const timestamp = timeEl.getAttribute('datetime');
             if (timestamp) {
-              existingMessages.add(`${timestamp}-${textEl.slice(0, 50)}`);
+              const textContent = typeof textEl === 'string' ? textEl : textEl.textContent?.trim() || '';
+              existingMessages.add(`${timestamp}-${textContent.slice(0, 50)}`);
             }
           }
         });
@@ -1362,7 +1364,10 @@ function RoomContentInner() {
                   right: 0,
                   zIndex: 100,
                   background: 'linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%)',
-                  padding: '20px 16px 16px',
+                  padding: '20px 0 16px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }}
               >
                 <ControlBar

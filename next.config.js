@@ -28,6 +28,12 @@ const nextConfig = {
       });
     }
 
+    // Exclude better-sqlite3 from webpack bundling (native module, server-only)
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push('better-sqlite3');
+    }
+
     return config;
   },
   // Note: COOP/COEP headers are now handled in middleware.ts

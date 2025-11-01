@@ -1,15 +1,17 @@
 /**
  * Advanced Mask Processing for Enhanced Person Detection
- * 
+ *
  * This module provides post-processing algorithms for segmentation masks
  * to reduce false detection of background objects and improve person detection quality.
- * 
+ *
  * Techniques implemented:
  * - Confidence-based thresholding
  * - Morphological operations (erosion/dilation) for noise removal
  * - Connected component analysis to isolate the main person
  * - Mask area filtering to remove tiny false detections
  */
+
+import type { BlurConfig } from './BlurConfig';
 
 /**
  * Process a segmentation mask with enhanced person detection algorithms
@@ -299,7 +301,7 @@ function calculateMaskArea(data: Uint8ClampedArray): number {
  */
 export function createEnhancedBackgroundProcessor(
   standardProcessor: any,
-  config: BlurConfig['enhancedPersonDetection']
+  config: any
 ): any {
   // This would require extending or wrapping the LiveKit processor
   // For now, we document the approach for future integration
@@ -310,7 +312,7 @@ export function createEnhancedBackgroundProcessor(
 /**
  * Get a human-readable summary of enhanced person detection settings
  */
-export function getEnhancedDetectionSummary(config: BlurConfig['enhancedPersonDetection']): string {
+export function getEnhancedDetectionSummary(config: any): string {
   if (!config || !config.enabled) {
     return 'Standard person detection';
   }
