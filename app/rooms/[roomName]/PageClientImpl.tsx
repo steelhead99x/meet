@@ -42,6 +42,7 @@ import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { BrowserWindowPIP } from '@/lib/BrowserWindowPIP';
 import { CarouselNavigation } from '@/lib/CarouselNavigation';
+import { LocalParticipantMarker } from '@/lib/LocalParticipantMarker';
 import { ProcessorLoadingProvider } from '@/lib/ProcessorLoadingContext';
 import { ProcessorLoadingOverlay } from '@/lib/ProcessorLoadingOverlay';
 import { AdaptiveVideoLayout } from '@/lib/AdaptiveVideoLayout';
@@ -602,9 +603,133 @@ function VideoConferenceComponent(props: {
   );
 }
 
-// Wrapper component to apply chat visibility attributes
+// Hook to group chat messages from the same sender within a timeframe
+function useChatMessageGrouping() {
+  React.useEffect(() => {
+    const groupMessages = () => {
+      const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages');
+      if (!messagesContainer) return;
+
+      const entries = Array.from(messagesContainer.querySelectorAll('.lk-chat-entry')) as HTMLElement[];
+      
+      if (entries.length === 0) return;
+
+      // Clear all existing grouping markers
+      entries.forEach(entry => {
+        entry.removeAttribute('data-grouped');
+      });
+
+      // Group messages from same sender within 2 minutes (120000ms)
+      const TIME_THRESHOLD = 120000; // 2 minutes in milliseconds
+      
+      for (let i = 1; i < entries.length; i++) {
+        const currentEntry = entries[i];
+        const previousEntry = entries[i - 1];
+        
+        // Get participant names
+        const currentNameEl = currentEntry.querySelector('.lk-participant-name');
+        const previousNameEl = previousEntry.querySelector('.lk-participant-name');
+        
+        // Get timestamps
+        const currentTimeEl = currentEntry.querySelector('time');
+        const previousTimeEl = previousEntry.querySelector('time');
+        
+        // Check if local messages (your messages)
+        const currentIsLocal = currentEntry.hasAttribute('data-lk-local') || 
+                               currentEntry.classList.contains('lk-chat-entry-local');
+        const previousIsLocal = previousEntry.hasAttribute('data-lk-local') || 
+                                previousEntry.classList.contains('lk-chat-entry-local');
+        
+        // Extract participant identity or name
+        const currentName = currentNameEl?.textContent?.trim() || '';
+        const previousName = previousNameEl?.textContent?.trim() || '';
+        
+        // Extract timestamps
+        let currentTimestamp: number | null = null;
+        let previousTimestamp: number | null = null;
+        
+        if (currentTimeEl) {
+          const datetime = currentTimeEl.getAttribute('datetime');
+          if (datetime) {
+            currentTimestamp = new Date(datetime).getTime();
+          }
+        }
+        
+        if (previousTimeEl) {
+          const datetime = previousTimeEl.getAttribute('datetime');
+          if (datetime) {
+            previousTimestamp = new Date(datetime).getTime();
+          }
+        }
+        
+        // If we don't have datetime attributes, try to get from text content
+        if (currentTimestamp === null && currentTimeEl) {
+          const timeText = currentTimeEl.textContent?.trim();
+          if (timeText) {
+            // Try to parse common time formats
+            const parsed = new Date(timeText);
+            if (!isNaN(parsed.getTime())) {
+              currentTimestamp = parsed.getTime();
+            }
+          }
+        }
+        
+        if (previousTimestamp === null && previousTimeEl) {
+          const timeText = previousTimeEl.textContent?.trim();
+          if (timeText) {
+            const parsed = new Date(timeText);
+            if (!isNaN(parsed.getTime())) {
+              previousTimestamp = parsed.getTime();
+            }
+          }
+        }
+        
+        // Determine if messages should be grouped
+        const sameSender = 
+          (currentIsLocal && previousIsLocal) || 
+          (!currentIsLocal && !previousIsLocal && currentName === previousName && currentName !== '');
+        
+        const withinTimeframe = 
+          currentTimestamp !== null && 
+          previousTimestamp !== null && 
+          (currentTimestamp - previousTimestamp) <= TIME_THRESHOLD;
+        
+        // If same sender and within timeframe, mark as grouped
+        if (sameSender && (withinTimeframe || (currentTimestamp === null || previousTimestamp === null))) {
+          currentEntry.setAttribute('data-grouped', 'true');
+        }
+      }
+    };
+
+    // Initial grouping
+    groupMessages();
+
+    // Watch for new messages
+    const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages');
+    if (!messagesContainer) return;
+
+    const observer = new MutationObserver(() => {
+      // Debounce grouping to avoid excessive work
+      setTimeout(groupMessages, 50);
+    });
+
+    observer.observe(messagesContainer, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+}
+
+// Wrapper component to apply chat visibility attributes and message grouping
 function ChatWrapper({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
+  
+  // Apply message grouping
+  useChatMessageGrouping();
   
   React.useEffect(() => {
     const updateChatAttributes = () => {
@@ -904,6 +1029,7 @@ function RoomContentInner() {
       <KeyboardShortcuts />
       <ReconnectionBanner />
       <ConnectionQualityTooltip />
+      <LocalParticipantMarker />
       <BrowserWindowPIP />
       <CarouselNavigation />
 

@@ -1191,6 +1191,8 @@ export function CameraSettings() {
               objectFit: 'contain',
               objectPosition: 'right center',
               transform: 'scaleX(-1)',
+              // PRIVACY: Hide video while applying processor (only for blur/background effects)
+              visibility: (isApplyingProcessor && backgroundType !== 'none') ? 'hidden' : 'visible'
             }}
             autoPlay
             playsInline
@@ -1205,7 +1207,7 @@ export function CameraSettings() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(26, 26, 26, 0.95)',
+            background: '#000000',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -1485,30 +1487,34 @@ export function CameraSettings() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              minWidth: '60px',
-              minHeight: '60px',
-              padding: '8px',
+              width: '24px',
+              height: '24px',
+              minWidth: '24px',
+              minHeight: '24px',
+              maxWidth: '24px',
+              maxHeight: '24px',
+              borderRadius: '50%',
+              padding: '0',
+              margin: '0 auto',
               cursor: isUploading ? 'not-allowed' : 'pointer',
               opacity: isUploading ? 0.6 : 1,
               position: 'relative',
+              pointerEvents: isUploading ? 'none' : 'auto',
             }}
           >
             {isUploading ? (
-              <div style={{ fontSize: '10px', textAlign: 'center' }}>
-                Uploading...
+              <div style={{ fontSize: '8px', textAlign: 'center', pointerEvents: 'none' }}>
+                ...
               </div>
             ) : (
-              <>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <div style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <div style={{ fontSize: '10px', marginTop: '4px' }}>
-                  Upload
-                </div>
-              </>
+              </div>
             )}
             
-            {/* Direct file input that captures clicks */}
+            {/* File input that captures clicks */}
             <input
               ref={fileInputRef}
               type="file"
@@ -1524,10 +1530,6 @@ export function CameraSettings() {
                 opacity: 0,
                 cursor: isUploading ? 'not-allowed' : 'pointer',
                 zIndex: 1,
-              }}
-              onClick={(e) => {
-                console.log('[CameraSettings] File input clicked directly');
-                e.stopPropagation();
               }}
             />
           </label>

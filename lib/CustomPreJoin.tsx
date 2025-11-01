@@ -617,7 +617,7 @@ export function CustomPreJoin({
     <div className="lk-prejoin" style={{ maxWidth: '500px', width: '100%' }}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Video Preview */}
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#1a1a1a', borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: (isPreparingVideo && backgroundType !== 'none') ? '#000000' : '#1a1a1a', borderRadius: '12px', overflow: 'hidden' }}>
           {videoEnabled && videoTrack ? (
             <video
               ref={videoEl}
@@ -650,7 +650,7 @@ export function CustomPreJoin({
               left: 0,
               right: 0,
               bottom: 0,
-              background: '#1a1a1a',
+              background: '#000000',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',

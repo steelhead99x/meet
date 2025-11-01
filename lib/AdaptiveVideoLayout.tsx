@@ -23,6 +23,7 @@ import {
   TrackReference,
   isTrackReference,
   useLocalParticipant,
+  useRoomContext,
 } from '@livekit/components-react';
 import { Track, Participant } from 'livekit-client';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
@@ -356,7 +357,10 @@ export function AdaptiveVideoLayout() {
               />
             )
           )}
-          <ParticipantInfo participant={singleParticipant} />
+          <ParticipantInfo 
+            participant={singleParticipant} 
+            isLocal={localParticipant?.identity === singleParticipant?.identity}
+          />
         </div>
       </div>
     );
@@ -419,7 +423,10 @@ export function AdaptiveVideoLayout() {
               }}
             />
           )}
-          <ParticipantInfo participant={focusedParticipant} />
+          <ParticipantInfo 
+            participant={focusedParticipant} 
+            isLocal={localParticipant?.identity === focusedParticipant?.identity}
+          />
         </div>
 
         {/* Small PIP videos in corner */}
@@ -478,7 +485,11 @@ export function AdaptiveVideoLayout() {
                     }}
                   />
                 )}
-                <ParticipantInfo participant={participant} isSmall />
+                <ParticipantInfo 
+                  participant={participant} 
+                  isSmall 
+                  isLocal={localParticipant?.identity === participant?.identity}
+                />
               </div>
             );
           })}
@@ -537,7 +548,10 @@ export function AdaptiveVideoLayout() {
                 }}
               />
             )}
-            <ParticipantInfo participant={participant} />
+            <ParticipantInfo 
+              participant={participant} 
+              isLocal={localParticipant?.identity === participant?.identity}
+            />
           </div>
         );
       })}
@@ -551,30 +565,71 @@ export function AdaptiveVideoLayout() {
 function ParticipantInfo({
   participant,
   isSmall = false,
+  isLocal = false,
 }: {
   participant: Participant;
   isSmall?: boolean;
+  isLocal?: boolean;
 }) {
+  const room = useRoomContext();
+  const isE2EEEnabled = room?.isE2EEEnabled ?? false;
+
   return (
     <div
       style={{
         position: 'absolute',
-        bottom: isSmall ? '4px' : '12px',
+        ...(isLocal
+          ? {
+              top: isSmall ? '4px' : '12px',
+              bottom: 'auto',
+            }
+          : {
+              bottom: isSmall ? '4px' : '12px',
+              top: 'auto',
+            }),
         left: isSmall ? '4px' : '12px',
-        background: 'rgba(0, 0, 0, 0.7)',
-        color: 'white',
-        padding: isSmall ? '2px 6px' : '4px 12px',
-        borderRadius: '4px',
-        fontSize: isSmall ? '10px' : '14px',
-        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
         maxWidth: 'calc(100% - 24px)',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
         pointerEvents: 'none',
       }}
     >
-      {participant.name || participant.identity}
+      {/* E2EE Lock Icon */}
+      {isE2EEEnabled && (
+        <svg
+          width={isSmall ? '12' : '16'}
+          height={isSmall ? '12' : '16'}
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{
+            flexShrink: 0,
+            color: '#22c55e',
+          }}
+        >
+          <path
+            d="M12.5 7H12V5C12 2.79086 10.2091 1 8 1C5.79086 1 4 2.79086 4 5V7H3.5C2.67157 7 2 7.67157 2 8.5V13.5C2 14.3284 2.67157 15 3.5 15H12.5C13.3284 15 14 14.3284 14 13.5V8.5C14 7.67157 13.3284 7 12.5 7ZM10 7H6V5C6 3.89543 6.89543 3 8 3C9.10457 3 10 3.89543 10 5V7Z"
+            fill="currentColor"
+          />
+        </svg>
+      )}
+      {/* Participant Name */}
+      <span
+        style={{
+          background: 'rgba(0, 0, 0, 0.7)',
+          color: 'white',
+          padding: isSmall ? '2px 6px' : '4px 12px',
+          borderRadius: '4px',
+          fontSize: isSmall ? '10px' : '14px',
+          fontWeight: 500,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {participant.name || participant.identity}
+      </span>
     </div>
   );
 }

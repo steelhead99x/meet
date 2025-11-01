@@ -19,6 +19,7 @@
     "@livekit/krisp-noise-filter": "0.3.4",
     "@livekit/track-processors": "^0.6.1",
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
+    "better-sqlite3": "^12.4.1",
     "livekit-client": "2.15.14",
     "livekit-server-sdk": "2.14.0",
     "next": "14.2.18",
@@ -28,6 +29,7 @@
     "tinykeys": "^3.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "22.17.2",
     "@types/react": "18.3.23",
     "@types/react-dom": "18.3.7",
