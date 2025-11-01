@@ -188,7 +188,7 @@ export function CustomPreJoin({
   });
   
   // Handle background effect changes
-  const selectBackground = React.useCallback((type: string, path?: string) => {
+  const selectBackground = React.useCallback(async (type: string, path?: string) => {
     console.log('[CustomPreJoin] Changing background to:', type, path);
     
     // PRIVACY: Hide video immediately when switching to a blur/effect
@@ -199,29 +199,34 @@ export function CustomPreJoin({
       setIsPreparingVideo(false);
     }
     
-    // Stop current processor first
+    // Stop current processor first and wait for it to complete
+    // This prevents race conditions when switching filters quickly
     if (videoTrack instanceof LocalVideoTrack && blurProcessorRef.current) {
       const mediaStreamTrack = videoTrack.mediaStreamTrack;
       if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
-        videoTrack.stopProcessor().catch(err => {
+        try {
+          await videoTrack.stopProcessor();
+          console.log('[CustomPreJoin] Successfully stopped previous processor');
+        } catch (err) {
           console.warn('[CustomPreJoin] Error stopping processor during background change:', err);
-        });
+        }
       }
+      // Clear the processor reference after stopping
+      blurProcessorRef.current = null;
     }
     
     // Reset the processed track ID so the effect can be reapplied
     processedTrackIdRef.current = null;
     
-    // Update state
+    // Update state - always update backgroundPath to ensure consistency
+    // If path is undefined, clear it to avoid stale values
     setBackgroundType(type as any);
-    if (path) {
-      setBackgroundPath(path);
-    }
+    setBackgroundPath(path || '');
     
     // Save to preferences
     saveUserPreferences({
       backgroundType: type as any,
-      backgroundPath: path,
+      backgroundPath: path || '',
     });
   }, [videoTrack]);
 
@@ -294,6 +299,19 @@ export function CustomPreJoin({
         if (processedTrackIdRef.current === effectKey) {
           console.log('[CustomPreJoin] Effect already applied to track:', effectKey);
           return;
+        }
+        
+        // Stop any existing processor before applying a new one
+        // This ensures clean transitions when changing filters
+        if (blurProcessorRef.current) {
+          try {
+            await videoTrack.stopProcessor();
+            console.log('[CustomPreJoin] Stopped existing processor before applying new effect');
+            blurProcessorRef.current = null;
+          } catch (err) {
+            console.warn('[CustomPreJoin] Error stopping existing processor (may not exist):', err);
+            blurProcessorRef.current = null; // Clear ref anyway
+          }
         }
         
         // Check track state before we start
