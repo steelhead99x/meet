@@ -5,6 +5,28 @@
  */
 
 import { BlurQuality, CustomSegmentationSettings } from './BlurConfig';
+import type { VideoCodec } from 'livekit-client';
+
+export type VideoResolution = '480p' | '720p' | '1080p' | '1440p' | '4K';
+export type VideoFramerate = 15 | 24 | 30 | 60;
+export type VideoQualityPreset = 'auto' | 'standard' | 'high' | 'ultra';
+
+export interface VideoQualitySettings {
+  /** Quality preset or 'auto' for automatic selection */
+  preset: VideoQualityPreset;
+  /** Resolution override (only used if preset is not 'auto') */
+  resolution?: VideoResolution;
+  /** Frame rate (15, 24, 30, or 60 fps) */
+  framerate?: VideoFramerate;
+  /** Maximum bitrate in bps (overrides preset if set) */
+  maxBitrate?: number;
+  /** Video codec preference */
+  codec?: VideoCodec;
+  /** Enable dynacast (dynamic broadcasting) */
+  dynacast?: boolean;
+  /** Enable adaptive stream */
+  adaptiveStream?: boolean;
+}
 
 export interface UserPreferences {
   // Video preferences
@@ -13,6 +35,9 @@ export interface UserPreferences {
   backgroundType: 'none' | 'blur' | 'image' | 'gradient' | 'custom-video' | 'custom-image';
   backgroundPath?: string; // For static images/gradients, or custom background ID
   blurQuality: BlurQuality;
+
+  // Video quality settings (LiveKit v2 enhancements)
+  videoQuality?: VideoQualitySettings;
 
   // Segmentation customization
   useCustomSegmentation?: boolean; // Whether to use custom settings instead of presets
@@ -45,6 +70,12 @@ export function getDefaultPreferences(): UserPreferences {
     preferredOrientation: 'auto', // Follow device orientation automatically
     audioEnabled: true,
     noiseFilterEnabled: true,
+    videoQuality: {
+      preset: 'auto', // Auto-detect best quality based on device
+      framerate: 30,
+      dynacast: true,
+      adaptiveStream: true,
+    },
   };
 }
 

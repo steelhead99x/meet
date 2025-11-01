@@ -37,6 +37,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useLowCPUOptimizer } from '@/lib/usePerformanceOptimizer';
+import { loadUserPreferences, VideoResolution } from '@/lib/userPreferences';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
@@ -169,6 +170,86 @@ export function PageClientImpl(props: {
   );
 }
 
+// Helper function to convert user preferences to room configuration
+function getVideoConfigFromPreferences(e2eeEnabled: boolean, urlCodec?: VideoCodec, urlHq?: boolean) {
+  const prefs = loadUserPreferences();
+  const videoQuality = prefs.videoQuality;
+
+  // Resolution presets
+  const resolutionPresets: Record<VideoResolution, { width: number; height: number }> = {
+    '480p': { width: 640, height: 480 },
+    '720p': { width: 1280, height: 720 },
+    '1080p': { width: 1920, height: 1080 },
+    '1440p': { width: 2560, height: 1440 },
+    '4K': { width: 3840, height: 2160 },
+  };
+
+  // Determine resolution
+  let resolution = { width: 1280, height: 720, frameRate: 30 };
+  if (videoQuality?.resolution) {
+    const res = resolutionPresets[videoQuality.resolution];
+    resolution = { ...res, frameRate: videoQuality.framerate || 30 };
+  } else if (videoQuality?.preset) {
+    switch (videoQuality.preset) {
+      case 'standard':
+        resolution = { width: 1280, height: 720, frameRate: 30 };
+        break;
+      case 'high':
+        resolution = { width: 1920, height: 1080, frameRate: 30 };
+        break;
+      case 'ultra':
+        resolution = { width: 2560, height: 1440, frameRate: 60 };
+        break;
+      default: // auto
+        resolution = { width: 1280, height: 720, frameRate: 30 };
+    }
+  } else if (urlHq) {
+    // Fallback to URL param
+    resolution = { width: 1920, height: 1080, frameRate: 30 };
+  }
+
+  // Determine bitrate
+  let maxBitrate = videoQuality?.maxBitrate || (urlHq ? 3_000_000 : 2_000_000);
+  if (videoQuality?.preset && !videoQuality.maxBitrate) {
+    switch (videoQuality.preset) {
+      case 'standard':
+        maxBitrate = 2_000_000;
+        break;
+      case 'high':
+        maxBitrate = 3_000_000;
+        break;
+      case 'ultra':
+        maxBitrate = 5_000_000;
+        break;
+    }
+  }
+
+  // Determine codec (URL param takes precedence, then user pref, then default)
+  let videoCodec: VideoCodec | undefined = urlCodec || videoQuality?.codec || 'vp9';
+  if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
+    videoCodec = undefined; // E2EE doesn't support VP9/AV1
+  }
+
+  // Determine simulcast layers based on resolution
+  const simulcastLayers = resolution.height >= 1080
+    ? [VideoPresets.h1080, VideoPresets.h720, VideoPresets.h360]
+    : resolution.height >= 720
+    ? [VideoPresets.h720, VideoPresets.h360, VideoPresets.h180]
+    : [VideoPresets.h360, VideoPresets.h180];
+
+  return {
+    resolution,
+    videoEncoding: {
+      maxBitrate,
+      maxFramerate: resolution.frameRate,
+    },
+    videoSimulcastLayers: simulcastLayers,
+    videoCodec,
+    dynacast: videoQuality?.dynacast !== false, // Default to true
+    adaptiveStream: videoQuality?.adaptiveStream !== false, // Default to true
+  };
+}
+
 function VideoConferenceComponent(props: {
   userChoices: LocalUserChoices;
   connectionDetails: ConnectionDetails;
@@ -204,45 +285,20 @@ function VideoConferenceComponent(props: {
 
         if (cancelled) return;
 
-        // Step 2: Create room options with E2EE config
-        let videoCodec: VideoCodec | undefined = props.codec ? props.codec : 'vp9';
-        if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
-          videoCodec = undefined;
-        }
+        // Step 2: Create room options with E2EE config and user preferences
+        const videoConfig = getVideoConfigFromPreferences(e2eeEnabled, props.codec, props.hq);
 
         const videoCaptureDefaults: VideoCaptureOptions = {
           deviceId: videoDeviceId ?? undefined,
-          resolution: props.hq 
-            ? { width: 1920, height: 1080, frameRate: 30 }
-            : { width: 1280, height: 720, frameRate: 30 },
+          resolution: videoConfig.resolution,
         };
 
         const publishDefaults: TrackPublishDefaults = {
           dtx: true,
-          // Enhanced video encoding for better quality
-          videoEncoding: props.hq 
-            ? {
-                maxBitrate: 3_000_000, // 3 Mbps for high quality
-                maxFramerate: 30,
-              }
-            : {
-                maxBitrate: 2_000_000, // 2 Mbps for standard quality
-                maxFramerate: 30,
-              },
-          // Better simulcast layers with higher bitrates
-          videoSimulcastLayers: props.hq
-            ? [
-                VideoPresets.h1080,
-                VideoPresets.h720,
-                VideoPresets.h360,
-              ]
-            : [
-                VideoPresets.h720,
-                VideoPresets.h360,
-                VideoPresets.h180,
-              ],
+          videoEncoding: videoConfig.videoEncoding,
+          videoSimulcastLayers: videoConfig.videoSimulcastLayers,
           red: !e2eeEnabled,
-          videoCodec,
+          videoCodec: videoConfig.videoCodec,
         };
 
         const roomOptions: RoomOptions = {
@@ -251,8 +307,8 @@ function VideoConferenceComponent(props: {
           audioCaptureDefaults: {
             deviceId: audioDeviceId ?? undefined,
           },
-          adaptiveStream: true,
-          dynacast: true,
+          adaptiveStream: videoConfig.adaptiveStream,
+          dynacast: videoConfig.dynacast,
           e2ee: keyProvider && worker && e2eeEnabled ? { keyProvider, worker } : undefined,
           singlePeerConnection: isMeetStaging(),
         };
@@ -299,46 +355,26 @@ function VideoConferenceComponent(props: {
           );
         }
 
-        // Create room without E2EE
+        // Create room without E2EE (using same video config)
+        const videoConfig = getVideoConfigFromPreferences(false, props.codec, props.hq);
+        
         const roomOptions: RoomOptions = {
           videoCaptureDefaults: {
             deviceId: videoDeviceId ?? undefined,
-            resolution: props.hq 
-              ? { width: 1920, height: 1080, frameRate: 30 }
-              : { width: 1280, height: 720, frameRate: 30 },
+            resolution: videoConfig.resolution,
           },
           publishDefaults: {
             dtx: true,
-            // Enhanced video encoding for better quality
-            videoEncoding: props.hq 
-              ? {
-                  maxBitrate: 3_000_000, // 3 Mbps for high quality
-                  maxFramerate: 30,
-                }
-              : {
-                  maxBitrate: 2_000_000, // 2 Mbps for standard quality
-                  maxFramerate: 30,
-                },
-            // Better simulcast layers with higher bitrates
-            videoSimulcastLayers: props.hq
-              ? [
-                  VideoPresets.h1080,
-                  VideoPresets.h720,
-                  VideoPresets.h360,
-                ]
-              : [
-                  VideoPresets.h720,
-                  VideoPresets.h360,
-                  VideoPresets.h180,
-                ],
+            videoEncoding: videoConfig.videoEncoding,
+            videoSimulcastLayers: videoConfig.videoSimulcastLayers,
             red: true,
-            videoCodec: props.codec,
+            videoCodec: videoConfig.videoCodec,
           },
           audioCaptureDefaults: {
             deviceId: audioDeviceId ?? undefined,
           },
-          adaptiveStream: true,
-          dynacast: true,
+          adaptiveStream: videoConfig.adaptiveStream,
+          dynacast: videoConfig.dynacast,
           singlePeerConnection: isMeetStaging(),
         };
 

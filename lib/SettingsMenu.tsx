@@ -11,6 +11,7 @@ import {
 import styles from '../styles/SettingsMenu.module.css';
 import { CameraSettings } from './CameraSettings';
 import { MicrophoneSettings } from './MicrophoneSettings';
+import { VideoQualitySettings } from './VideoQualitySettings';
 import { 
   BlurQuality, 
   getBlurQualityDescription, 
@@ -121,6 +122,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = React.useState<{
     camera: boolean;
+    videoQuality: boolean;
     microphone: boolean;
     speaker: boolean;
     blur: boolean;
@@ -128,6 +130,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
     mediapipe: boolean;
   }>({
     camera: true,
+    videoQuality: false,
     microphone: false,
     speaker: false,
     blur: false,
@@ -498,6 +501,48 @@ export function SettingsMenu(props: SettingsMenuProps) {
                 {expandedSections.camera && (
                   <section>
                     <CameraSettings />
+                  </section>
+                )}
+              </>
+            )}
+            
+            {/* Video Quality Section */}
+            {settings.media && settings.media.camera && (
+              <>
+                <h3 
+                  onClick={() => toggleSection('videoQuality')}
+                  style={{ 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px',
+                    margin: '8px 0 8px 0',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s',
+                    border: '2px solid rgba(16, 185, 129, 0.3)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)'}
+                >
+                  <span>🎥 Video Quality Settings</span>
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    style={{ 
+                      transform: expandedSections.videoQuality ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}
+                  >
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </h3>
+                {expandedSections.videoQuality && (
+                  <section>
+                    <VideoQualitySettings />
                   </section>
                 )}
               </>

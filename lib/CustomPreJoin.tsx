@@ -170,6 +170,7 @@ export function CustomPreJoin({
   }, [tracks]);
 
   const videoEl = React.useRef<HTMLVideoElement>(null);
+  const formRef = React.useRef<HTMLFormElement>(null);
   const videoTrack = tracks?.filter((t) => t.kind === Track.Kind.Video)[0];
 
   React.useEffect(() => {
@@ -615,7 +616,7 @@ export function CustomPreJoin({
 
   return (
     <div className="lk-prejoin" style={{ maxWidth: '500px', width: '100%' }}>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Video Preview */}
         <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: (isPreparingVideo && backgroundType !== 'none') ? '#000000' : '#1a1a1a', borderRadius: '12px', overflow: 'hidden' }}>
           {videoEnabled && videoTrack ? (
@@ -905,6 +906,12 @@ export function CustomPreJoin({
           placeholder="Enter your name"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              formRef.current?.requestSubmit();
+            }
+          }}
           required
           autoComplete="name"
           autoCapitalize="words"

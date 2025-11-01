@@ -2517,7 +2517,7 @@
 
 [data-lk-theme] .lk-chat-form form {
   display: flex;
-  gap: 10px;
+  gap: 20px;
   align-items: center;
   height: 100%;
   width: 100%;
@@ -2575,10 +2575,10 @@
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   border: none;
   border-radius: 12px;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0 !important;
   color: white;
   font-weight: 600;
@@ -2658,12 +2658,12 @@
 [data-lk-theme] .lk-chat-form button svg,
 [data-lk-theme] .lk-chat-form-button svg,
 [data-lk-theme] .lk-button.lk-chat-form-button svg {
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
   flex-shrink: 0;
-  font-size: 20px !important;
+  font-size: 16px !important;
   color: white !important;
   display: block !important;
   visibility: visible !important;
@@ -2691,10 +2691,10 @@
   background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
   border: none !important;
   border-radius: 12px !important;
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
   padding: 0 !important;
   color: white !important;
   font-weight: 600 !important;
@@ -2762,6 +2762,14 @@
 [data-lk-theme] .lk-button.lk-chat-form-button:disabled {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
+}
+
+/* Add spacing between adjacent chat form buttons */
+[data-lk-theme] .lk-button.lk-chat-form-button + .lk-button.lk-chat-form-button,
+[data-lk-theme] .lk-chat-form-button + .lk-chat-form-button,
+[data-lk-theme] .lk-chat-form-button + .lk-button.lk-chat-form-button,
+[data-lk-theme] .lk-button.lk-chat-form-button + .lk-chat-form-button {
+  margin-left: 12px !important;
 }
 
 /* ===========================================
@@ -3565,4 +3573,129 @@
 [data-lk-theme] .lk-loading-spinner {
   border-color: rgba(255, 255, 255, 0.2);
   border-top-color: #3b82f6;
+}
+
+/* ===========================================
+   VIDEO QUALITY SETTINGS ENHANCEMENTS
+   =========================================== */
+
+/* Video Quality Settings container */
+.settings-menu .tab-content > div:has(> div:first-child) {
+  color: #e5e7eb;
+}
+
+/* Quality preset buttons hover effects */
+.settings-menu button.lk-button[aria-pressed="true"] {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.settings-menu button.lk-button[aria-pressed="false"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Bitrate slider styling */
+.settings-menu input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.settings-menu input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #60a5fa;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.settings-menu input[type="range"]::-webkit-slider-thumb:hover {
+  background: #3b82f6;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.settings-menu input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #60a5fa;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.settings-menu input[type="range"]::-moz-range-thumb:hover {
+  background: #3b82f6;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced label styling */
+.settings-menu label {
+  color: #e5e7eb !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+}
+
+/* Quality preset button transitions */
+.settings-menu button.lk-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Color-coded quality indicators */
+.settings-menu .quality-preset-auto button[aria-pressed="true"],
+.settings-menu button[aria-pressed="true"][style*="10b981"] {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+.settings-menu .quality-preset-standard button[aria-pressed="true"],
+.settings-menu button[aria-pressed="true"][style*="3b82f6"] {
+  border-color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
+.settings-menu .quality-preset-high button[aria-pressed="true"],
+.settings-menu button[aria-pressed="true"][style*="f59e0b"] {
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.settings-menu .quality-preset-ultra button[aria-pressed="true"],
+.settings-menu button[aria-pressed="true"][style*="a855f7"] {
+  border-color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.15) !important;
+}
+
+/* Resolution color indicators - colors are applied via inline styles in component */
+
+/* Info panel enhancements */
+.settings-menu div[style*="rgba(59, 130, 246, 0.1)"] {
+  border-left: 3px solid rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Text color improvements */
+.settings-menu strong {
+  color: inherit;
+}
+
+.settings-menu div[style*="opacity"] {
+  color: #9ca3af !important;
+}
+
+/* Improve contrast for description text */
+.settings-menu div[style*="fontSize: '12px'"] {
+  color: #d1d5db !important;
+  line-height: 1.5;
 }
