@@ -247,6 +247,17 @@
   z-index: 1 !important;
 }
 
+/* Override for close-button chat toggle - must be more specific */
+[data-lk-theme] .lk-control-bar .lk-close-button.lk-button.lk-chat-toggle svg,
+[data-lk-theme] .lk-control-bar .lk-close-button.lk-chat-toggle svg {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  max-width: 12px !important;
+  max-height: 12px !important;
+}
+
 /* Ensure SVG children (paths, circles, etc.) are always visible */
 [data-lk-theme] .lk-control-bar .lk-button svg * {
   display: block !important;
@@ -573,9 +584,7 @@
 
 /* Chat toggle button - circular icon only - Clean style */
 [data-lk-theme] .lk-chat-toggle,
-[data-lk-theme] .lk-control-bar button[aria-label*="Chat"],
-[data-lk-theme] .lk-close-button.lk-chat-toggle,
-[data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle {
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] {
   background: transparent;
   border: none;
   width: 48px !important;
@@ -587,6 +596,39 @@
   border-radius: 50%;
   padding: 0 !important;
   margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0 !important;
+  transition: all 0.2s ease;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  text-indent: -9999px !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+
+/* Close button chat toggle - 50% smaller and right-justified */
+[data-lk-theme] .lk-close-button.lk-chat-toggle,
+[data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle,
+[data-lk-theme] .lk-control-bar .lk-close-button.lk-chat-toggle,
+[data-lk-theme] .lk-control-bar .lk-close-button.lk-button.lk-chat-toggle {
+  background: transparent;
+  border: none;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  border-radius: 50%;
+  padding: 0 !important;
+  margin: 0 0 0 auto !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -642,15 +684,40 @@
 
 /* Responsive SVG sizing with CSS variables */
 [data-lk-theme] .lk-chat-toggle svg,
-[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg,
-[data-lk-theme] .lk-close-button.lk-chat-toggle svg,
-[data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle svg {
+[data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg {
   width: clamp(18px, 4vw, 24px) !important;
   height: clamp(18px, 4vw, 24px) !important;
   min-width: 18px !important;
   min-height: 18px !important;
   max-width: 24px !important;
   max-height: 24px !important;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: white !important;
+  stroke: white !important;
+  color: white !important;
+  z-index: 1 !important;
+  transition: transform 0.2s ease;
+  pointer-events: none !important;
+}
+
+/* Smaller SVG for close-button chat toggle (50% smaller) */
+[data-lk-theme] .lk-close-button.lk-chat-toggle svg,
+[data-lk-theme] .lk-close-button.lk-button.lk-chat-toggle svg,
+[data-lk-theme] .lk-control-bar .lk-close-button.lk-chat-toggle svg,
+[data-lk-theme] .lk-control-bar .lk-close-button.lk-button.lk-chat-toggle svg {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  max-width: 12px !important;
+  max-height: 12px !important;
   flex-shrink: 0;
   position: absolute;
   top: 50%;
@@ -675,6 +742,7 @@
 [data-lk-theme] .lk-close-button:hover svg {
   transform: translate(-50%, -50%) rotate(90deg) scale(1.1);
 }
+
 
 /* Close button combined with chat toggle - ensure proper styling */
 [data-lk-theme] .lk-close-button.lk-chat-toggle,
@@ -1864,15 +1932,15 @@
 
 /* Chat header - Modern Enhanced styling */
 [data-lk-theme] .lk-chat-header {
-  padding: 20px 24px;
+  padding: 12px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0; /* Prevent header from shrinking */
-  min-height: 68px; /* Fixed header height */
+  min-height: 52px; /* Fixed header height - more compact */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -1899,11 +1967,11 @@
 
 /* Style text nodes directly (when not wrapped in h3) and h3 */
 [data-lk-theme] .lk-chat-header {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.96);
   letter-spacing: -0.1px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* Ensure text nodes inherit proper styling and button alignment */
@@ -1920,7 +1988,7 @@
 }
 
 [data-lk-theme] .lk-chat-header h3 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.96);
   margin: 0;
@@ -1928,7 +1996,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start; /* Left justify the message text */
-  gap: 8px;
+  gap: 6px;
   letter-spacing: -0.1px;
   text-transform: none;
   flex: 1;
@@ -2062,17 +2130,17 @@
   flex: 1 1 0 !important; /* Grow to fill space, shrink if needed, base size 0 */
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding: 20px !important;
+  padding: 12px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 12px !important;
+  gap: 8px !important;
   justify-content: flex-start !important; /* Align messages to top */
   align-items: stretch !important;
   min-height: 0 !important; /* Allow flexbox to properly calculate height */
   background: transparent !important;
   scroll-behavior: smooth !important;
-  scroll-padding-bottom: 16px !important;
-  scroll-padding-top: 16px !important;
+  scroll-padding-bottom: 12px !important;
+  scroll-padding-top: 12px !important;
   margin: 0 !important; /* Remove default UL margin */
   list-style: none !important; /* Remove default UL list style */
 }
@@ -2337,8 +2405,8 @@
 /* LiveKit Chat Entry (actual message container) - Enhanced styling */
 [data-lk-theme] .lk-chat-entry {
   background: rgba(255, 255, 255, 0.12) !important;
-  border-radius: 18px 18px 18px 4px !important;
-  padding: 12px 16px !important;
+  border-radius: 14px 14px 14px 4px !important;
+  padding: 10px 14px !important;
   margin: 0 !important; /* Let grouping rules handle margins */
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
@@ -2370,13 +2438,13 @@
 
 /* Grouped messages - smaller spacing between messages from same sender */
 [data-lk-theme] .lk-chat-entry[data-grouped="true"] {
-  margin-top: 6px !important;
+  margin-top: 4px !important;
   margin-bottom: 0 !important;
 }
 
 /* Non-grouped messages - larger spacing to separate different senders/timeframes */
 [data-lk-theme] .lk-chat-entry:not([data-grouped="true"]) {
-  margin-top: 20px !important;
+  margin-top: 12px !important;
   margin-bottom: 0 !important;
 }
 
@@ -2469,8 +2537,8 @@
 /* Note: Base padding for .lk-chat-entry is set above (12px 16px) */
 /* Grouped messages can have slightly reduced vertical padding */
 [data-lk-theme] .lk-chat-entry[data-grouped="true"] {
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
 }
 
 /* Ensure message body in grouped messages has proper spacing */
@@ -2483,8 +2551,8 @@
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"][data-grouped="true"],
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local[data-grouped="true"] {
   margin-top: 4px !important;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
 
 [data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"][data-grouped="true"] .lk-meta-data,
@@ -2613,7 +2681,7 @@
 
 /* Chat input - Modern Enhanced styling */
 [data-lk-theme] .lk-chat-form {
-  padding: 16px 12px;
+  padding: 12px 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   background: linear-gradient(to top, 
     rgba(0, 0, 0, 0.4), 
@@ -2623,7 +2691,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   flex-shrink: 0; /* Prevent input form from shrinking */
-  min-height: 76px; /* Fixed form height */
+  min-height: 64px; /* Fixed form height - more compact */
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.25),
               inset 0 1px 0 rgba(255, 255, 255, 0.04);
   position: relative;
@@ -2652,7 +2720,7 @@
 
 [data-lk-theme] .lk-chat-form form {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   align-items: center;
   height: 100%;
   width: 100%;
@@ -2666,10 +2734,10 @@
   flex: 1;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 10px;
+  padding: 10px 12px;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.12),
@@ -2709,11 +2777,11 @@
 [data-lk-theme] .lk-chat-form button {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   border: none;
-  border-radius: 12px;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0 !important;
   color: white;
   font-weight: 600;

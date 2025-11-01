@@ -567,13 +567,18 @@ function VideoConferenceComponent(props: {
       const entries = Array.from(messagesContainer.querySelectorAll('.lk-chat-entry'));
       
       entries.forEach((entry) => {
-        const messageBody = entry.querySelector('.lk-message-body') || 
-                           entry.querySelector('.lk-chat-message') ||
-                           entry.textContent?.trim();
+        const messageBodyEl = entry.querySelector('.lk-message-body') || 
+                             entry.querySelector('.lk-chat-message');
+        const messageBodyText = messageBodyEl ? null : entry.textContent?.trim();
         const timeEl = entry.querySelector('time');
         const participantEl = entry.querySelector('.lk-participant-name');
         
-        if (!messageBody || !timeEl) return;
+        // Extract message text - either from element's textContent or direct text
+        const messageText = messageBodyEl 
+          ? (messageBodyEl.textContent?.trim() || '')
+          : (messageBodyText || '');
+        
+        if (!messageText || !timeEl) return;
 
         const timestamp = timeEl.getAttribute('datetime');
         const participant = participantEl?.textContent?.trim() ||
@@ -582,7 +587,6 @@ function VideoConferenceComponent(props: {
         if (!timestamp) return;
 
         // Create unique key to avoid duplicates
-        const messageText = typeof messageBody === 'string' ? messageBody : messageBody.textContent?.trim() || '';
         const messageKey = `${timestamp}-${participant}-${messageText.slice(0, 50)}`;
         
         if (savedMessages.has(messageKey)) return;
@@ -670,12 +674,14 @@ function VideoConferenceComponent(props: {
         existingEntries.forEach((entry: Element) => {
           const timeEl = entry.querySelector('time');
           const textEl = entry.querySelector('.lk-message-body') ||
-                        entry.querySelector('.lk-chat-message') ||
-                        entry.textContent?.trim();
-          if (timeEl && textEl) {
+                        entry.querySelector('.lk-chat-message');
+          const textContent = textEl 
+            ? (textEl.textContent?.trim() || '')
+            : (entry.textContent?.trim() || '');
+          
+          if (timeEl && textContent) {
             const timestamp = timeEl.getAttribute('datetime');
             if (timestamp) {
-              const textContent = typeof textEl === 'string' ? textEl : textEl.textContent?.trim() || '';
               existingMessages.add(`${timestamp}-${textContent.slice(0, 50)}`);
             }
           }
@@ -1306,6 +1312,47 @@ function RoomContentInner() {
       document.removeEventListener('click', handleChatClick, true);
     };
   }, [hasScreenShare, layoutContext, isChatOpen]);
+
+  // Handle close button in chat header (X button)
+  React.useEffect(() => {
+    if (hasScreenShare) return;
+    
+    const handleChatCloseClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Check if click is on the close button in chat header
+      const closeButton = target.closest('.lk-chat-header button') ||
+                         (target.closest('.lk-chat-header') && target.closest('button'));
+      
+      if (closeButton) {
+        // Verify we're actually in the chat header
+        const chatHeader = target.closest('.lk-chat-header');
+        if (chatHeader) {
+          console.log('[Chat] Close button clicked in chat header');
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Close the chat
+          setIsChatOpen(false);
+          
+          // Also try LayoutContext dispatch if available
+          if (layoutContext?.widget?.dispatch) {
+            try {
+              layoutContext.widget.dispatch({ msg: 'toggle_chat' });
+            } catch (err) {
+              console.warn('[Chat] LayoutContext dispatch failed:', err);
+            }
+          }
+        }
+      }
+    };
+    
+    // Use capture phase to catch the event early
+    document.addEventListener('click', handleChatCloseClick, true);
+    return () => {
+      document.removeEventListener('click', handleChatCloseClick, true);
+    };
+  }, [hasScreenShare, layoutContext]);
 
   return (
     <>
