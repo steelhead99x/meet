@@ -2,11 +2,9 @@
 
 import React from 'react';
 import { Track } from 'livekit-client';
-import { 
-  useLocalParticipant, 
+import {
+  useLocalParticipant,
   useTracks,
-  ParticipantTile,
-  TrackRefContext
 } from '@livekit/components-react';
 import { createRoot, Root } from 'react-dom/client';
 
@@ -69,13 +67,15 @@ export function BrowserWindowPIP() {
   // Get camera tracks (not screen shares) for the PIP view
   const cameraTracks = React.useMemo(() => {
     try {
-      return allTracks.filter(track => 
-        track.source === Track.Source.Camera && 
-        track.publication && 
+      const tracks = allTracks.filter(track =>
+        track.source === Track.Source.Camera &&
+        track.publication &&
         track.participant
       );
+      console.log('[BrowserWindowPIP] Camera tracks for PiP:', tracks.length, tracks);
+      return tracks;
     } catch (error) {
-      console.error('Error filtering camera tracks:', error);
+      console.error('[BrowserWindowPIP] Error filtering camera tracks:', error);
       return [];
     }
   }, [allTracks]);
@@ -235,8 +235,15 @@ export function BrowserWindowPIP() {
     };
 
     if (isLocalScreenSharing && !pipWindow) {
-      console.log('[BrowserWindowPIP] 📺 Screen sharing started - attempting to open PIP window');
-      openPIPWindow();
+      console.log('[BrowserWindowPIP] 📺 Screen sharing started - waiting before opening PIP window');
+      // Small delay to let screen share stabilize before opening PiP window
+      // This prevents the browser from canceling screen share when PiP opens
+      const timer = setTimeout(() => {
+        console.log('[BrowserWindowPIP] Opening PIP window now');
+        openPIPWindow();
+      }, 500); // 500ms delay
+
+      return () => clearTimeout(timer);
     } else if (!isLocalScreenSharing && pipWindow) {
       console.log('[BrowserWindowPIP] 🛑 Screen sharing stopped - closing PIP window');
       closePIPWindow();
@@ -263,7 +270,7 @@ export function BrowserWindowPIP() {
 
     // Render the participant grid
     rootRef.current.render(
-      <PIPWindowContent 
+      <PIPWindowContent
         cameraTracks={cameraTracks}
         isLocalScreenSharing={isLocalScreenSharing}
       />
@@ -273,15 +280,50 @@ export function BrowserWindowPIP() {
   return null; // This component doesn't render anything in the main window
 }
 
-// Separate component for PIP window content
-function PIPWindowContent({ 
-  cameraTracks, 
-  isLocalScreenSharing 
-}: { 
+// Separate component for PIP window content - uses direct video elements
+// to avoid React context issues across separate windows
+function PIPWindowContent({
+  cameraTracks,
+  isLocalScreenSharing
+}: {
   cameraTracks: any[];
   isLocalScreenSharing: boolean;
 }) {
-  if (!isLocalScreenSharing) return null;
+  const videoRefs = React.useRef<Map<string, HTMLVideoElement>>(new Map());
+
+  React.useEffect(() => {
+    console.log('[PIPWindowContent] Rendering with:', {
+      cameraTracks: cameraTracks.length,
+      isLocalScreenSharing,
+      tracks: cameraTracks.map(t => ({
+        participant: t.participant?.identity,
+        source: t.source,
+      }))
+    });
+
+    // Attach tracks to video elements
+    cameraTracks.forEach((trackRef) => {
+      const videoEl = videoRefs.current.get(trackRef.participant.identity);
+      if (videoEl && trackRef.publication?.track) {
+        console.log('[PIPWindowContent] Attaching track for:', trackRef.participant.identity);
+        trackRef.publication.track.attach(videoEl);
+      }
+    });
+
+    // Cleanup: detach tracks
+    return () => {
+      cameraTracks.forEach((trackRef) => {
+        if (trackRef.publication?.track) {
+          trackRef.publication.track.detach();
+        }
+      });
+    };
+  }, [cameraTracks, isLocalScreenSharing]);
+
+  if (!isLocalScreenSharing) {
+    console.log('[PIPWindowContent] Not rendering - screen sharing is off');
+    return null;
+  }
 
   return (
     <div className="pip-window-container">
@@ -291,17 +333,47 @@ function PIPWindowContent({
           <span className="pip-window-badge">Screen Sharing</span>
         </div>
       </div>
-      
+
       <div className="pip-window-content">
         <div className="pip-window-grid">
           {cameraTracks.length > 0 ? (
-            cameraTracks.map((trackRef) => (
-              <div key={trackRef.participant.identity} className="pip-window-participant">
-                <TrackRefContext.Provider value={trackRef}>
-                  <ParticipantTile />
-                </TrackRefContext.Provider>
-              </div>
-            ))
+            cameraTracks.map((trackRef) => {
+              const participantName = trackRef.participant?.identity || trackRef.participant?.name || 'Unknown';
+
+              return (
+                <div key={trackRef.participant.identity} className="pip-window-participant">
+                  <video
+                    ref={(el) => {
+                      if (el) {
+                        videoRefs.current.set(trackRef.participant.identity, el);
+                      }
+                    }}
+                    autoPlay
+                    playsInline
+                    muted={trackRef.participant?.isLocal}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      backgroundColor: '#000',
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '8px',
+                    left: '8px',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                  }}>
+                    {participantName}
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <div className="pip-window-empty">
               <span>No participants with video</span>
