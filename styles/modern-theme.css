@@ -2711,35 +2711,21 @@
   overflow: visible !important; /* Changed to visible to show icon */
 }
 
-/* Add send icon (paper plane) if no SVG is present */
-[data-lk-theme] .lk-chat-form-button:not(:has(svg))::after,
-[data-lk-theme] .lk-button.lk-chat-form-button:not(:has(svg))::after {
-  content: '';
+/* Add arrow icon (matching prejoin style) if no SVG is present */
+[data-lk-theme] .lk-chat-form-button:not(:has(svg))::before,
+[data-lk-theme] .lk-button.lk-chat-form-button:not(:has(svg))::before {
+  content: "";
   position: absolute;
   width: 0;
   height: 0;
-  border-left: 7px solid white;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-right: none;
+  border-left: 12px solid white;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 2;
-  transform: translateX(2px);
   transition: transform 0.2s ease;
-}
-
-/* Add paper plane body */
-[data-lk-theme] .lk-chat-form-button:not(:has(svg))::before,
-[data-lk-theme] .lk-button.lk-chat-form-button:not(:has(svg))::before {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-right: 2.5px solid white;
-  border-top: 2.5px solid white;
-  transform: rotate(-45deg);
-  z-index: 2;
-  margin-left: -1px;
-  margin-top: -1px;
 }
 
 [data-lk-theme] .lk-chat-form-button:hover,
@@ -2752,14 +2738,9 @@
 }
 
 /* Icon animation on hover */
-[data-lk-theme] .lk-chat-form-button:hover:not(:has(svg))::after,
-[data-lk-theme] .lk-button.lk-chat-form-button:hover:not(:has(svg))::after {
-  transform: translateX(4px);
-}
-
 [data-lk-theme] .lk-chat-form-button:hover:not(:has(svg))::before,
 [data-lk-theme] .lk-button.lk-chat-form-button:hover:not(:has(svg))::before {
-  transform: rotate(-45deg) translate(2px, -2px);
+  transform: translate(-40%, -50%);
 }
 
 [data-lk-theme] .lk-chat-form-button:active,
@@ -3110,16 +3091,26 @@
 
 @media (max-width: 768px) {
   [data-lk-theme] .lk-control-bar {
-    padding: 8px 4px;
-    gap: 6px;
-    flex-wrap: wrap;
+    padding: 6px 3px;
+    gap: 3px;
+    flex-wrap: nowrap !important;
     justify-content: center;
     align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
   
-  /* Allow button groups to wrap on mobile */
+  [data-lk-theme] .lk-control-bar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Keep button groups on one line on mobile */
   [data-lk-theme] .lk-button-group {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 2px;
   }
 
   /* Mobile PIP - smaller and closer to corner */
@@ -3156,10 +3147,10 @@
   [data-lk-theme] .lk-button[data-lk-source="screen_share"],
   [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
   [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px !important;
-    max-width: 48px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
   }
 
   [data-lk-theme] .lk-control-bar .lk-button svg,
@@ -3168,15 +3159,36 @@
   [data-lk-theme] .lk-settings-toggle svg,
   [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg,
   [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
-    width: clamp(18px, 3.5vw, 20px) !important;
-    height: clamp(18px, 3.5vw, 20px) !important;
+    width: 18px !important;
+    height: 18px !important;
     min-width: 18px !important;
     min-height: 18px !important;
-    max-width: 20px !important;
-    max-height: 20px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Make button group menu buttons smaller on mobile */
+  [data-lk-theme] .lk-control-bar .lk-button-group .lk-button:not([data-lk-source]):not(:first-child),
+  [data-lk-theme] .lk-control-bar .lk-button-group > button:not(:first-child),
+  [data-lk-theme] .lk-control-bar .lk-button-menu {
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+  }
+  
+  [data-lk-theme] .lk-control-bar .lk-button-group .lk-button:not([data-lk-source]):not(:first-child) svg,
+  [data-lk-theme] .lk-control-bar .lk-button-group > button:not(:first-child) svg,
+  [data-lk-theme] .lk-control-bar .lk-button-menu svg {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
   }
 
   /* On mobile, use a simpler responsive grid */
@@ -3428,6 +3440,13 @@
 
 @media (max-width: 480px) {
   /* All control bar buttons even smaller on very small screens */
+  [data-lk-theme] .lk-control-bar {
+    padding: 5px 2px;
+    gap: 2px;
+    min-height: 56px;
+    max-height: 56px;
+  }
+  
   [data-lk-theme] .lk-control-bar .lk-button,
   [data-lk-theme] .lk-chat-toggle,
   [data-lk-theme] .lk-settings-menu-toggle,
@@ -3439,10 +3458,10 @@
   [data-lk-theme] .lk-button[data-lk-source="screen_share"],
   [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="microphone"],
   [data-lk-theme] .lk-control-bar .lk-button[data-lk-source="camera"] {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
   }
 
   [data-lk-theme] .lk-control-bar .lk-button svg,
@@ -3451,15 +3470,31 @@
   [data-lk-theme] .lk-settings-toggle svg,
   [data-lk-theme] .lk-control-bar button[aria-label*="Chat"] svg,
   [data-lk-theme] .lk-control-bar button[aria-label*="Settings"] svg {
-    width: clamp(16px, 3vw, 18px) !important;
-    height: clamp(16px, 3vw, 18px) !important;
+    width: 16px !important;
+    height: 16px !important;
     min-width: 16px !important;
     min-height: 16px !important;
-    max-width: 18px !important;
-    max-height: 18px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Even smaller button group menu buttons on very small screens */
+  [data-lk-theme] .lk-control-bar .lk-button-group .lk-button:not([data-lk-source]):not(:first-child),
+  [data-lk-theme] .lk-control-bar .lk-button-group > button:not(:first-child),
+  [data-lk-theme] .lk-control-bar .lk-button-menu {
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+  
+  [data-lk-theme] .lk-control-bar .lk-button-group {
+    gap: 1px;
   }
   
   /* Make visual buttons even smaller on very small screens */
