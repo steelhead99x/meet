@@ -44,7 +44,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
     // LiveKit's ControlBar toggles settings via widget state
     const checkState = () => {
       const state = layoutContext.widget.state;
-      const widgetStateOpen = state.settings === true;
+      const widgetStateOpen = state?.settings === true;
       // Settings can be tracked via widget.state or we can listen to DOM changes
       // Since LiveKit may use DOM attributes, we'll check for modal wrapper
       const modal = document.querySelector('.lk-settings-menu-modal');
@@ -60,7 +60,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
     let unsubscribe: (() => void) | undefined;
     if (layoutContext.widget.subscribe) {
       unsubscribe = layoutContext.widget.subscribe((state) => {
-        const isOpen = state.settings === true;
+        const isOpen = state?.settings === true;
         setIsSettingsOpen(isOpen);
       });
     }
