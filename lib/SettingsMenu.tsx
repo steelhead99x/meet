@@ -43,7 +43,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
     // Check if widget state has settings property
     // LiveKit's ControlBar toggles settings via widget state
     const checkState = () => {
-      const state = layoutContext.widget.state;
+      const state = layoutContext.widget.state as any;
       const widgetStateOpen = state?.settings === true;
       // Settings can be tracked via widget.state or we can listen to DOM changes
       // Since LiveKit may use DOM attributes, we'll check for modal wrapper
@@ -59,7 +59,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
     // Subscribe to widget state changes if available
     let unsubscribe: (() => void) | undefined;
     if (layoutContext.widget.subscribe) {
-      unsubscribe = layoutContext.widget.subscribe((state) => {
+      unsubscribe = layoutContext.widget.subscribe((state: any) => {
         const isOpen = state?.settings === true;
         setIsSettingsOpen(isOpen);
       });
@@ -154,7 +154,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
     // Method 1: Update LayoutContext widget state (LiveKit's preferred method)
     if (layoutContext?.widget) {
       // Only dispatch toggle if settings is currently open (to avoid toggling back open)
-      const isCurrentlyOpen = layoutContext.widget.state?.settings === true;
+      const isCurrentlyOpen = (layoutContext.widget.state as any)?.settings === true;
       if (isCurrentlyOpen && layoutContext.widget.dispatch) {
         layoutContext.widget.dispatch({ msg: 'toggle_settings' });
       }
@@ -394,7 +394,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
   };
 
   // Don't render if settings menu is not open (when not managed by VideoConference)
-  if (!isSettingsOpen && !layoutContext?.widget.state?.settings) {
+  if (!isSettingsOpen && !(layoutContext?.widget.state as any)?.settings) {
     // Still render but hidden - let CSS handle visibility
     // This allows LiveKit to wrap it in modal when it opens
   }
