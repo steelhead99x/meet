@@ -1097,14 +1097,63 @@
 }
 
 /* Hide text but show icons in MediaDeviceMenu button */
-[data-lk-theme] .lk-button-menu {
+/* Device menu toggle button - centered and matching prejoin style */
+[data-lk-theme] .lk-button-menu,
+[data-lk-theme] .lk-prejoin .lk-button-menu,
+[data-lk-theme] .lk-control-bar .lk-button-menu {
   font-size: 0 !important;
   position: relative;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: white !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-lk-theme] .lk-button-menu:hover,
+[data-lk-theme] .lk-prejoin .lk-button-menu:hover,
+[data-lk-theme] .lk-control-bar .lk-button-menu:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.05) !important;
+}
+
+[data-lk-theme] .lk-button-menu:active,
+[data-lk-theme] .lk-prejoin .lk-button-menu:active,
+[data-lk-theme] .lk-control-bar .lk-button-menu:active {
+  transform: scale(0.95) !important;
 }
 
 [data-lk-theme] .lk-button-menu > span:not(:has(svg)),
 [data-lk-theme] .lk-button-menu > div:not(:has(svg)) {
   display: none !important;
+}
+
+/* Ensure SVG icons in menu button are centered and visible */
+[data-lk-theme] .lk-button-menu svg,
+[data-lk-theme] .lk-prejoin .lk-button-menu svg,
+[data-lk-theme] .lk-control-bar .lk-button-menu svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: currentColor !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
 }
 
 /* Create dropdown arrow icon using CSS when no SVG exists */

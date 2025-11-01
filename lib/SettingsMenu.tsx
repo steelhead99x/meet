@@ -537,6 +537,194 @@ export function SettingsMenu(props: SettingsMenuProps) {
               </>
             )}
             
+            {/* Background Blur Quality Section */}
+            {settings.media && settings.media.camera && (
+              <>
+                <h3 
+                  onClick={() => toggleSection('blur')}
+                  style={{ 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px',
+                    margin: '8px 0 8px 0',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                >
+                  <span>Background Blur Quality</span>
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    style={{ 
+                      transform: expandedSections.blur ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}
+                  >
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </h3>
+                {expandedSections.blur && (
+                  <section>
+                  {/* Applying changes indicator */}
+                  {isApplyingChanges && (
+                    <div style={{
+                      marginBottom: '12px',
+                      padding: '8px 12px',
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      fontSize: '12px',
+                      color: '#60a5fa',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <svg 
+                        width="14" 
+                        height="14" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        style={{ animation: 'spin 1s linear infinite' }}
+                      >
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="8" strokeLinecap="round"/>
+                      </svg>
+                      Applying changes...
+                    </div>
+                  )}
+                  
+                  {deviceInfo && (
+                    <div style={{ 
+                      marginBottom: '12px', 
+                      padding: '10px', 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>Device Info</div>
+                      <div>CPU Cores: {deviceInfo.cpuCores}</div>
+                      {deviceInfo.deviceMemoryGB && <div>Memory: {deviceInfo.deviceMemoryGB} GB</div>}
+                      <div>GPU: {deviceInfo.hasGPU ? '✓ Available' : '✗ Not detected'}</div>
+                      <div>Type: {deviceInfo.deviceType}</div>
+                      <div>Power Level: <span style={{ 
+                        color: deviceInfo.powerLevel === 'high' ? '#10b981' : 
+                               deviceInfo.powerLevel === 'medium' ? '#f59e0b' : '#ef4444',
+                        fontWeight: 'bold'
+                      }}>{deviceInfo.powerLevel.toUpperCase()}</span></div>
+                    </div>
+                  )}
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '8px',
+                    justifyContent: 'flex-start',
+                    flexWrap: 'wrap',
+                  }}>
+                    {(['low', 'medium', 'high', 'ultra'] as BlurQuality[]).map((quality) => {
+                      const isActive = blurQuality === quality;
+                      // Icon representations for each quality level
+                      const qualityIcons = {
+                        low: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.6"/>
+                            <circle cx="6" cy="12" r="1.5" fill="currentColor" opacity="0.4"/>
+                            <circle cx="18" cy="12" r="1.5" fill="currentColor" opacity="0.4"/>
+                          </svg>
+                        ),
+                        medium: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.7"/>
+                            <circle cx="6" cy="12" r="2" fill="currentColor" opacity="0.5"/>
+                            <circle cx="18" cy="12" r="2" fill="currentColor" opacity="0.5"/>
+                          </svg>
+                        ),
+                        high: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.8"/>
+                            <circle cx="5" cy="12" r="2.5" fill="currentColor" opacity="0.6"/>
+                            <circle cx="19" cy="12" r="2.5" fill="currentColor" opacity="0.6"/>
+                          </svg>
+                        ),
+                        ultra: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                            <circle cx="4" cy="12" r="3" fill="currentColor" opacity="0.7"/>
+                            <circle cx="20" cy="12" r="3" fill="currentColor" opacity="0.7"/>
+                          </svg>
+                        ),
+                      };
+                      
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleBlurQualityChange(quality)}
+                          className="lk-button"
+                          aria-pressed={isActive}
+                          aria-label={`${quality.charAt(0).toUpperCase() + quality.slice(1)} blur quality`}
+                          title={`${quality.charAt(0).toUpperCase() + quality.slice(1)} - ${getBlurQualityDescription(quality).split(' - ')[1]}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 12px',
+                            border: isActive 
+                              ? '2px solid #3b82f6' 
+                              : '2px solid rgba(255, 255, 255, 0.15)',
+                            background: isActive 
+                              ? 'rgba(59, 130, 246, 0.1)' 
+                              : 'rgba(255, 255, 255, 0.08)',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            textTransform: 'capitalize',
+                            fontWeight: isActive ? '600' : '400',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          {qualityIcons[quality]}
+                          <span>{quality}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '10px', 
+                    background: 'rgba(59, 130, 246, 0.1)', 
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                  }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#60a5fa' }}>
+                      💡 How Quality Settings Work
+                    </div>
+                    <div style={{ lineHeight: '1.5' }}>
+                      <strong>Blur Strength:</strong> 15px (Low) → 45px (Medium) → 90px (High) → 150px (Ultra)
+                      <br/><br/>
+                      <strong>Segmentation Engine:</strong>
+                      <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                        <li>⭐ All quality levels now use MediaPipe Image Segmenter</li>
+                        <li>Low: CPU processing for compatibility</li>
+                        <li>Medium/High/Ultra: GPU-accelerated for best quality</li>
+                      </ul>
+                      <strong>System Activity:</strong> Low uses CPU only. Medium/High/Ultra use GPU with 
+                      similar processing load - the main difference is visual blur intensity and segmentation quality.
+                      <br/><br/>
+                      Your device: <strong>{deviceInfo?.powerLevel}</strong> power.
+                      Changes apply with a short delay to prevent freezing.
+                    </div>
+                  </div>
+                  </section>
+                )}
+              </>
+            )}
+            
             {/* Video Quality Section */}
             {settings.media && settings.media.camera && (
               <>
@@ -679,176 +867,6 @@ export function SettingsMenu(props: SettingsMenuProps) {
                         </svg>
                       </MediaDeviceMenu>
                     </div>
-                  </section>
-                )}
-              </>
-            )}
-            
-            {/* Background Blur Quality Section */}
-            {settings.media && settings.media.camera && (
-              <>
-                <h3 
-                  onClick={() => toggleSection('blur')}
-                  style={{ 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px',
-                    margin: '8px 0 8px 0',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                >
-                  <span>Background Blur Quality</span>
-                  <svg 
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    style={{ 
-                      transform: expandedSections.blur ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s',
-                    }}
-                  >
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </h3>
-                {expandedSections.blur && (
-                  <section>
-                  {/* Applying changes indicator */}
-                  {isApplyingChanges && (
-                    <div style={{
-                      marginBottom: '12px',
-                      padding: '8px 12px',
-                      background: 'rgba(59, 130, 246, 0.15)',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      fontSize: '12px',
-                      color: '#60a5fa',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <svg 
-                        width="14" 
-                        height="14" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        style={{ animation: 'spin 1s linear infinite' }}
-                      >
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="8" strokeLinecap="round"/>
-                      </svg>
-                      Applying changes...
-                    </div>
-                  )}
-                  
-                  {deviceInfo && (
-                    <div style={{ 
-                      marginBottom: '12px', 
-                      padding: '10px', 
-                      background: 'rgba(255, 255, 255, 0.05)', 
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                    }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>Device Info</div>
-                      <div>CPU Cores: {deviceInfo.cpuCores}</div>
-                      {deviceInfo.deviceMemoryGB && <div>Memory: {deviceInfo.deviceMemoryGB} GB</div>}
-                      <div>GPU: {deviceInfo.hasGPU ? '✓ Available' : '✗ Not detected'}</div>
-                      <div>Type: {deviceInfo.deviceType}</div>
-                      <div>Power Level: <span style={{ 
-                        color: deviceInfo.powerLevel === 'high' ? '#10b981' : 
-                               deviceInfo.powerLevel === 'medium' ? '#f59e0b' : '#ef4444',
-                        fontWeight: 'bold'
-                      }}>{deviceInfo.powerLevel.toUpperCase()}</span></div>
-                    </div>
-                  )}
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {(['low', 'medium', 'high', 'ultra'] as BlurQuality[]).map((quality) => {
-                      const impact = getPerformanceImpact(quality);
-                      return (
-                        <button
-                          key={quality}
-                          onClick={() => handleBlurQualityChange(quality)}
-                          className="lk-button"
-                          aria-pressed={blurQuality === quality}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            padding: '12px',
-                            border: blurQuality === quality 
-                              ? '2px solid #3b82f6' 
-                              : '2px solid rgba(255, 255, 255, 0.15)',
-                            background: blurQuality === quality 
-                              ? 'rgba(59, 130, 246, 0.1)' 
-                              : 'rgba(255, 255, 255, 0.05)',
-                            textAlign: 'left',
-                          }}
-                        >
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            width: '100%',
-                            alignItems: 'center',
-                            marginBottom: '4px',
-                          }}>
-                            <strong style={{ fontSize: '15px', textTransform: 'capitalize' }}>
-                              {quality}
-                            </strong>
-                            {blurQuality === quality && (
-                              <span style={{ color: '#3b82f6', fontSize: '18px' }}>✓</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '6px' }}>
-                            {getBlurQualityDescription(quality).split(' - ')[1]}
-                          </div>
-                          <div style={{ 
-                            fontSize: '11px', 
-                            opacity: 0.7,
-                            display: 'flex',
-                            gap: '12px',
-                          }}>
-                            <span>CPU: {impact.cpuUsage}</span>
-                            <span>GPU: {impact.gpuUsage}</span>
-                            <span>Memory: {impact.memoryUsage}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <div style={{ 
-                    marginTop: '12px', 
-                    padding: '10px', 
-                    background: 'rgba(59, 130, 246, 0.1)', 
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                  }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#60a5fa' }}>
-                      💡 How Quality Settings Work
-                    </div>
-                    <div style={{ lineHeight: '1.5' }}>
-                      <strong>Blur Strength:</strong> 15px (Low) → 45px (Medium) → 90px (High) → 150px (Ultra)
-                      <br/><br/>
-                      <strong>Segmentation Engine:</strong>
-                      <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
-                        <li>⭐ All quality levels now use MediaPipe Image Segmenter</li>
-                        <li>Low: CPU processing for compatibility</li>
-                        <li>Medium/High/Ultra: GPU-accelerated for best quality</li>
-                      </ul>
-                      <strong>System Activity:</strong> Low uses CPU only. Medium/High/Ultra use GPU with 
-                      similar processing load - the main difference is visual blur intensity and segmentation quality.
-                      <br/><br/>
-                      Your device: <strong>{deviceInfo?.powerLevel}</strong> power.
-                      Changes apply with a short delay to prevent freezing.
-                    </div>
-                  </div>
                   </section>
                 )}
               </>

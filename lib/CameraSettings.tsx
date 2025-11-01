@@ -379,14 +379,23 @@ export function CameraSettings() {
 
     // Check if we're already using this processor configuration
     const currentPath = selectedCustomBgId || virtualBackgroundImagePath;
-
-    if (
+    
+    const isSameConfig = 
       currentProcessorRef.current.type === backgroundType &&
       currentProcessorRef.current.path === currentPath &&
-      (backgroundType !== 'blur' || currentProcessorRef.current.blurQuality === blurQuality)
-    ) {
+      (backgroundType !== 'blur' || currentProcessorRef.current.blurQuality === blurQuality);
+    
+    if (isSameConfig) {
+      console.log('[CameraSettings] ⏭️  Skipping - same processor config already applied');
       return; // Already applied, skip
     }
+    
+    console.log('[CameraSettings] 🔄 Processor config changed - need to update:', {
+      type: backgroundType,
+      path: currentPath,
+      blurQuality: backgroundType === 'blur' ? blurQuality : undefined,
+      previous: currentProcessorRef.current
+    });
 
     // Apply processor immediately for privacy - no debounce
     const applyProcessor = async () => {
@@ -396,12 +405,8 @@ export function CameraSettings() {
         return;
       }
       
-      // Update the processor ref BEFORE starting to prevent re-triggers
-      currentProcessorRef.current = {
-        type: backgroundType,
-        path: currentPath,
-        blurQuality: backgroundType === 'blur' ? blurQuality : undefined,
-      };
+      // DO NOT update the processor ref here - update it AFTER successful processor application
+      // This ensures that quality changes are properly detected and processors are recreated
       
       try {
         // Re-check track state to prevent race conditions
@@ -461,28 +466,38 @@ export function CameraSettings() {
             
             console.log(`[CameraSettings] Applying blur with quality: ${blurQuality}, radius: ${blurConfig.blurRadius}px, delegate: ${delegate}`);
 
-            // V2 API: Initialize processor once, then use switchTo() for seamless transitions
-            if (!backgroundProcessorRef.current) {
-              console.log('[CameraSettings] Initializing BackgroundProcessor v2 in blur mode');
-              backgroundProcessorRef.current = BackgroundProcessor({
-                blurRadius: blurConfig.blurRadius,
-                segmenterOptions: {
-                  delegate,
-                },
-              });
-              await track.setProcessor(backgroundProcessorRef.current);
-              console.log(`[CameraSettings] BackgroundProcessor v2 initialized with ${blurQuality} quality (${blurConfig.blurRadius}px blur, ${delegate})`);
-            } else {
-              // Processor already exists, switch to blur mode seamlessly
-              console.log('[CameraSettings] Switching to blur mode using v2 API');
-              await backgroundProcessorRef.current.switchTo({
-                blurRadius: blurConfig.blurRadius,
-                segmenterOptions: {
-                  delegate,
-                },
-              });
-              console.log(`[CameraSettings] Switched to blur mode with ${blurQuality} quality (${blurConfig.blurRadius}px blur, ${delegate})`);
+            // Always recreate processor when blur quality changes to ensure it works properly
+            // switchTo() may not reliably change blur radius, so we recreate for consistency
+            if (backgroundProcessorRef.current) {
+              console.log('[CameraSettings] Stopping existing processor to apply new blur quality');
+              try {
+                await track.stopProcessor();
+                backgroundProcessorRef.current = null;
+              } catch (err) {
+                console.warn('[CameraSettings] Error stopping existing processor:', err);
+                // Continue anyway - try to create new processor
+                backgroundProcessorRef.current = null;
+              }
             }
+            
+            // Create new processor with updated blur quality settings
+            console.log('[CameraSettings] Creating BackgroundProcessor with blur quality:', blurQuality);
+            backgroundProcessorRef.current = BackgroundProcessor({
+              blurRadius: blurConfig.blurRadius,
+              segmenterOptions: {
+                delegate,
+              },
+            });
+            await track.setProcessor(backgroundProcessorRef.current);
+            console.log(`[CameraSettings] ✅ Processor updated with ${blurQuality} quality (${blurConfig.blurRadius}px blur, ${delegate})`);
+            
+            // Update the processor ref AFTER successful application
+            currentProcessorRef.current = {
+              type: backgroundType,
+              path: currentPath,
+              blurQuality: backgroundType === 'blur' ? blurQuality : undefined,
+            };
+            
             restoreConsoleWarn();
           } catch (processorError) {
             restoreConsoleWarn();
@@ -518,6 +533,14 @@ export function CameraSettings() {
           try {
             await track.setProcessor(virtualBgProcessor);
             console.log('[CameraSettings] Virtual background applied successfully');
+            
+            // Update the processor ref AFTER successful application
+            currentProcessorRef.current = {
+              type: backgroundType,
+              path: currentPath,
+              blurQuality: undefined,
+            };
+            
             restoreConsoleWarn();
           } catch (processorError) {
             restoreConsoleWarn();
@@ -553,6 +576,14 @@ export function CameraSettings() {
             try {
               await track.setProcessor(virtualBgProcessor);
               console.log('[CameraSettings] Custom background applied successfully');
+              
+              // Update the processor ref AFTER successful application
+              currentProcessorRef.current = {
+                type: backgroundType,
+                path: currentPath,
+                blurQuality: undefined,
+              };
+              
               restoreConsoleWarn();
             } catch (processorError) {
               restoreConsoleWarn();
@@ -581,6 +612,13 @@ export function CameraSettings() {
                 backgroundProcessorRef.current = null;
                 console.log('[CameraSettings] Processor stopped successfully');
               }
+              
+              // Update the processor ref AFTER successful removal
+              currentProcessorRef.current = {
+                type: 'none',
+                path: null,
+                blurQuality: undefined,
+              };
               restoreConsoleWarn();
             } catch (stopError) {
               restoreConsoleWarn();
@@ -630,9 +668,15 @@ export function CameraSettings() {
     if (typeof window === 'undefined') return;
 
     window.__setBlurQuality = (quality: BlurQuality) => {
-      console.log('[CameraSettings] Blur quality changed via window.__setBlurQuality:', quality);
-      setBlurQuality(quality);
-      saveUserPreferences({ blurQuality: quality });
+      console.log('[CameraSettings] 📝 window.__setBlurQuality called with quality:', quality);
+      console.log('[CameraSettings] Current blurQuality state:', blurQuality);
+      if (quality !== blurQuality) {
+        console.log('[CameraSettings] ✅ Quality changed from', blurQuality, 'to', quality, '- updating state');
+        setBlurQuality(quality);
+        saveUserPreferences({ blurQuality: quality });
+      } else {
+        console.log('[CameraSettings] ⏭️  Quality unchanged, skipping update');
+      }
     };
 
     window.__getBlurQuality = () => {
@@ -765,6 +809,13 @@ export function CameraSettings() {
 
       <section className="lk-button-group">
         <TrackToggle aria-label="Toggle camera" source={Track.Source.Camera} />
+        <div className="lk-button-group-menu">
+          <MediaDeviceMenu kind="videoinput">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </MediaDeviceMenu>
+        </div>
         <button
           onClick={() => {
             const newValue = !mirrorVideo;
@@ -789,13 +840,6 @@ export function CameraSettings() {
           </svg>
           <span>Flip</span>
         </button>
-        <div className="lk-button-group-menu">
-          <MediaDeviceMenu kind="videoinput">
-            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </MediaDeviceMenu>
-        </div>
       </section>
 
       <div style={{ marginTop: '10px' }}>

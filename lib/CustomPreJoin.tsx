@@ -11,6 +11,7 @@ import {
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 import { BackgroundProcessor, VirtualBackground } from '@livekit/track-processors';
 import { useProcessorLoading } from './ProcessorLoadingContext';
+import { getBlurConfig, BlurQuality } from './BlurConfig';
 import {
   saveCustomBackground,
   getAllCustomBackgrounds,
@@ -93,6 +94,9 @@ export function CustomPreJoin({
   );
   const [mirrorVideo, setMirrorVideo] = React.useState(
     savedPrefs.mirrorVideo !== undefined ? savedPrefs.mirrorVideo : true
+  );
+  const [blurQuality, setBlurQuality] = React.useState<BlurQuality>(
+    savedPrefs.blurQuality || 'medium'
   );
 
   // Custom backgrounds state
@@ -358,8 +362,8 @@ export function CustomPreJoin({
         
         const trackId = mediaStreamTrack.id;
         
-        // Create a unique key combining track ID and effect settings
-        const effectKey = `${trackId}-${backgroundType}-${backgroundPath}`;
+        // Create a unique key combining track ID, effect settings, and blur quality
+        const effectKey = `${trackId}-${backgroundType}-${backgroundPath}-${backgroundType === 'blur' ? blurQuality : ''}`;
         
         // Skip if already applied this exact effect to this specific track
         if (processedTrackIdRef.current === effectKey) {
@@ -423,12 +427,16 @@ export function CustomPreJoin({
           
           // Create processor based on background type
           if (backgroundType === 'blur') {
-            // V2 API: Initialize BackgroundProcessor for blur
-            console.log('[CustomPreJoin] Initializing BackgroundProcessor v2 in blur mode');
+            // Get blur configuration based on quality setting
+            const blurConfig = getBlurConfig(blurQuality);
+            // Use CPU for low quality, GPU for others (better performance on MacBook Pro)
+            const delegate = blurQuality === 'low' ? 'CPU' : 'GPU';
+            
+            console.log(`[CustomPreJoin] Initializing BackgroundProcessor v2 in blur mode with quality: ${blurQuality}, radius: ${blurConfig.blurRadius}px, delegate: ${delegate}`);
             blurProcessorRef.current = BackgroundProcessor({
-              blurRadius: 15,
+              blurRadius: blurConfig.blurRadius,
               segmenterOptions: {
-                delegate: 'GPU',
+                delegate,
               },
             });
           } else if ((backgroundType === 'gradient' || backgroundType === 'image') && backgroundPath) {
@@ -541,7 +549,7 @@ export function CustomPreJoin({
       setIsPreparingVideo(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoTrack, backgroundType, backgroundPath]); // Reapply effect when track or background settings change
+  }, [videoTrack, backgroundType, backgroundPath, blurQuality]); // Reapply effect when track or background settings change
 
   React.useEffect(() => {
     if (videoEl.current && videoTrack) {
