@@ -21,6 +21,7 @@ import {
   VideoTrack,
   useParticipants,
   TrackReference,
+  isTrackReference,
 } from '@livekit/components-react';
 import { Track, Participant } from 'livekit-client';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
@@ -35,9 +36,12 @@ export function AdaptiveVideoLayout() {
     { onlySubscribed: false },
   );
 
-  // Filter to get camera tracks only (no screen shares) and ensure they have publications
-  const cameraTracks = tracks.filter(
-    (track) => track.source === Track.Source.Camera && track.publication
+  // Filter to get camera tracks only (no screen shares) and ensure they are full TrackReferences
+  const cameraTracks: TrackReference[] = tracks.filter(
+    (track): track is TrackReference =>
+      track.source === Track.Source.Camera &&
+      track.publication !== undefined &&
+      isTrackReference(track)
   );
 
   // State for orientation and layout
