@@ -4,7 +4,7 @@
  * Provides utilities for saving and loading user preferences in local storage
  */
 
-import { BlurQuality, CustomSegmentationSettings } from './BlurConfig';
+import { BlurQuality } from './BlurConfig';
 import type { VideoCodec } from 'livekit-client';
 
 export type VideoResolution = '480p' | '720p' | '1080p' | '1440p' | '4K';
@@ -35,13 +35,11 @@ export interface UserPreferences {
   backgroundType: 'none' | 'blur' | 'image' | 'gradient' | 'custom-video' | 'custom-image';
   backgroundPath?: string; // For static images/gradients, or custom background ID
   blurQuality: BlurQuality;
+  mirrorVideo?: boolean; // Mirror/flip camera video (default true for natural self-view)
 
   // Video quality settings (LiveKit v2 enhancements)
   videoQuality?: VideoQualitySettings;
 
-  // Segmentation customization
-  useCustomSegmentation?: boolean; // Whether to use custom settings instead of presets
-  customSegmentation?: CustomSegmentationSettings;
 
   // Layout preferences
   videoLayout?: 'auto' | 'grid' | 'pip'; // auto = adaptive based on participant count
@@ -66,6 +64,7 @@ export function getDefaultPreferences(): UserPreferences {
     videoEnabled: true,
     backgroundType: 'blur', // Blur enabled by default
     blurQuality: 'medium',
+    mirrorVideo: true, // Mirror video by default for natural self-view
     videoLayout: 'auto', // Adaptive layout based on participant count
     preferredOrientation: 'auto', // Follow device orientation automatically
     audioEnabled: true,

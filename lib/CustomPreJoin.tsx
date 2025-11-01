@@ -10,10 +10,6 @@ import {
 } from '@livekit/components-react';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 import { BackgroundProcessor, VirtualBackground } from '@livekit/track-processors';
-import { getBlurConfig, getRecommendedBlurQuality, CustomSegmentationSettings } from './BlurConfig';
-import { detectDeviceCapabilities } from './client-utils';
-import { waitForProcessorWithFallback } from './videoProcessorUtils';
-import { MediaPipeImageSegmenterProcessor } from './processors/MediaPipeImageSegmenter';
 import { useProcessorLoading } from './ProcessorLoadingContext';
 
 // Helper function to create a canvas with gradient for VirtualBackground
@@ -87,6 +83,9 @@ export function CustomPreJoin({
   );
   const [backgroundPath, setBackgroundPath] = React.useState(
     savedPrefs.backgroundPath || ''
+  );
+  const [mirrorVideo, setMirrorVideo] = React.useState(
+    savedPrefs.mirrorVideo !== undefined ? savedPrefs.mirrorVideo : true
   );
   
   // Use shared processor loading context for privacy screen during room join
@@ -247,8 +246,6 @@ export function CustomPreJoin({
           backgroundType: prefs.backgroundType,
           backgroundPath: prefs.backgroundPath,
           blurQuality: prefs.blurQuality,
-          useCustomSegmentation: prefs.useCustomSegmentation,
-          customSegmentation: prefs.customSegmentation,
           videoEnabled: prefs.videoEnabled,
           audioEnabled: prefs.audioEnabled,
           noiseFilterEnabled: prefs.noiseFilterEnabled,
@@ -350,126 +347,58 @@ export function CustomPreJoin({
           // The processor initialization happens fast enough that no unblurred frames are sent
           console.log('[CustomPreJoin] Applying processor directly to live track (no mute needed for preview)');
           
-          // Determine blur quality for both blur and virtual backgrounds
-          const blurQuality = savedPrefs.blurQuality || 
-            getRecommendedBlurQuality(detectDeviceCapabilities());
-          
-          // Check if user has custom segmentation settings
-          const useCustom = savedPrefs.useCustomSegmentation || false;
-          const customSettings = savedPrefs.customSegmentation || null;
-          
-          const config = getBlurConfig(blurQuality, useCustom ? customSettings : null);
-          console.log('[CustomPreJoin] Applying', backgroundType, 'effect with quality:', blurQuality, 
-                      useCustom ? '(custom settings)' : '');
-          
-          // Suppress MediaPipe initialization warnings
-          // MediaPipe logs benign OpenGL warnings during WebGL context initialization
-          const originalWarn = console.warn;
-          console.warn = (...args: any[]) => {
-            const message = args.join(' ');
-            // Filter out MediaPipe OpenGL warnings
-            if (message.includes('OpenGL error checking') || 
-                message.includes('gl_context.cc')) {
-              return; // Suppress this specific warning
-            }
-            originalWarn.apply(console, args);
-          };
-          
-          // Verify track is still valid before creating processor
           const currentMediaStreamTrack = videoTrack.mediaStreamTrack;
-          const currentReadyState = currentMediaStreamTrack?.readyState;
-          if (!isEffectActive || currentReadyState !== 'live') {
-            console.log('[CustomPreJoin] Track no longer valid before processor creation. isEffectActive:', isEffectActive, 'readyState:', currentReadyState, 'trackId:', currentMediaStreamTrack?.id);
-            console.warn = originalWarn;
+          if (!isEffectActive || !currentMediaStreamTrack || currentMediaStreamTrack.readyState !== 'live') {
             setIsPreparingVideo(false);
             return;
           }
           
           // Create processor based on background type
           if (backgroundType === 'blur') {
-            // IMPORTANT: For preview, always use LiveKit default processor instead of MediaPipe
-            // MediaPipe initialization takes too long (downloads 3MB WASM) and preview tracks
-            // can close during initialization. The main video track in-room will use MediaPipe.
-            console.log(`[CustomPreJoin] Using LiveKit BackgroundProcessor for preview (fast initialization)`);
-            
             blurProcessorRef.current = BackgroundProcessor({
-              blurRadius: config.blurRadius,
+              blurRadius: 15,
               segmenterOptions: {
-                delegate: config.segmenterOptions.delegate,
+                delegate: 'GPU',
               },
             });
-            
-            console.log(`[BlurConfig] ✅ PreJoin: ${config.blurRadius}px blur, ${config.segmenterOptions.delegate} processing`);
-            
-            // Note: MediaPipe and enhanced features will be used in the main room video track
-            if (config.processorType === 'mediapipe-image') {
-              console.log('[BlurConfig] ℹ️  MediaPipe will be used for in-room video (not preview)');
-            }
-          } else if (backgroundType === 'gradient' || backgroundType === 'image' || backgroundType === 'custom-image') {
-            // Create virtual background processor
-            // For gradient, convert CSS gradient to canvas data URL
+          } else if ((backgroundType === 'gradient' || backgroundType === 'image') && backgroundPath) {
             let imageSrc = backgroundPath;
-            if (backgroundType === 'gradient' && backgroundPath) {
+            if (backgroundType === 'gradient') {
               imageSrc = createGradientCanvas(backgroundPath);
-              console.log('[CustomPreJoin] Created gradient canvas for:', backgroundPath);
             }
             
             blurProcessorRef.current = VirtualBackground(imageSrc, {
-              delegate: config.segmenterOptions.delegate,
+              delegate: 'GPU',
             });
           }
           
-          // Restore console.warn after a delay to catch initialization warnings
-          setTimeout(() => {
-            console.warn = originalWarn;
-          }, 1000);
+          if (!blurProcessorRef.current) {
+            setIsPreparingVideo(false);
+            return;
+          }
           
-          // CRITICAL: Check if effect is still active and track is still live
           if (!isEffectActive) {
-            console.log('[CustomPreJoin] Effect cancelled during processor creation, aborting');
             setIsPreparingVideo(false);
             return;
           }
           
-          const postProcessorMediaStreamTrack = videoTrack.mediaStreamTrack;
-          if (!postProcessorMediaStreamTrack || postProcessorMediaStreamTrack.readyState !== 'live') {
-            console.warn('[CustomPreJoin] Track ended during processor creation, aborting');
+          // Check if track is still valid before applying processor
+          if (videoTrack.mediaStreamTrack?.readyState !== 'live') {
+            console.warn('[CustomPreJoin] Track is not in live state, skipping processor application');
             setIsPreparingVideo(false);
             return;
           }
           
-          // Apply the processor to the track
+          // Check if processor is still valid
+          if (!blurProcessorRef.current) {
+            console.warn('[CustomPreJoin] Processor is no longer available');
+            setIsPreparingVideo(false);
+            return;
+          }
+          
           await videoTrack.setProcessor(blurProcessorRef.current);
-          
-          // Final check before marking as complete
-          if (!isEffectActive) {
-            console.log('[CustomPreJoin] Effect cancelled after setProcessor, cleanup needed');
-            setIsPreparingVideo(false);
-            return;
-          }
-          
           processedTrackIdRef.current = effectKey;
-          console.log('[CustomPreJoin] Effect processor applied successfully');
-          
-          // Wait for processor to actually start outputting processed frames
-          // This detects when the effect is actually ready instead of using fixed timeouts
-          console.log('[CustomPreJoin] Detecting when', backgroundType, 'processor is ready...');
-          try {
-            await waitForProcessorWithFallback(videoTrack, 50);
-          } catch (waitError) {
-            console.warn('[CustomPreJoin] Error waiting for processor ready, continuing anyway:', waitError);
-          }
-          
-          // Check one more time before finalizing
-          if (!isEffectActive) {
-            console.log('[CustomPreJoin] Effect cancelled during processor initialization');
-            setIsPreparingVideo(false);
-            return;
-          }
-          
-          // Mark video as ready to show - remove loading overlay
           setIsPreparingVideo(false);
-          console.log('[CustomPreJoin] Blur is ready and video is now visible with effect applied');
         } catch (error) {
           // Always restore video state on error
           setIsPreparingVideo(false);
@@ -579,16 +508,22 @@ export function CustomPreJoin({
       audioEnabled,
       videoDeviceId,
       audioDeviceId,
-      // Preserve existing background settings (including defaults like blur)
+      // Preserve existing background settings
       backgroundType: currentPrefs.backgroundType,
       backgroundPath: currentPrefs.backgroundPath,
-      blurQuality: currentPrefs.blurQuality,
-      useCustomSegmentation: currentPrefs.useCustomSegmentation,
-      customSegmentation: currentPrefs.customSegmentation,
       noiseFilterEnabled: currentPrefs.noiseFilterEnabled,
     });
     
     console.log('[CustomPreJoin] Saved complete user preferences:', currentPrefs);
+
+    // PRIVACY: Show global loading overlay BEFORE stopping preview and joining room
+    // This ensures privacy is maintained during the entire transition
+    const currentPrefs2 = loadUserPreferences();
+    if (videoEnabled && currentPrefs2.backgroundType && currentPrefs2.backgroundType !== 'none') {
+      console.log('[CustomPreJoin] Setting global processor loading state for room join (PRIVACY PROTECTION)');
+      setIsApplyingProcessor(true);
+      // The CameraSettings component will clear this state once the processor is applied
+    }
 
     // Stop the blur processor on preview track before joining
     // This allows the preview track to be properly disposed
@@ -600,15 +535,6 @@ export function CustomPreJoin({
       } catch (err) {
         console.warn('[CustomPreJoin] Error stopping preview processor:', err);
       }
-    }
-
-    // PRIVACY: Show global loading overlay while joining room if video effects are enabled
-    // This prevents showing unblurred video during the transition from preview to room
-    const currentPrefs2 = loadUserPreferences();
-    if (videoEnabled && currentPrefs2.backgroundType && currentPrefs2.backgroundType !== 'none') {
-      console.log('[CustomPreJoin] Setting global processor loading state for room join');
-      setIsApplyingProcessor(true);
-      // The CameraSettings component will clear this state once the processor is applied
     }
 
     onSubmit?.(values);
@@ -626,7 +552,7 @@ export function CustomPreJoin({
                 width: '100%', 
                 height: '100%', 
                 objectFit: 'cover', 
-                transform: 'scaleX(-1)',
+                transform: mirrorVideo ? 'scaleX(-1)' : 'none',
                 // PRIVACY: Hide video until blur is ready (only if blur/effect is enabled)
                 visibility: (isPreparingVideo && backgroundType !== 'none') ? 'hidden' : 'visible'
               }}

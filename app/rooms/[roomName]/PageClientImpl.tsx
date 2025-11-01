@@ -133,6 +133,7 @@ export function PageClientImpl(props: {
 
   return (
     <ProcessorLoadingProvider>
+      <ProcessorLoadingOverlay />
       <main data-lk-theme="default" style={{ height: '100%' }}>
         {connectionDetails === undefined || preJoinChoices === undefined ? (
           <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -528,6 +529,216 @@ function VideoConferenceComponent(props: {
   const participantToken = props.connectionDetails.participantToken;
   const videoEnabled = props.userChoices.videoEnabled;
   const audioEnabled = props.userChoices.audioEnabled;
+  const roomName = props.connectionDetails.roomName;
+
+  // Chat message persistence - save messages to database via DOM observation
+  // This approach works regardless of how LiveKit's Chat component sends messages
+  React.useEffect(() => {
+    if (!room || !roomName) return;
+
+    const saveMessageToDb = async (message: string, participantIdentity: string, timestamp: number) => {
+      try {
+        await fetch('/api/chat/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomName,
+            participantIdentity,
+            message,
+            timestamp,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to save chat message to database:', error);
+        // Don't show toast - silent failure to avoid spam
+      }
+    };
+
+    // Track saved messages to avoid duplicates
+    const savedMessages = new Set<string>();
+
+    // Watch for new messages in the chat UI
+    const observeChatMessages = () => {
+      const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages .lk-list');
+      if (!messagesContainer) return;
+
+      const entries = Array.from(messagesContainer.querySelectorAll('.lk-chat-entry'));
+      
+      entries.forEach((entry) => {
+        const messageBody = entry.querySelector('.lk-message-body') || 
+                           entry.querySelector('.lk-chat-message') ||
+                           entry.textContent?.trim();
+        const timeEl = entry.querySelector('time');
+        const participantEl = entry.querySelector('.lk-participant-name');
+        
+        if (!messageBody || !timeEl) return;
+
+        const timestamp = timeEl.getAttribute('datetime');
+        const participant = participantEl?.textContent?.trim() || 
+                          (entry.hasAttribute('data-lk-local') ? room.localParticipant.identity : 'unknown');
+        
+        if (!timestamp) return;
+
+        // Create unique key to avoid duplicates
+        const messageKey = `${timestamp}-${participant}-${messageBody.slice(0, 50)}`;
+        
+        if (savedMessages.has(messageKey)) return;
+        
+        savedMessages.add(messageKey);
+        const timestamp_ms = new Date(timestamp).getTime();
+        
+        // Only save if message is recent (within last hour) or if it's new
+        // This prevents saving historical messages we're loading
+        const isRecent = Date.now() - timestamp_ms < 3600000; // 1 hour
+        if (isRecent || !entry.hasAttribute('data-historical')) {
+          saveMessageToDb(messageBody, participant, timestamp_ms);
+        }
+      });
+    };
+
+    // Initial check
+    const checkInterval = setInterval(observeChatMessages, 2000); // Check every 2 seconds
+
+    // Also use MutationObserver for immediate detection
+    const observer = new MutationObserver(() => {
+      observeChatMessages();
+    });
+
+    // Watch for changes in chat container
+    const chatContainer = document.querySelector('[data-lk-theme] .lk-chat-messages');
+    if (chatContainer) {
+      observer.observe(chatContainer, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      clearInterval(checkInterval);
+      observer.disconnect();
+    };
+  }, [room, roomName]);
+
+  // Load historical messages when room connects
+  React.useEffect(() => {
+    if (!room || !roomName || room.state !== 'connected') return;
+
+    let retryCount = 0;
+    const maxRetries = 10;
+    const timeoutIds: NodeJS.Timeout[] = [];
+
+    const loadHistoricalMessages = async (): Promise<void> => {
+      try {
+        const response = await fetch(`/api/chat/messages?roomName=${encodeURIComponent(roomName)}&limit=100`);
+        if (!response.ok) {
+          console.error('Failed to fetch historical messages:', response.statusText);
+          return;
+        }
+        
+        const data = await response.json();
+        const messages = data.messages || [];
+        
+        if (messages.length === 0) return;
+
+        // Get the chat messages container - try multiple selectors
+        const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages .lk-list') ||
+                                  document.querySelector('[data-lk-theme] .lk-chat-messages') ||
+                                  document.querySelector('.lk-chat-messages .lk-list') ||
+                                  document.querySelector('.lk-chat-messages');
+        
+        if (!messagesContainer) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            const timeoutId = setTimeout(() => {
+              loadHistoricalMessages();
+            }, 500);
+            timeoutIds.push(timeoutId);
+          }
+          return;
+        }
+
+        const listContainer = messagesContainer.querySelector('.lk-list') || messagesContainer;
+
+        // Mark existing messages to avoid duplicates
+        const existingMessages = new Set<string>();
+        const existingEntries = Array.from(listContainer.querySelectorAll('.lk-chat-entry'));
+        existingEntries.forEach((entry: Element) => {
+          const timeEl = entry.querySelector('time');
+          const textEl = entry.querySelector('.lk-message-body') || 
+                        entry.querySelector('.lk-chat-message') ||
+                        entry.textContent?.trim();
+          if (timeEl && textEl) {
+            const timestamp = timeEl.getAttribute('datetime');
+            if (timestamp) {
+              existingMessages.add(`${timestamp}-${textEl.slice(0, 50)}`);
+            }
+          }
+        });
+
+        // Insert historical messages that don't already exist
+        messages.forEach((msg: any) => {
+          const timestamp = new Date(msg.timestamp);
+          const timeStr = timestamp.toISOString();
+          const messageKey = `${timeStr}-${msg.message.slice(0, 50)}`;
+          
+          if (existingMessages.has(messageKey)) return;
+
+          // Create a message entry element matching LiveKit's structure
+          const entry = document.createElement('li');
+          entry.className = 'lk-chat-entry';
+          entry.setAttribute('data-historical', 'true'); // Mark as historical
+          
+          const isLocal = msg.participant_identity === room.localParticipant.identity;
+          if (isLocal) {
+            entry.setAttribute('data-lk-local', 'true');
+            entry.classList.add('lk-chat-entry-local');
+          }
+
+          // Escape HTML to prevent XSS
+          const escapeHtml = (text: string) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+          };
+          
+          entry.innerHTML = `
+            <div class="lk-meta-data">
+              <span class="lk-participant-name">${escapeHtml(msg.participant_identity)}</span>
+              <time datetime="${timeStr}">${timestamp.toLocaleTimeString()}</time>
+            </div>
+            <div class="lk-message-body">${escapeHtml(msg.message)}</div>
+          `;
+
+          // Insert at the beginning (oldest messages first)
+          // But if there are existing messages, insert before the first existing one
+          const firstExisting = listContainer.querySelector('.lk-chat-entry:not([data-historical])');
+          if (firstExisting) {
+            listContainer.insertBefore(entry, firstExisting);
+          } else {
+            listContainer.appendChild(entry);
+          }
+        });
+
+        // Scroll to bottom after loading historical messages
+        setTimeout(() => {
+          const chatMessages = document.querySelector('[data-lk-theme] .lk-chat-messages');
+          if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Failed to load historical messages:', error);
+      }
+    };
+
+    // Load messages after room is connected and chat UI is ready
+    const initialTimeoutId = setTimeout(loadHistoricalMessages, 1500);
+    timeoutIds.push(initialTimeoutId);
+    
+    return () => {
+      timeoutIds.forEach(id => clearTimeout(id));
+    };
+  }, [room, roomName, room?.state]);
 
   // Ensure we only connect once to avoid blinks on unrelated state changes
   const hasConnectedRef = React.useRef(false);

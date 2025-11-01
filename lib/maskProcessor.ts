@@ -11,23 +11,21 @@
  * - Mask area filtering to remove tiny false detections
  */
 
-import { BlurConfig } from './BlurConfig';
-
 /**
  * Process a segmentation mask with enhanced person detection algorithms
  * This improves person detection and reduces false positives from background objects
  * 
+ * @deprecated This function is no longer used - LiveKit's built-in processors handle this
  * @param maskData - The segmentation mask ImageData (grayscale, 0-255)
  * @param config - Enhanced person detection configuration
  * @returns Processed mask with reduced false detections
  */
 export function processEnhancedPersonMask(
   maskData: ImageData,
-  config: BlurConfig['enhancedPersonDetection']
+  config: any
 ): ImageData {
-  if (!config || !config.enabled) {
-    return maskData;
-  }
+  // Stub implementation - no longer used
+  return maskData;
 
   const { width, height } = maskData;
   const data = new Uint8ClampedArray(maskData.data);

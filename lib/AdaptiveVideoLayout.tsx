@@ -172,6 +172,38 @@ export function AdaptiveVideoLayout() {
     { onlySubscribed: false },
   );
 
+  // Load mirror video preference - reactive to localStorage changes
+  const [mirrorVideo, setMirrorVideo] = React.useState(() => {
+    const prefs = loadUserPreferences();
+    return prefs.mirrorVideo !== undefined ? prefs.mirrorVideo : true;
+  });
+
+  // Listen for storage changes to update mirror preference
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const prefs = loadUserPreferences();
+      setMirrorVideo(prefs.mirrorVideo !== undefined ? prefs.mirrorVideo : true);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom storage events (for same-tab updates)
+    const interval = setInterval(() => {
+      const prefs = loadUserPreferences();
+      const currentMirror = prefs.mirrorVideo !== undefined ? prefs.mirrorVideo : true;
+      setMirrorVideo(prev => {
+        if (prev !== currentMirror) {
+          return currentMirror;
+        }
+        return prev;
+      });
+    }, 500); // Check every 500ms
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   // Get camera tracks for all participants (including placeholders)
   // When withPlaceholder: true, useTracks returns placeholder tracks for participants without video
   // Order them to match the participants array order for consistent layout
@@ -353,6 +385,9 @@ export function AdaptiveVideoLayout() {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover', // Fill screen, crop sides if needed (Zoom-like)
+                  transform: (singleTrack.participant?.identity === localParticipant?.identity && mirrorVideo) 
+                    ? 'scaleX(-1)' 
+                    : 'none',
                 }}
               />
             )
@@ -420,6 +455,9 @@ export function AdaptiveVideoLayout() {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover', // Fill screen, faces centered
+                transform: (focusedTrack.participant?.identity === localParticipant?.identity && mirrorVideo) 
+                  ? 'scaleX(-1)' 
+                  : 'none',
               }}
             />
           )}
@@ -482,6 +520,9 @@ export function AdaptiveVideoLayout() {
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
+                      transform: (track.participant?.identity === localParticipant?.identity && mirrorVideo) 
+                        ? 'scaleX(-1)' 
+                        : 'none',
                     }}
                   />
                 )}
@@ -545,6 +586,9 @@ export function AdaptiveVideoLayout() {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  transform: (track.participant?.identity === localParticipant?.identity && mirrorVideo) 
+                    ? 'scaleX(-1)' 
+                    : 'none',
                 }}
               />
             )}

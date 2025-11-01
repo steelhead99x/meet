@@ -110,9 +110,22 @@ export function SettingsMenu(props: SettingsMenuProps) {
   
   // Custom segmentation state
   const [useCustomSegmentation, setUseCustomSegmentation] = React.useState(false);
-  const [customSegmentation, setCustomSegmentation] = React.useState<CustomSegmentationSettings>(
-    getDefaultCustomSettings()
-  );
+  const [customSegmentation, setCustomSegmentation] = React.useState<CustomSegmentationSettings>(() => {
+    // Use lazy initializer to ensure function is available
+    try {
+      return getDefaultCustomSettings();
+    } catch (error) {
+      // Fallback if function not available
+      return {
+        blurRadius: 15,
+        edgeFeather: 0.25,
+        temporalSmoothing: true,
+        useGPU: true,
+        enableEdgeRefinement: false,
+        useEnhancedPersonModel: false,
+      };
+    }
+  });
   const [showAdvancedSettings, setShowAdvancedSettings] = React.useState(false);
   
   // Debounce timer for slider changes to prevent freezing
@@ -337,6 +350,24 @@ export function SettingsMenu(props: SettingsMenuProps) {
       setIsApplyingChanges(false);
     }, 500);
   };
+
+  // Initialize mediaPipeSettings if needed when custom segmentation is enabled
+  React.useEffect(() => {
+    if (useCustomSegmentation && !customSegmentation.mediaPipeSettings) {
+      setCustomSegmentation(prev => ({
+        ...prev,
+        mediaPipeSettings: {
+          confidenceThreshold: 0.7,
+          morphologyEnabled: true,
+          morphologyKernelSize: 5,
+          keepLargestComponentOnly: true,
+          minMaskAreaRatio: 0.02,
+          temporalSmoothingAlpha: 0.7,
+        },
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useCustomSegmentation]); // Only depend on useCustomSegmentation to avoid loops
 
   // Cleanup debounce timer on unmount
   React.useEffect(() => {
@@ -1320,22 +1351,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
                       </div>
                     </div>
                     
-                    {/* Initialize mediaPipeSettings if not exists */}
-                    {!customSegmentation.mediaPipeSettings && (() => {
-                      const updated = {
-                        ...customSegmentation,
-                        mediaPipeSettings: {
-                          confidenceThreshold: 0.7,
-                          morphologyEnabled: true,
-                          morphologyKernelSize: 5,
-                          keepLargestComponentOnly: true,
-                          minMaskAreaRatio: 0.02,
-                          temporalSmoothingAlpha: 0.7,
-                        },
-                      };
-                      setCustomSegmentation(updated);
-                      return null;
-                    })()}
+                    {/* MediaPipe settings are initialized via useEffect below */}
                     
                     {/* Confidence Threshold Slider */}
                     <div style={{ marginBottom: '20px' }}>

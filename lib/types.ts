@@ -1,6 +1,6 @@
 import { LocalAudioTrack, LocalVideoTrack, videoCodecs } from 'livekit-client';
 import { VideoCodec } from 'livekit-client';
-import { BlurQuality, CustomSegmentationSettings } from './BlurConfig';
+import { BlurQuality } from './BlurConfig';
 
 export interface SessionProps {
   roomName: string;
@@ -28,14 +28,10 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-// Extend Window interface for custom blur quality and segmentation methods
+// Extend Window interface for custom blur quality methods
 declare global {
   interface Window {
     __setBlurQuality?: (quality: BlurQuality) => void;
     __getBlurQuality?: () => BlurQuality | undefined;
-    __setUseCustomSegmentation?: (use: boolean) => void;
-    __getUseCustomSegmentation?: () => boolean | undefined;
-    __setCustomSegmentation?: (settings: CustomSegmentationSettings) => void;
-    __getCustomSegmentation?: () => CustomSegmentationSettings | null | undefined;
   }
 }
