@@ -12,7 +12,6 @@ interface DocumentPictureInPictureOptions {
 interface DocumentPictureInPicture extends EventTarget {
   requestWindow(options?: DocumentPictureInPictureOptions): Promise<Window>;
   window: Window | null;
-  request(options?: DocumentPictureInPictureOptions): Promise<Window>;
 }
 
 interface Window {

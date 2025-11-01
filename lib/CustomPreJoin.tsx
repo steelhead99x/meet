@@ -201,6 +201,14 @@ export function CustomPreJoin({
   const isApplyingBlurRef = React.useRef(false);
   // Store original frame rate to restore when blur is disabled
   const originalFrameRateRef = React.useRef<number | null>(null);
+  // Track last known dimensions to detect rotation changes
+  const lastDimensionsRef = React.useRef<{ width: number; height: number } | null>(null);
+  // Track dimensions as a dependency for processor reapplication
+  const [trackDimensions, setTrackDimensions] = React.useState<string>('');
+  // Track video orientation for preview styling
+  const [videoOrientation, setVideoOrientation] = React.useState<'portrait' | 'landscape'>('landscape');
+  // Track video aspect ratio for precise preview container sizing
+  const [videoAspectRatio, setVideoAspectRatio] = React.useState<string>('16/9');
   // Start with isPreparingVideo=true if blur/effects are enabled (for privacy)
   const [isPreparingVideo, setIsPreparingVideo] = React.useState(() => {
     return backgroundType !== 'none'; // Hide video initially if effect is enabled
@@ -623,7 +631,104 @@ export function CustomPreJoin({
       setIsPreparingVideo(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoTrack, backgroundType, backgroundPath, blurQuality]); // Reapply effect when track or background settings change
+  }, [videoTrack, backgroundType, backgroundPath, blurQuality, trackDimensions]); // Reapply effect when track or background settings change
+
+  // Monitor track dimensions and orientation changes to reapply processor on rotation
+  React.useEffect(() => {
+    if (!videoTrack || !(videoTrack instanceof LocalVideoTrack)) {
+      lastDimensionsRef.current = null;
+      return;
+    }
+
+    const mediaStreamTrack = videoTrack.mediaStreamTrack;
+    if (!mediaStreamTrack || mediaStreamTrack.readyState !== 'live') {
+      lastDimensionsRef.current = null;
+      return;
+    }
+    
+    // Function to check for dimension changes
+    const checkDimensions = () => {
+      try {
+        const settings = mediaStreamTrack.getSettings();
+        const currentDims = {
+          width: settings.width || 0,
+          height: settings.height || 0,
+        };
+
+        if (currentDims.width === 0 || currentDims.height === 0) {
+          return; // Dimensions not available yet
+        }
+
+        const lastDims = lastDimensionsRef.current;
+        
+        // Determine orientation based on dimensions
+        const isPortrait = currentDims.height > currentDims.width;
+        const orientation = isPortrait ? 'portrait' : 'landscape';
+        setVideoOrientation(orientation);
+        
+        // Calculate precise aspect ratio from actual dimensions
+        const aspectRatio = currentDims.width > 0 && currentDims.height > 0
+          ? `${currentDims.width}/${currentDims.height}`
+          : (isPortrait ? '9/16' : '16/9');
+        setVideoAspectRatio(aspectRatio);
+        
+        if (lastDims && 
+            (lastDims.width !== currentDims.width || lastDims.height !== currentDims.height)) {
+          // Dimensions changed - likely a rotation occurred
+          console.log('[CustomPreJoin] 📐 Track dimensions changed:', 
+            `${lastDims.width}x${lastDims.height} → ${currentDims.width}x${currentDims.height}`);
+          console.log('[CustomPreJoin] 🔄 Orientation:', orientation);
+          console.log('[CustomPreJoin] 🔄 Invalidating processor to reapply for new dimensions');
+          
+          // Stop existing processor to ensure clean recreation
+          if (videoTrack instanceof LocalVideoTrack && blurProcessorRef.current) {
+            videoTrack.stopProcessor().catch(err => {
+              console.warn('[CustomPreJoin] Error stopping processor on dimension change:', err);
+            });
+            blurProcessorRef.current = null;
+          }
+          
+          // Clear processed track ID to force reapplication
+          processedTrackIdRef.current = null;
+          // Update dimension state to trigger processor effect re-run
+          setTrackDimensions(`${currentDims.width}x${currentDims.height}`);
+        } else if (!lastDims) {
+          // First time setting dimensions
+          console.log('[CustomPreJoin] 📐 Initial track dimensions:', 
+            `${currentDims.width}x${currentDims.height}, orientation: ${orientation}`);
+          setTrackDimensions(`${currentDims.width}x${currentDims.height}`);
+        }
+
+        lastDimensionsRef.current = currentDims;
+      } catch (error) {
+        console.warn('[CustomPreJoin] Error checking dimensions:', error);
+      }
+    };
+
+    // Initial dimension check
+    checkDimensions();
+
+    // Poll for dimension changes (dimensions may change without events)
+    const dimensionCheckInterval = setInterval(checkDimensions, 500);
+
+    // Listen for orientation change events as backup
+    const handleOrientationChange = () => {
+      console.log('[CustomPreJoin] 📱 Orientation change detected');
+      // Small delay to let dimensions update
+      setTimeout(() => {
+        checkDimensions();
+      }, 100);
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+
+    return () => {
+      clearInterval(dimensionCheckInterval);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, [videoTrack]);
 
   React.useEffect(() => {
     if (videoEl.current && videoTrack) {
@@ -717,7 +822,14 @@ export function CustomPreJoin({
     <div className="lk-prejoin" style={{ maxWidth: '500px', width: '100%' }}>
       <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Video Preview */}
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: (isPreparingVideo && backgroundType !== 'none') ? '#000000' : '#1a1a1a', borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ 
+          position: 'relative', 
+          width: '100%', 
+          aspectRatio: videoAspectRatio, 
+          background: (isPreparingVideo && backgroundType !== 'none') ? '#000000' : '#1a1a1a', 
+          borderRadius: '12px', 
+          overflow: 'hidden' 
+        }}>
           {videoEnabled && videoTrack ? (
             <video
               ref={videoEl}

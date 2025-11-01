@@ -22,6 +22,20 @@ export function BrowserWindowPIP() {
   const { localParticipant } = useLocalParticipant();
   const [pipWindow, setPipWindow] = React.useState<Window | null>(null);
   const rootRef = React.useRef<Root | null>(null);
+
+  // Check browser compatibility on mount
+  React.useEffect(() => {
+    const hasAPI = 'documentPictureInPicture' in window;
+    console.log('[BrowserWindowPIP] 🔍 Component mounted');
+    console.log('[BrowserWindowPIP] Browser support:', {
+      hasDocumentPiPAPI: hasAPI,
+      userAgent: navigator.userAgent,
+    });
+    if (!hasAPI) {
+      console.warn('[BrowserWindowPIP] ⚠️  Document Picture-in-Picture not supported');
+      console.warn('[BrowserWindowPIP] Please use Chrome 116+, Edge 116+, or similar');
+    }
+  }, []);
   
   // Get all tracks including screen shares
   const allTracks = useTracks([
@@ -31,13 +45,26 @@ export function BrowserWindowPIP() {
   
   // Check if local participant is sharing screen
   const screenShareTracks = React.useMemo(() => {
-    return allTracks.filter(track => 
+    const tracks = allTracks.filter(track =>
       track.source === Track.Source.ScreenShare &&
       track.participant?.identity === localParticipant?.identity
     );
+    console.log('[BrowserWindowPIP] Screen share tracks:', tracks.length, tracks);
+    return tracks;
   }, [allTracks, localParticipant?.identity]);
-  
+
   const isLocalScreenSharing = screenShareTracks.length > 0;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[BrowserWindowPIP] State:', {
+      isLocalScreenSharing,
+      screenShareTracksCount: screenShareTracks.length,
+      allTracksCount: allTracks.length,
+      hasDocPiP: 'documentPictureInPicture' in window,
+      hasPipWindow: !!pipWindow
+    });
+  }, [isLocalScreenSharing, screenShareTracks.length, allTracks.length, pipWindow]);
 
   // Get camera tracks (not screen shares) for the PIP view
   const cameraTracks = React.useMemo(() => {
@@ -58,19 +85,23 @@ export function BrowserWindowPIP() {
     const openPIPWindow = async () => {
       // Check if Document Picture-in-Picture API is available
       if (!('documentPictureInPicture' in window)) {
-        console.warn('Document Picture-in-Picture API not supported in this browser');
+        console.warn('[BrowserWindowPIP] Document Picture-in-Picture API not supported in this browser');
+        console.warn('[BrowserWindowPIP] Requires Chrome 116+, Edge 116+, or similar Chromium-based browser');
         return;
       }
 
       try {
-        console.log('[BrowserWindowPIP] Opening PIP window');
-        
-        // @ts-ignore - Document PiP API is not in TypeScript definitions yet
-        const pipWindowInstance = await window.documentPictureInPicture.request({
+        console.log('[BrowserWindowPIP] 🎬 Opening PIP window...');
+        console.log('[BrowserWindowPIP] API available:', window.documentPictureInPicture);
+
+        // @ts-ignore - Document PiP API
+        const pipWindowInstance = await window.documentPictureInPicture.requestWindow({
           width: 500,
           height: 400,
           disallowReturnToOpener: false,
         });
+
+        console.log('[BrowserWindowPIP] ✅ PIP window created successfully!');
 
         setPipWindow(pipWindowInstance);
 
@@ -184,7 +215,10 @@ export function BrowserWindowPIP() {
         });
 
       } catch (error) {
-        console.error('[BrowserWindowPIP] Error opening PIP window:', error);
+        console.error('[BrowserWindowPIP] ❌ Error opening PIP window:', error);
+        if (error instanceof Error) {
+          console.error('[BrowserWindowPIP] Error details:', error.message, error.stack);
+        }
       }
     };
 
@@ -201,8 +235,10 @@ export function BrowserWindowPIP() {
     };
 
     if (isLocalScreenSharing && !pipWindow) {
+      console.log('[BrowserWindowPIP] 📺 Screen sharing started - attempting to open PIP window');
       openPIPWindow();
     } else if (!isLocalScreenSharing && pipWindow) {
+      console.log('[BrowserWindowPIP] 🛑 Screen sharing stopped - closing PIP window');
       closePIPWindow();
     }
 

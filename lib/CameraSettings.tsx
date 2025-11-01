@@ -231,6 +231,11 @@ export function CameraSettings() {
   // V2 API: Keep a single processor instance and use switchTo() for seamless transitions
   const backgroundProcessorRef = React.useRef<any>(null);
 
+  // Track last known dimensions to detect rotation changes
+  const lastDimensionsRef = React.useRef<{ width: number; height: number } | null>(null);
+  // Track dimensions as a dependency for processor reapplication
+  const [trackDimensions, setTrackDimensions] = React.useState<string>('');
+
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
@@ -743,7 +748,88 @@ export function CameraSettings() {
     return () => {
       isEffectActive = false;
     };
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, selectedCustomBgId, customBackgrounds, blurQuality, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, selectedCustomBgId, customBackgrounds, blurQuality, trackDimensions, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings]);
+
+  // Monitor track dimensions and orientation changes to reapply processor on rotation
+  React.useEffect(() => {
+    const track = cameraTrack?.track;
+    
+    if (!isLocalTrack(track) || track.mediaStreamTrack?.readyState !== 'live') {
+      lastDimensionsRef.current = null;
+      return;
+    }
+
+    const mediaStreamTrack = track.mediaStreamTrack;
+    
+    // Function to check for dimension changes
+    const checkDimensions = () => {
+      try {
+        const settings = mediaStreamTrack.getSettings();
+        const currentDims = {
+          width: settings.width || 0,
+          height: settings.height || 0,
+        };
+
+        if (currentDims.width === 0 || currentDims.height === 0) {
+          return; // Dimensions not available yet
+        }
+
+        const lastDims = lastDimensionsRef.current;
+        
+        if (lastDims && 
+            (lastDims.width !== currentDims.width || lastDims.height !== currentDims.height)) {
+          // Dimensions changed - likely a rotation occurred
+          console.log('[CameraSettings] 📐 Track dimensions changed:', 
+            `${lastDims.width}x${lastDims.height} → ${currentDims.width}x${currentDims.height}`);
+          console.log('[CameraSettings] 🔄 Invalidating processor to reapply for new dimensions');
+          
+          // Stop existing processor to ensure clean recreation
+          if (isLocalTrack(track) && backgroundProcessorRef.current) {
+            track.stopProcessor().catch(err => {
+              console.warn('[CameraSettings] Error stopping processor on dimension change:', err);
+            });
+            backgroundProcessorRef.current = null;
+          }
+          
+          // Invalidate processor cache to force reapplication
+          currentProcessorRef.current = { type: 'none', path: null };
+          // Update dimension state to trigger processor effect re-run
+          setTrackDimensions(`${currentDims.width}x${currentDims.height}`);
+        } else if (!lastDims) {
+          // First time setting dimensions
+          setTrackDimensions(`${currentDims.width}x${currentDims.height}`);
+        }
+
+        lastDimensionsRef.current = currentDims;
+      } catch (error) {
+        console.warn('[CameraSettings] Error checking dimensions:', error);
+      }
+    };
+
+    // Initial dimension check
+    checkDimensions();
+
+    // Poll for dimension changes (dimensions may change without events)
+    const dimensionCheckInterval = setInterval(checkDimensions, 500);
+
+    // Listen for orientation change events as backup
+    const handleOrientationChange = () => {
+      console.log('[CameraSettings] 📱 Orientation change detected');
+      // Small delay to let dimensions update
+      setTimeout(() => {
+        checkDimensions();
+      }, 100);
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+
+    return () => {
+      clearInterval(dimensionCheckInterval);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, [cameraTrack]);
 
   // Set up window.__setBlurQuality and __getBlurQuality for SettingsMenu integration
   React.useEffect(() => {
