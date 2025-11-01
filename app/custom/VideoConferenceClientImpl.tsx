@@ -22,7 +22,6 @@ import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
 import { ConnectionQualityTooltip } from '@/lib/ConnectionQualityTooltip';
-import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
 import { BrowserWindowPIP } from '@/lib/BrowserWindowPIP';
 import { CarouselNavigation } from '@/lib/CarouselNavigation';
 

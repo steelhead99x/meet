@@ -39,7 +39,6 @@ import { useLowCPUOptimizer } from '@/lib/usePerformanceOptimizer';
 import toast from 'react-hot-toast';
 import { RoomErrorBoundary } from '@/app/ErrorBoundary';
 import { ReconnectionBanner } from '@/lib/ReconnectionBanner';
-import { ScreenSharePIP } from '@/lib/ScreenSharePIP';
 import { BrowserWindowPIP } from '@/lib/BrowserWindowPIP';
 import { CarouselNavigation } from '@/lib/CarouselNavigation';
 import { ProcessorLoadingProvider } from '@/lib/ProcessorLoadingContext';
@@ -666,6 +665,9 @@ function RoomContentInner() {
             />
           )}
         </div>
+
+        {/* Settings menu - only show when not using VideoConference and settings are enabled */}
+        {!hasScreenShare && SHOW_SETTINGS_MENU && <SettingsMenu />}
       </LayoutContextProvider>
     </>
   );

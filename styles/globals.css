@@ -4,8 +4,6 @@
   box-sizing: border-box;
 }
 
-@import './ScreenSharePIP.css';
-
 html,
 body {
   padding: 0;
