@@ -286,12 +286,24 @@ button[title*="encryption" i] {
   position: relative;
 }
 
-/* LiveKit already adds encryption indicators via SVG - don't add duplicates */
+/* LiveKit already adds encryption indicators via SVG - ensure they are visible */
 /* The lock icon is automatically added by LiveKit when E2EE is enabled */
 
-/* Hide any duplicate lock icons that might appear */
-.lk-participant-tile .lk-participant-metadata-item > svg[data-lk-encryption-indicator] + svg {
-  display: none;
+/* Ensure E2EE encryption indicators are visible on video tiles */
+.lk-participant-tile .lk-participant-metadata-item svg[data-lk-encryption-indicator],
+.lk-participant-tile .lk-participant-metadata-item[data-lk-encryption-indicator] svg,
+.lk-participant-tile .lk-participant-metadata-item .lk-encryption-indicator svg,
+.lk-participant-tile .lk-participant-metadata-item[class*="encryption"] svg {
+  display: inline-flex !important;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Ensure E2EE indicator metadata item container is visible */
+.lk-participant-tile .lk-participant-metadata-item[data-lk-encryption-indicator],
+.lk-participant-tile .lk-participant-metadata-item[class*="encryption"] {
+  display: inline-flex !important;
 }
 
 /* Style the avatar/initials when no video is present */

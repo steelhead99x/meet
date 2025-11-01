@@ -1160,6 +1160,23 @@
   height: 16px;
 }
 
+/* Ensure E2EE encryption indicators are visible on video tiles */
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata-item svg[data-lk-encryption-indicator],
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata-item[data-lk-encryption-indicator] svg,
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata-item .lk-encryption-indicator svg,
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata-item[class*="encryption"] svg {
+  display: inline-flex !important;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #22c55e; /* Green color for encryption indicator */
+}
+
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata-item[data-lk-encryption-indicator],
+[data-lk-theme] .lk-participant-tile .lk-participant-metadata-item[class*="encryption"] {
+  display: inline-flex !important;
+}
+
 /* ===========================================
    GRID LAYOUT - Responsive & Clean
    Auto-scales from 2 to 64+ participants evenly
