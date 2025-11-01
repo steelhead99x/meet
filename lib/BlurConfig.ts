@@ -39,12 +39,13 @@ export interface CustomSegmentationSettings {
 
 /**
  * Simple blur radius values based on quality
+ * Increased values for better quality, especially on desktop/MacBook Pro
  */
 const BLUR_RADIUS: Record<BlurQuality, number> = {
-  low: 10,
-  medium: 15,
-  high: 25,
-  ultra: 40,
+  low: 15,      // Good for mobile devices
+  medium: 30,    // Balanced for laptops/tablets
+  high: 60,      // High quality for desktops/MacBook Pro
+  ultra: 100,    // Maximum quality for high-end systems
 };
 
 /**

@@ -18,6 +18,7 @@ import {
   CustomBackground,
 } from './customBackgrounds';
 import { useProcessorLoading } from './ProcessorLoadingContext';
+import { getBlurConfig, BlurQuality } from './BlurConfig';
 
 // Background image paths (using public URLs to avoid Turbopack static import issues)
 const BACKGROUND_IMAGES = [
@@ -176,6 +177,13 @@ export function CameraSettings() {
     return prefs.mirrorVideo !== undefined ? prefs.mirrorVideo : true;
   });
 
+  // Blur quality preference
+  const [blurQuality, setBlurQuality] = React.useState<BlurQuality>(() => {
+    if (typeof window === 'undefined') return 'medium';
+    const prefs = loadUserPreferences();
+    return prefs.blurQuality || 'medium';
+  });
+
   // Load custom backgrounds on mount and restore selection
   const loadCustomBackgrounds = React.useCallback(async () => {
     try {
@@ -214,6 +222,7 @@ export function CameraSettings() {
   const currentProcessorRef = React.useRef<{
     type: BackgroundType;
     path: string | null;
+    blurQuality?: BlurQuality;
   }>({ type: 'none', path: null });
 
   // V2 API: Keep a single processor instance and use switchTo() for seamless transitions
@@ -373,7 +382,8 @@ export function CameraSettings() {
 
     if (
       currentProcessorRef.current.type === backgroundType &&
-      currentProcessorRef.current.path === currentPath
+      currentProcessorRef.current.path === currentPath &&
+      (backgroundType !== 'blur' || currentProcessorRef.current.blurQuality === blurQuality)
     ) {
       return; // Already applied, skip
     }
@@ -390,6 +400,7 @@ export function CameraSettings() {
       currentProcessorRef.current = {
         type: backgroundType,
         path: currentPath,
+        blurQuality: backgroundType === 'blur' ? blurQuality : undefined,
       };
       
       try {
@@ -443,27 +454,34 @@ export function CameraSettings() {
           }
 
           try {
+            // Get blur configuration based on quality setting
+            const blurConfig = getBlurConfig(blurQuality);
+            // Use CPU for low quality, GPU for others (better performance on MacBook Pro)
+            const delegate = blurQuality === 'low' ? 'CPU' : 'GPU';
+            
+            console.log(`[CameraSettings] Applying blur with quality: ${blurQuality}, radius: ${blurConfig.blurRadius}px, delegate: ${delegate}`);
+
             // V2 API: Initialize processor once, then use switchTo() for seamless transitions
             if (!backgroundProcessorRef.current) {
               console.log('[CameraSettings] Initializing BackgroundProcessor v2 in blur mode');
               backgroundProcessorRef.current = BackgroundProcessor({
-                blurRadius: 15,
+                blurRadius: blurConfig.blurRadius,
                 segmenterOptions: {
-                  delegate: 'GPU',
+                  delegate,
                 },
               });
               await track.setProcessor(backgroundProcessorRef.current);
-              console.log('[CameraSettings] BackgroundProcessor v2 initialized and applied');
+              console.log(`[CameraSettings] BackgroundProcessor v2 initialized with ${blurQuality} quality (${blurConfig.blurRadius}px blur, ${delegate})`);
             } else {
               // Processor already exists, switch to blur mode seamlessly
               console.log('[CameraSettings] Switching to blur mode using v2 API');
               await backgroundProcessorRef.current.switchTo({
-                blurRadius: 15,
+                blurRadius: blurConfig.blurRadius,
                 segmenterOptions: {
-                  delegate: 'GPU',
+                  delegate,
                 },
               });
-              console.log('[CameraSettings] Switched to blur mode successfully');
+              console.log(`[CameraSettings] Switched to blur mode with ${blurQuality} quality (${blurConfig.blurRadius}px blur, ${delegate})`);
             }
             restoreConsoleWarn();
           } catch (processorError) {
@@ -605,7 +623,32 @@ export function CameraSettings() {
     return () => {
       isEffectActive = false;
     };
-  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, selectedCustomBgId, customBackgrounds, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings]);
+  }, [cameraTrack, backgroundType, virtualBackgroundImagePath, selectedCustomBgId, customBackgrounds, blurQuality, setIsApplyingProcessor, revokeBlobUrls, suppressMediaPipeWarnings]);
+
+  // Set up window.__setBlurQuality and __getBlurQuality for SettingsMenu integration
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    window.__setBlurQuality = (quality: BlurQuality) => {
+      console.log('[CameraSettings] Blur quality changed via window.__setBlurQuality:', quality);
+      setBlurQuality(quality);
+      saveUserPreferences({ blurQuality: quality });
+    };
+
+    window.__getBlurQuality = () => {
+      return blurQuality;
+    };
+
+    return () => {
+      // Cleanup on unmount
+      if (window.__setBlurQuality) {
+        delete window.__setBlurQuality;
+      }
+      if (window.__getBlurQuality) {
+        delete window.__getBlurQuality;
+      }
+    };
+  }, [blurQuality]);
 
   // Cleanup processors on unmount
   React.useEffect(() => {
