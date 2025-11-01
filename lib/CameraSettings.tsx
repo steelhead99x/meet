@@ -216,6 +216,9 @@ export function CameraSettings() {
     path: string | null;
   }>({ type: 'none', path: null });
 
+  // V2 API: Keep a single processor instance and use switchTo() for seamless transitions
+  const backgroundProcessorRef = React.useRef<any>(null);
+
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
@@ -433,23 +436,35 @@ export function CameraSettings() {
             return;
           }
 
-          // Use LiveKit's built-in BackgroundProcessor
-          const blurProcessor = BackgroundProcessor({
-            blurRadius: 15, // Standard blur radius
-            segmenterOptions: {
-              delegate: 'GPU',
-            },
-          });
-
           const finalMediaStreamTrack = track.mediaStreamTrack;
           if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
             restoreConsoleWarn();
             return;
           }
-          
+
           try {
-            await track.setProcessor(blurProcessor);
-            console.log('[CameraSettings] Blur processor applied successfully');
+            // V2 API: Initialize processor once, then use switchTo() for seamless transitions
+            if (!backgroundProcessorRef.current) {
+              console.log('[CameraSettings] Initializing BackgroundProcessor v2 in blur mode');
+              backgroundProcessorRef.current = BackgroundProcessor({
+                blurRadius: 15,
+                segmenterOptions: {
+                  delegate: 'GPU',
+                },
+              });
+              await track.setProcessor(backgroundProcessorRef.current);
+              console.log('[CameraSettings] BackgroundProcessor v2 initialized and applied');
+            } else {
+              // Processor already exists, switch to blur mode seamlessly
+              console.log('[CameraSettings] Switching to blur mode using v2 API');
+              await backgroundProcessorRef.current.switchTo({
+                blurRadius: 15,
+                segmenterOptions: {
+                  delegate: 'GPU',
+                },
+              });
+              console.log('[CameraSettings] Switched to blur mode successfully');
+            }
             restoreConsoleWarn();
           } catch (processorError) {
             restoreConsoleWarn();
@@ -532,13 +547,22 @@ export function CameraSettings() {
           }
           
         } else {
-          // No effect - stop processor
+          // No effect - use v2 API to disable processor (keeps instance for fast re-enable)
           revokeBlobUrls();
 
           if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
             try {
-              await track.stopProcessor();
-              console.log('[CameraSettings] Processor stopped successfully');
+              if (backgroundProcessorRef.current && typeof backgroundProcessorRef.current.switchTo === 'function') {
+                // V2 API: Switch to disabled mode instead of stopping
+                console.log('[CameraSettings] Switching to disabled mode using v2 API');
+                await backgroundProcessorRef.current.switchTo({ mode: 'disabled' });
+                console.log('[CameraSettings] Processor disabled successfully');
+              } else {
+                // Fallback for old API or VirtualBackground processors
+                await track.stopProcessor();
+                backgroundProcessorRef.current = null;
+                console.log('[CameraSettings] Processor stopped successfully');
+              }
               restoreConsoleWarn();
             } catch (stopError) {
               restoreConsoleWarn();
@@ -617,8 +641,9 @@ export function CameraSettings() {
       // Restore original console.warn if it was overridden
       console.warn = originalWarn;
 
-      // Clear processor configuration tracking
+      // Clear processor configuration tracking and v2 processor ref
       currentProcessorRef.current = { type: 'none', path: null };
+      backgroundProcessorRef.current = null;
       console.log('[CameraSettings] Cleanup complete');
     };
   }, [cameraTrack, revokeBlobUrls]);

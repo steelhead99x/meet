@@ -203,7 +203,7 @@ export function CustomPreJoin({
   // Handle background effect changes
   const selectBackground = React.useCallback(async (type: string, path?: string) => {
     console.log('[CustomPreJoin] Changing background to:', type, path);
-    
+
     // PRIVACY: Hide video immediately when switching to a blur/effect
     if (type !== 'none') {
       setIsPreparingVideo(true);
@@ -211,31 +211,41 @@ export function CustomPreJoin({
       // Show video immediately when switching to 'none'
       setIsPreparingVideo(false);
     }
-    
-    // Stop current processor first and wait for it to complete
-    // This prevents race conditions when switching filters quickly
+
+    // V2 API: Try to use switchTo() for seamless transitions when possible
+    const isBlurProcessor = blurProcessorRef.current && typeof blurProcessorRef.current.switchTo === 'function';
+
     if (videoTrack instanceof LocalVideoTrack && blurProcessorRef.current) {
       const mediaStreamTrack = videoTrack.mediaStreamTrack;
       if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
         try {
-          await videoTrack.stopProcessor();
-          console.log('[CustomPreJoin] Successfully stopped previous processor');
+          // If we have a v2 BackgroundProcessor and switching to 'none', use switchTo disabled
+          if (isBlurProcessor && type === 'none') {
+            console.log('[CustomPreJoin] Using v2 API to switch to disabled mode');
+            await blurProcessorRef.current.switchTo({ mode: 'disabled' });
+            console.log('[CustomPreJoin] Successfully switched to disabled mode');
+            // Don't clear processor ref - keep it for fast re-enable
+          } else {
+            // For VirtualBackground or switching between different processor types, stop completely
+            await videoTrack.stopProcessor();
+            console.log('[CustomPreJoin] Successfully stopped previous processor');
+            blurProcessorRef.current = null;
+          }
         } catch (err) {
           console.warn('[CustomPreJoin] Error stopping processor during background change:', err);
+          blurProcessorRef.current = null;
         }
       }
-      // Clear the processor reference after stopping
-      blurProcessorRef.current = null;
     }
-    
+
     // Reset the processed track ID so the effect can be reapplied
     processedTrackIdRef.current = null;
-    
+
     // Update state - always update backgroundPath to ensure consistency
     // If path is undefined, clear it to avoid stale values
     setBackgroundType(type as any);
     setBackgroundPath(path || '');
-    
+
     // Save to preferences
     saveUserPreferences({
       backgroundType: type as any,
@@ -413,6 +423,8 @@ export function CustomPreJoin({
           
           // Create processor based on background type
           if (backgroundType === 'blur') {
+            // V2 API: Initialize BackgroundProcessor for blur
+            console.log('[CustomPreJoin] Initializing BackgroundProcessor v2 in blur mode');
             blurProcessorRef.current = BackgroundProcessor({
               blurRadius: 15,
               segmenterOptions: {
