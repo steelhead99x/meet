@@ -293,6 +293,39 @@ export function AdaptiveVideoLayout() {
     };
   }, []);
 
+  // Automatically focus on remote participants when they join
+  // This ensures remote participants appear as the main video, with local participant in PIP
+  React.useEffect(() => {
+    if (cameraTracks.length < 2) return; // Only relevant for PIP mode (2+ participants)
+    
+    // Find the first remote participant's index
+    const remoteParticipantIndex = cameraTracks.findIndex(
+      (track) => track.participant && track.participant.identity !== localParticipant?.identity
+    );
+    
+    // If we found a remote participant, check if we should auto-focus on them
+    if (remoteParticipantIndex !== -1) {
+      // Use functional update to avoid dependency on focusedTrackIndex
+      setFocusedTrackIndex((currentIndex) => {
+        // Check what participant we're currently focused on
+        const currentFocusedTrack = cameraTracks[currentIndex];
+        const isCurrentlyFocusedLocal = currentFocusedTrack?.participant?.identity === localParticipant?.identity;
+        const isCurrentIndexValid = currentIndex >= 0 && currentIndex < cameraTracks.length;
+        
+        // Auto-switch to remote participant if:
+        // 1. We're currently showing local participant, OR
+        // 2. Current index is invalid/out of bounds
+        if (isCurrentlyFocusedLocal || !isCurrentIndexValid) {
+          console.log('[AdaptiveVideoLayout] Auto-focused on remote participant at index', remoteParticipantIndex);
+          return remoteParticipantIndex;
+        }
+        
+        // Otherwise, keep current focus (user may have manually switched)
+        return currentIndex;
+      });
+    }
+  }, [cameraTracks, localParticipant]);
+
   // Save orientation preference when it changes
   React.useEffect(() => {
     saveUserPreferences({ preferredOrientation: orientation });

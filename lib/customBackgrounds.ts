@@ -74,9 +74,12 @@ function generateVideoThumbnail(file: File): Promise<string> {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const thumbnail = canvas.toDataURL('image/jpeg', 0.7);
         
-        // Cleanup
+        // Cleanup - save blob URL before clearing src
+        const blobUrl = video.src;
         video.src = '';
-        URL.revokeObjectURL(video.src);
+        if (blobUrl) {
+          URL.revokeObjectURL(blobUrl);
+        }
         
         resolve(thumbnail);
       } catch (error) {
@@ -160,7 +163,7 @@ export async function saveCustomBackground(file: File): Promise<CustomBackground
 
   // Create custom background object
   const customBg: CustomBackground = {
-    id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     name: file.name,
     type: isVideo ? 'video' : 'image',
     data: file,
@@ -176,7 +179,15 @@ export async function saveCustomBackground(file: File): Promise<CustomBackground
     const request = store.add(customBg);
 
     request.onsuccess = () => resolve(customBg);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      const error = request.error || new Error('Failed to save custom background to database');
+      reject(error);
+    };
+    
+    transaction.onerror = () => {
+      const error = transaction.error || new Error('Transaction failed');
+      reject(error);
+    };
   });
 }
 
@@ -197,7 +208,15 @@ export async function getAllCustomBackgrounds(): Promise<CustomBackground[]> {
       backgrounds.sort((a, b) => b.uploadedAt - a.uploadedAt);
       resolve(backgrounds);
     };
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      const error = request.error || new Error('Failed to get custom backgrounds');
+      reject(error);
+    };
+    
+    transaction.onerror = () => {
+      const error = transaction.error || new Error('Transaction failed');
+      reject(error);
+    };
   });
 }
 
@@ -213,7 +232,15 @@ export async function getCustomBackground(id: string): Promise<CustomBackground 
     const request = store.get(id);
 
     request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      const error = request.error || new Error('Failed to get custom background');
+      reject(error);
+    };
+    
+    transaction.onerror = () => {
+      const error = transaction.error || new Error('Transaction failed');
+      reject(error);
+    };
   });
 }
 
@@ -229,7 +256,15 @@ export async function deleteCustomBackground(id: string): Promise<void> {
     const request = store.delete(id);
 
     request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      const error = request.error || new Error('Failed to delete custom background');
+      reject(error);
+    };
+    
+    transaction.onerror = () => {
+      const error = transaction.error || new Error('Transaction failed');
+      reject(error);
+    };
   });
 }
 
@@ -245,7 +280,15 @@ export async function clearAllCustomBackgrounds(): Promise<void> {
     const request = store.clear();
 
     request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      const error = request.error || new Error('Failed to clear custom backgrounds');
+      reject(error);
+    };
+    
+    transaction.onerror = () => {
+      const error = transaction.error || new Error('Transaction failed');
+      reject(error);
+    };
   });
 }
 

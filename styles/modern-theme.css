@@ -2016,35 +2016,42 @@
 }
 
 /* Messages container - Enhanced */
-[data-lk-theme] .lk-chat-messages {
-  flex: 1 1 0; /* Grow to fill space, shrink if needed, base size 0 */
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  justify-content: flex-start; /* Align messages to top */
-  align-items: stretch;
-  min-height: 0; /* Allow flexbox to properly calculate height */
-  background: transparent;
-  scroll-behavior: smooth;
-  scroll-padding-bottom: 16px;
-  scroll-padding-top: 16px;
+/* LiveKit renders this as a UL with both lk-list and lk-chat-messages classes */
+[data-lk-theme] .lk-chat-messages,
+[data-lk-theme] .lk-list.lk-chat-messages {
+  flex: 1 1 0 !important; /* Grow to fill space, shrink if needed, base size 0 */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  justify-content: flex-start !important; /* Align messages to top */
+  align-items: stretch !important;
+  min-height: 0 !important; /* Allow flexbox to properly calculate height */
+  background: transparent !important;
+  scroll-behavior: smooth !important;
+  scroll-padding-bottom: 16px !important;
+  scroll-padding-top: 16px !important;
+  margin: 0 !important; /* Remove default UL margin */
+  list-style: none !important; /* Remove default UL list style */
 }
 
 /* Scrollbar - Enhanced styling */
-[data-lk-theme] .lk-chat-messages::-webkit-scrollbar {
+[data-lk-theme] .lk-chat-messages::-webkit-scrollbar,
+[data-lk-theme] .lk-list.lk-chat-messages::-webkit-scrollbar {
   width: 8px;
 }
 
-[data-lk-theme] .lk-chat-messages::-webkit-scrollbar-track {
+[data-lk-theme] .lk-chat-messages::-webkit-scrollbar-track,
+[data-lk-theme] .lk-list.lk-chat-messages::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 4px;
   margin: 8px 0;
 }
 
-[data-lk-theme] .lk-chat-messages::-webkit-scrollbar-thumb {
+[data-lk-theme] .lk-chat-messages::-webkit-scrollbar-thumb,
+[data-lk-theme] .lk-list.lk-chat-messages::-webkit-scrollbar-thumb {
   background: linear-gradient(to bottom, 
     rgba(255, 255, 255, 0.25), 
     rgba(255, 255, 255, 0.15)
@@ -2055,7 +2062,8 @@
   transition: background 0.2s ease;
 }
 
-[data-lk-theme] .lk-chat-messages::-webkit-scrollbar-thumb:hover {
+[data-lk-theme] .lk-chat-messages::-webkit-scrollbar-thumb:hover,
+[data-lk-theme] .lk-list.lk-chat-messages::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, 
     rgba(255, 255, 255, 0.35), 
     rgba(255, 255, 255, 0.25)
@@ -2064,7 +2072,8 @@
 }
 
 /* Firefox scrollbar */
-[data-lk-theme] .lk-chat-messages {
+[data-lk-theme] .lk-chat-messages,
+[data-lk-theme] .lk-list.lk-chat-messages {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.03);
 }
@@ -2239,7 +2248,8 @@
 }
 
 /* Empty chat state */
-[data-lk-theme] .lk-chat-messages:empty::before {
+[data-lk-theme] .lk-chat-messages:empty::before,
+[data-lk-theme] .lk-list.lk-chat-messages:empty::before {
   content: 'No messages yet. Start the conversation!';
   display: flex;
   align-items: center;
@@ -2258,6 +2268,7 @@
 }
 
 /* Chat message list styling */
+/* Since lk-list and lk-chat-messages are on the same UL element, target it directly */
 [data-lk-theme] .lk-chat-messages .lk-list {
   display: flex;
   flex-direction: column;
@@ -2268,29 +2279,32 @@
 }
 
 /* Improve message list item styling */
-[data-lk-theme] .lk-chat-messages .lk-list li {
+[data-lk-theme] .lk-chat-messages .lk-list li,
+[data-lk-theme] .lk-list.lk-chat-messages > li {
   margin: 0;
   padding: 0;
 }
 
 /* LiveKit Chat Entry (actual message container) - Enhanced styling */
 [data-lk-theme] .lk-chat-entry {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-radius: 16px !important;
-  padding: 12px 16px !important;
-  margin: 8px 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
-              0 1px 3px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px 18px 18px 4px !important;
+  padding: 14px 18px !important;
+  margin: 0 !important; /* Let grouping rules handle margins */
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+              0 2px 4px rgba(0, 0, 0, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   word-wrap: break-word !important;
   position: relative !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  animation: messageIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  backdrop-filter: blur(12px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  animation: messageIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   max-width: 85% !important;
   align-self: flex-start !important;
+  line-height: 1.6 !important;
+  min-height: auto !important;
 }
 
 /* Message grouping - Consolidated messages from same sender */
@@ -2301,36 +2315,71 @@
   display: none !important;
 }
 
-/* Reduce top margin for grouped messages (only if previous is from same sender) */
+/* Grouped messages - smaller spacing between messages from same sender */
 [data-lk-theme] .lk-chat-entry[data-grouped="true"] {
-  margin-top: 4px !important;
-  border-top-left-radius: 8px !important;
-  border-top-right-radius: 8px !important;
+  margin-top: 6px !important;
+  margin-bottom: 0 !important;
 }
 
-/* First message in group - keep normal top margin */
+/* Non-grouped messages - larger spacing to separate different senders/timeframes */
 [data-lk-theme] .lk-chat-entry:not([data-grouped="true"]) {
-  margin-top: 12px !important;
+  margin-top: 20px !important;
+  margin-bottom: 0 !important;
 }
 
-/* When a grouped message is followed by another grouped message, make it compact */
+/* First message in chat has no top margin */
+[data-lk-theme] .lk-chat-entry:first-child {
+  margin-top: 0 !important;
+}
+
+/* When a grouped message is followed by another grouped message, consistent spacing */
 [data-lk-theme] .lk-chat-entry[data-grouped="true"] + .lk-chat-entry[data-grouped="true"] {
+  margin-top: 6px !important;
+}
+
+/* Border radius adjustments for grouped messages - left aligned (remote) */
+[data-lk-theme] .lk-chat-entry[data-grouped="true"]:not([data-lk-message-origin="local"]) {
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 18px !important;
+}
+
+/* Border radius for middle grouped messages - left aligned */
+[data-lk-theme] .lk-chat-entry[data-grouped="true"]:not([data-lk-message-origin="local"]) + .lk-chat-entry[data-grouped="true"]:not([data-lk-message-origin="local"]) {
   border-top-left-radius: 8px !important;
   border-top-right-radius: 8px !important;
-  margin-top: 2px !important;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
 }
 
-/* When a grouped message is NOT followed by another grouped message, it's the last in group */
-[data-lk-theme] .lk-chat-entry[data-grouped="true"]:not(:has(+ .lk-chat-entry[data-grouped="true"])) {
-  border-bottom-left-radius: 16px !important;
-  border-bottom-right-radius: 16px !important;
+/* Last message in group - left aligned */
+[data-lk-theme] .lk-chat-entry[data-grouped="true"]:not([data-lk-message-origin="local"]):not(:has(+ .lk-chat-entry[data-grouped="true"])) {
+  border-bottom-left-radius: 18px !important;
+  border-bottom-right-radius: 4px !important;
 }
 
-/* When a non-grouped message is followed by a grouped message, the grouped one should connect */
+/* Border radius adjustments for grouped messages - right aligned (local) */
+[data-lk-theme] .lk-chat-entry[data-grouped="true"][data-lk-message-origin="local"] {
+  border-top-left-radius: 18px !important;
+  border-top-right-radius: 8px !important;
+}
+
+/* Border radius for middle grouped messages - right aligned */
+[data-lk-theme] .lk-chat-entry[data-grouped="true"][data-lk-message-origin="local"] + .lk-chat-entry[data-grouped="true"][data-lk-message-origin="local"] {
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}
+
+/* Last message in group - right aligned */
+[data-lk-theme] .lk-chat-entry[data-grouped="true"][data-lk-message-origin="local"]:not(:has(+ .lk-chat-entry[data-grouped="true"])) {
+  border-bottom-left-radius: 4px !important;
+  border-bottom-right-radius: 18px !important;
+}
+
+/* When a non-grouped message is followed by a grouped message, start the group with proper spacing */
 [data-lk-theme] .lk-chat-entry:not([data-grouped="true"]) + .lk-chat-entry[data-grouped="true"] {
-  border-top-left-radius: 8px !important;
-  border-top-right-radius: 8px !important;
-  margin-top: 4px !important;
+  margin-top: 12px !important;
 }
 
 /* Fallback for browsers that don't support :has() - assume grouped messages are not last */
@@ -2341,25 +2390,40 @@
   }
   
   /* Last grouped message in list */
-  [data-lk-theme] .lk-chat-messages .lk-chat-entry[data-grouped="true"]:last-child {
+  [data-lk-theme] .lk-chat-messages .lk-chat-entry[data-grouped="true"]:last-child,
+  [data-lk-theme] .lk-list.lk-chat-messages > .lk-chat-entry[data-grouped="true"]:last-child {
     border-bottom-left-radius: 16px !important;
     border-bottom-right-radius: 16px !important;
   }
 }
 
 [data-lk-theme] .lk-chat-entry:hover {
-  background: rgba(255, 255, 255, 0.14) !important;
-  border-color: rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2),
-              0 2px 4px rgba(0, 0, 0, 0.15),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-  transform: translateY(-1px) translateX(2px) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25),
+              0 3px 6px rgba(0, 0, 0, 0.18),
+              inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  transform: translateY(-2px) translateX(2px) scale(1.01) !important;
 }
 
-/* Grouped message styling - adjusted padding for cleaner look */
+/* Exclude local messages from hover transform direction */
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"]:hover,
+[data-lk-theme] .lk-chat-entry[data-lk-local="true"]:hover,
+[data-lk-theme] .lk-chat-entry.lk-chat-entry-local:hover {
+  transform: translateY(-2px) translateX(-2px) scale(1.01) !important;
+}
+
+/* All messages should have consistent padding */
+[data-lk-theme] .lk-chat-entry {
+  padding: 14px 18px !important;
+}
+
+/* Grouped messages can have slightly reduced padding but still readable */
 [data-lk-theme] .lk-chat-entry[data-grouped="true"] {
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
 }
 
 /* Ensure message body in grouped messages has proper spacing */
@@ -2368,6 +2432,7 @@
 }
 
 /* Apply same grouping rules to local messages */
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"][data-grouped="true"],
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"][data-grouped="true"],
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local[data-grouped="true"] {
   margin-top: 4px !important;
@@ -2375,32 +2440,39 @@
   padding-bottom: 8px !important;
 }
 
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"][data-grouped="true"] .lk-meta-data,
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"][data-grouped="true"] .lk-meta-data,
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local[data-grouped="true"] .lk-meta-data,
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"][data-grouped="true"] .lk-participant-name,
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"][data-grouped="true"] .lk-participant-name,
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local[data-grouped="true"] .lk-participant-name,
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"][data-grouped="true"] time,
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"][data-grouped="true"] time,
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local[data-grouped="true"] time {
   display: none !important;
 }
 
 /* Local (your) messages - Enhanced */
+/* LiveKit uses data-lk-message-origin="local" for local messages */
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"],
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"],
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local {
   background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.28), 
-    rgba(37, 99, 235, 0.22),
-    rgba(59, 130, 246, 0.18)
+    rgba(59, 130, 246, 0.32), 
+    rgba(37, 99, 235, 0.26),
+    rgba(59, 130, 246, 0.22)
   ) !important;
-  border-color: rgba(59, 130, 246, 0.4) !important;
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  border-radius: 18px 18px 4px 18px !important;
   margin-left: auto !important;
   margin-right: 0 !important;
   align-self: flex-end !important;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25),
-              0 2px 6px rgba(59, 130, 246, 0.15),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 5px 18px rgba(59, 130, 246, 0.3),
+              0 2px 8px rgba(59, 130, 246, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"]:hover,
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"]:hover,
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local:hover {
   background: linear-gradient(135deg, 
@@ -2445,8 +2517,10 @@
   opacity: 0.8 !important;
 }
 
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"] .lk-meta-data span,
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"] .lk-meta-data span,
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local .lk-meta-data span,
+[data-lk-theme] .lk-chat-entry[data-lk-message-origin="local"] time,
 [data-lk-theme] .lk-chat-entry[data-lk-local="true"] time,
 [data-lk-theme] .lk-chat-entry.lk-chat-entry-local time {
   color: rgba(255, 255, 255, 0.7) !important;
@@ -3310,7 +3384,8 @@
   }
   
   /* Mobile chat messages adjustments */
-  [data-lk-theme] .lk-chat-messages {
+  [data-lk-theme] .lk-chat-messages,
+  [data-lk-theme] .lk-list.lk-chat-messages {
     padding: 16px !important;
     gap: 10px !important;
   }

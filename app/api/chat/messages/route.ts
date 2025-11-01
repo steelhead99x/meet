@@ -26,10 +26,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ messages });
   } catch (error) {
     console.error('Error fetching chat history:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch chat history' },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', { errorMessage, errorStack });
+    
+    // Return empty array instead of error to prevent UI issues
+    // The chat will still work for new messages
+    return NextResponse.json({ messages: [] }, { status: 200 });
   }
 }
 

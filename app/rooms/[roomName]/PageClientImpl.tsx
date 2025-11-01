@@ -559,7 +559,9 @@ function VideoConferenceComponent(props: {
 
     // Watch for new messages in the chat UI
     const observeChatMessages = () => {
-      const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages .lk-list');
+      // LiveKit renders messages container as UL with both lk-list and lk-chat-messages classes
+      const messagesContainer = document.querySelector('[data-lk-theme] .lk-list.lk-chat-messages') ||
+                                 document.querySelector('[data-lk-theme] .lk-chat-messages');
       if (!messagesContainer) return;
 
       const entries = Array.from(messagesContainer.querySelectorAll('.lk-chat-entry'));
@@ -641,9 +643,10 @@ function VideoConferenceComponent(props: {
         if (messages.length === 0) return;
 
         // Get the chat messages container - try multiple selectors
-        const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages .lk-list') ||
+        // LiveKit renders messages container as UL with both lk-list and lk-chat-messages classes
+        const messagesContainer = document.querySelector('[data-lk-theme] .lk-list.lk-chat-messages') ||
                                   document.querySelector('[data-lk-theme] .lk-chat-messages') ||
-                                  document.querySelector('.lk-chat-messages .lk-list') ||
+                                  document.querySelector('.lk-list.lk-chat-messages') ||
                                   document.querySelector('.lk-chat-messages');
         
         if (!messagesContainer) {
@@ -657,7 +660,8 @@ function VideoConferenceComponent(props: {
           return;
         }
 
-        const listContainer = messagesContainer.querySelector('.lk-list') || messagesContainer;
+        // No longer needed - messagesContainer is already the list
+        const listContainer = messagesContainer;
 
         // Mark existing messages to avoid duplicates
         const existingMessages = new Set<string>();
@@ -854,7 +858,9 @@ function VideoConferenceComponent(props: {
 function useChatMessageGrouping() {
   React.useEffect(() => {
     const groupMessages = () => {
-      const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages');
+      // LiveKit renders messages container as UL with both lk-list and lk-chat-messages classes
+      const messagesContainer = document.querySelector('[data-lk-theme] .lk-list.lk-chat-messages') ||
+                               document.querySelector('[data-lk-theme] .lk-chat-messages');
       if (!messagesContainer) return;
 
       const entries = Array.from(messagesContainer.querySelectorAll('.lk-chat-entry')) as HTMLElement[];
@@ -873,32 +879,54 @@ function useChatMessageGrouping() {
         const currentEntry = entries[i];
         const previousEntry = entries[i - 1];
         
-        // Get participant names
-        const currentNameEl = currentEntry.querySelector('.lk-participant-name');
-        const previousNameEl = previousEntry.querySelector('.lk-participant-name');
-        
-        // Get timestamps
-        const currentTimeEl = currentEntry.querySelector('time');
-        const previousTimeEl = previousEntry.querySelector('time');
-        
         // Check if local messages (your messages)
-        const currentIsLocal = currentEntry.hasAttribute('data-lk-local') || 
+        // LiveKit uses data-lk-message-origin="local" attribute
+        const currentIsLocal = currentEntry.getAttribute('data-lk-message-origin') === 'local' ||
+                               currentEntry.hasAttribute('data-lk-local') || 
                                currentEntry.classList.contains('lk-chat-entry-local');
-        const previousIsLocal = previousEntry.hasAttribute('data-lk-local') || 
+        const previousIsLocal = previousEntry.getAttribute('data-lk-message-origin') === 'local' ||
+                                previousEntry.hasAttribute('data-lk-local') || 
                                 previousEntry.classList.contains('lk-chat-entry-local');
         
-        // Extract participant identity or name
+        // Get participant names (for non-local messages)
+        const currentNameEl = currentEntry.querySelector('.lk-participant-name');
+        const previousNameEl = previousEntry.querySelector('.lk-participant-name');
         const currentName = currentNameEl?.textContent?.trim() || '';
         const previousName = previousNameEl?.textContent?.trim() || '';
         
-        // Extract timestamps
+        // Extract timestamps - try multiple methods
         let currentTimestamp: number | null = null;
         let previousTimestamp: number | null = null;
+        
+        // Method 1: Try datetime attribute on time element
+        const currentTimeEl = currentEntry.querySelector('time');
+        const previousTimeEl = previousEntry.querySelector('time');
         
         if (currentTimeEl) {
           const datetime = currentTimeEl.getAttribute('datetime');
           if (datetime) {
             currentTimestamp = new Date(datetime).getTime();
+          }
+          // If no datetime attribute, try title attribute on the entry
+          if (!currentTimestamp && currentEntry.hasAttribute('title')) {
+            const title = currentEntry.getAttribute('title');
+            if (title) {
+              const parsed = new Date(title);
+              if (!isNaN(parsed.getTime())) {
+                currentTimestamp = parsed.getTime();
+              }
+            }
+          }
+          // Last resort: try parsing time element text
+          if (!currentTimestamp) {
+            const timeText = currentTimeEl.textContent?.trim();
+            if (timeText) {
+              // Try to parse common time formats
+              const parsed = new Date(timeText);
+              if (!isNaN(parsed.getTime())) {
+                currentTimestamp = parsed.getTime();
+              }
+            }
           }
         }
         
@@ -907,42 +935,46 @@ function useChatMessageGrouping() {
           if (datetime) {
             previousTimestamp = new Date(datetime).getTime();
           }
-        }
-        
-        // If we don't have datetime attributes, try to get from text content
-        if (currentTimestamp === null && currentTimeEl) {
-          const timeText = currentTimeEl.textContent?.trim();
-          if (timeText) {
-            // Try to parse common time formats
-            const parsed = new Date(timeText);
-            if (!isNaN(parsed.getTime())) {
-              currentTimestamp = parsed.getTime();
+          // If no datetime attribute, try title attribute
+          if (!previousTimestamp && previousEntry.hasAttribute('title')) {
+            const title = previousEntry.getAttribute('title');
+            if (title) {
+              const parsed = new Date(title);
+              if (!isNaN(parsed.getTime())) {
+                previousTimestamp = parsed.getTime();
+              }
             }
           }
-        }
-        
-        if (previousTimestamp === null && previousTimeEl) {
-          const timeText = previousTimeEl.textContent?.trim();
-          if (timeText) {
-            const parsed = new Date(timeText);
-            if (!isNaN(parsed.getTime())) {
-              previousTimestamp = parsed.getTime();
+          // Last resort: try parsing time element text
+          if (!previousTimestamp) {
+            const timeText = previousTimeEl.textContent?.trim();
+            if (timeText) {
+              const parsed = new Date(timeText);
+              if (!isNaN(parsed.getTime())) {
+                previousTimestamp = parsed.getTime();
+              }
             }
           }
         }
         
         // Determine if messages should be grouped
+        // Same sender if: both are local, or both are remote with same name
         const sameSender = 
           (currentIsLocal && previousIsLocal) || 
           (!currentIsLocal && !previousIsLocal && currentName === previousName && currentName !== '');
         
-        const withinTimeframe = 
-          currentTimestamp !== null && 
-          previousTimestamp !== null && 
-          (currentTimestamp - previousTimestamp) <= TIME_THRESHOLD;
+        // Within timeframe if timestamps are close enough
+        let withinTimeframe = false;
+        if (currentTimestamp !== null && previousTimestamp !== null) {
+          const timeDiff = Math.abs(currentTimestamp - previousTimestamp);
+          withinTimeframe = timeDiff <= TIME_THRESHOLD;
+        } else if (currentTimestamp === null && previousTimestamp === null) {
+          // If we can't get timestamps but same sender, assume they're close enough
+          withinTimeframe = true;
+        }
         
         // If same sender and within timeframe, mark as grouped
-        if (sameSender && (withinTimeframe || (currentTimestamp === null || previousTimestamp === null))) {
+        if (sameSender && withinTimeframe) {
           currentEntry.setAttribute('data-grouped', 'true');
         }
       }
@@ -952,7 +984,9 @@ function useChatMessageGrouping() {
     groupMessages();
 
     // Watch for new messages
-    const messagesContainer = document.querySelector('[data-lk-theme] .lk-chat-messages');
+    // LiveKit renders messages container as UL with both lk-list and lk-chat-messages classes
+    const messagesContainer = document.querySelector('[data-lk-theme] .lk-list.lk-chat-messages') ||
+                              document.querySelector('[data-lk-theme] .lk-chat-messages');
     if (!messagesContainer) return;
 
     const observer = new MutationObserver(() => {

@@ -15,23 +15,35 @@ let db: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (!db) {
-    db = new Database(dbPath);
-    
-    // Enable WAL mode for better concurrency
-    db.pragma('journal_mode = WAL');
-    
-    // Create chat_messages table if it doesn't exist
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS chat_messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        room_name TEXT NOT NULL,
-        participant_identity TEXT NOT NULL,
-        message TEXT NOT NULL,
-        timestamp INTEGER NOT NULL,
-        created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-        INDEX idx_room_timestamp (room_name, timestamp)
-      )
-    `);
+    try {
+      db = new Database(dbPath);
+      
+      // Enable WAL mode for better concurrency
+      db.pragma('journal_mode = WAL');
+      
+      // Create chat_messages table if it doesn't exist
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS chat_messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          room_name TEXT NOT NULL,
+          participant_identity TEXT NOT NULL,
+          message TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        )
+      `);
+      
+      // Create index separately to avoid errors if it already exists
+      try {
+        db.exec(`CREATE INDEX IF NOT EXISTS idx_room_timestamp ON chat_messages(room_name, timestamp)`);
+      } catch (indexError) {
+        // Index might already exist, ignore
+        console.warn('Index creation warning (may already exist):', indexError);
+      }
+    } catch (error) {
+      console.error('Database initialization error:', error);
+      throw error;
+    }
   }
   
   return db;

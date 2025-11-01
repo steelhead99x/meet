@@ -396,9 +396,29 @@ export function CustomPreJoin({
             return;
           }
           
-          await videoTrack.setProcessor(blurProcessorRef.current);
-          processedTrackIdRef.current = effectKey;
-          setIsPreparingVideo(false);
+          // CRITICAL: Final track state check right before setProcessor
+          // This minimizes the race condition window where the stream could close
+          const finalMediaStreamTrack = videoTrack.mediaStreamTrack;
+          if (!finalMediaStreamTrack || finalMediaStreamTrack.readyState !== 'live') {
+            console.warn('[CustomPreJoin] Stream state changed before applying processor, aborting');
+            setIsPreparingVideo(false);
+            return;
+          }
+          
+          // Apply processor with specific error handling for InvalidStateError
+          try {
+            await videoTrack.setProcessor(blurProcessorRef.current);
+            processedTrackIdRef.current = effectKey;
+            setIsPreparingVideo(false);
+          } catch (processorError) {
+            setIsPreparingVideo(false);
+            if (processorError instanceof DOMException && processorError.name === 'InvalidStateError') {
+              console.warn('[CustomPreJoin] Stream closed while applying processor (expected during transitions)');
+              return;
+            }
+            // Re-throw unexpected errors to be caught by outer catch block
+            throw processorError;
+          }
         } catch (error) {
           // Always restore video state on error
           setIsPreparingVideo(false);
@@ -406,13 +426,14 @@ export function CustomPreJoin({
             videoTrack.unmute().catch(() => {});
           }
           
-          // Handle specific error cases
+          // Handle specific error cases - use console.warn for expected errors
           if (error instanceof DOMException && error.name === 'InvalidStateError') {
-            console.warn('[CustomPreJoin] Stream closed while applying blur to preview:', error.message);
+            console.warn('[CustomPreJoin] Stream closed while applying blur to preview (expected during transitions)');
           } else if (error instanceof TypeError && error.message.includes('track cannot be ended')) {
             console.warn('[CustomPreJoin] Track ended before processor could be applied. This can happen during device changes.');
             console.warn('[CustomPreJoin] Video will play without blur. Try refreshing or the effect will apply on next load.');
           } else {
+            // Only log as error for unexpected errors
             console.error('[CustomPreJoin] Error applying blur to preview:', error);
           }
         } finally {

@@ -959,11 +959,19 @@ export function CameraSettings() {
             );
           })}
           
-          {/* Upload button with file input - using label for native file input behavior */}
-          <label
-            htmlFor="custom-background-upload"
+          {/* Upload button with file input */}
+          <button
+            type="button"
             className="lk-button lk-button-visual"
             aria-label="Upload custom background"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!isUploading && fileInputRef.current) {
+                fileInputRef.current.click();
+              }
+            }}
+            disabled={isUploading}
             style={{
               border: '2px dashed rgba(255, 255, 255, 0.3)',
               background: 'rgba(255, 255, 255, 0.05)',
@@ -978,7 +986,6 @@ export function CameraSettings() {
               cursor: isUploading ? 'not-allowed' : 'pointer',
               opacity: isUploading ? 0.6 : 1,
               position: 'relative',
-              pointerEvents: isUploading ? 'none' : 'auto',
             }}
           >
             {isUploading ? (
@@ -1003,9 +1010,8 @@ export function CameraSettings() {
               </div>
             )}
             
-            {/* Hidden file input with id for label association */}
+            {/* Hidden file input */}
             <input
-              id="custom-background-upload"
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/ogg"
@@ -1017,13 +1023,15 @@ export function CameraSettings() {
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                width: '1px',
-                height: '1px',
+                width: '100%',
+                height: '100%',
                 opacity: 0,
-                overflow: 'hidden',
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                zIndex: 1,
+                pointerEvents: 'none',
               }}
             />
-          </label>
+          </button>
         </div>
         
         {/* Storage info */}
