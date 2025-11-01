@@ -38,22 +38,48 @@ export interface CustomSegmentationSettings {
 }
 
 /**
- * Simple blur radius values based on quality
- * Increased values for better quality, especially on desktop/MacBook Pro
+ * Blur radius values optimized to prevent jitter
+ * Desktop/MacBook uses lower values with CPU for stability
+ * Mobile devices can use higher values with GPU
  */
 const BLUR_RADIUS: Record<BlurQuality, number> = {
-  low: 15,      // Good for mobile devices
-  medium: 30,    // Balanced for laptops/tablets
-  high: 60,      // High quality for desktops/MacBook Pro
-  ultra: 100,    // Maximum quality for high-end systems
+  low: 10,      // Minimal blur for maximum stability
+  medium: 15,    // Low blur for desktop stability (reduced from 25)
+  high: 20,      // Moderate blur for desktop (reduced from 45)
+  ultra: 30,     // Higher blur but still conservative for desktop (reduced from 75)
 };
 
 /**
+ * Device-specific blur radius values for better performance
+ * Desktop/MacBook uses much lower values to prevent jitter
+ */
+const BLUR_RADIUS_DESKTOP: Record<BlurQuality, number> = {
+  low: 10,      // Minimal for stability
+  medium: 15,    // Very low to prevent jitter
+  high: 20,      // Conservative for smooth performance
+  ultra: 25,     // Still conservative to avoid frame drops
+};
+
+/**
+ * Detects if device is desktop/MacBook (likely to have jitter issues)
+ */
+function isDesktopDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isMac = /macintosh|mac os x/.test(userAgent);
+  const isDesktop = !/iphone|ipod|ipad|android/.test(userAgent);
+  return isMac || (isDesktop && window.innerWidth > 768);
+}
+
+/**
  * Gets a simple blur configuration
+ * Uses lower values for desktop/MacBook to prevent jitter
  */
 export function getBlurConfig(quality: BlurQuality = 'medium'): BlurConfig {
+  const isDesktop = isDesktopDevice();
+  const radiusMap = isDesktop ? BLUR_RADIUS_DESKTOP : BLUR_RADIUS;
   return {
-    blurRadius: BLUR_RADIUS[quality],
+    blurRadius: radiusMap[quality],
   };
 }
 

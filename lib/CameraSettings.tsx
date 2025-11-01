@@ -98,6 +98,9 @@ export function CameraSettings() {
 
   // Track blob URLs to prevent memory leaks
   const activeBlobUrlsRef = React.useRef<Set<string>>(new Set());
+  
+  // Store original frame rate to restore when blur is disabled
+  const originalFrameRateRef = React.useRef<number | null>(null);
 
   // Helper function to revoke blob URLs and prevent memory leaks
   const revokeBlobUrls = React.useCallback(() => {
@@ -461,35 +464,90 @@ export function CameraSettings() {
           try {
             // Get blur configuration based on quality setting
             const blurConfig = getBlurConfig(blurQuality);
-            // Use CPU for low quality, GPU for others (better performance on MacBook Pro)
-            const delegate = blurQuality === 'low' ? 'CPU' : 'GPU';
+            // CRITICAL FIX: Use CPU for all blur on desktop/MacBook to prevent jitter
+            // GPU on MacBook causes severe jitter due to frame synchronization issues
+            const isDesktop = typeof navigator !== 'undefined' && 
+              (/macintosh|mac os x/.test(navigator.userAgent.toLowerCase()) || 
+               (!/iphone|ipod|ipad|android/.test(navigator.userAgent.toLowerCase()) && window.innerWidth > 768));
+            
+            // Always use CPU for desktop to prevent jitter/seizure-inducing frame drops
+            // Mobile devices can safely use GPU
+            const delegate = isDesktop ? 'CPU' : (blurQuality === 'low' ? 'CPU' : 'GPU');
             
             console.log(`[CameraSettings] Applying blur with quality: ${blurQuality}, radius: ${blurConfig.blurRadius}px, delegate: ${delegate}`);
 
-            // Always recreate processor when blur quality changes to ensure it works properly
-            // switchTo() may not reliably change blur radius, so we recreate for consistency
-            if (backgroundProcessorRef.current) {
-              console.log('[CameraSettings] Stopping existing processor to apply new blur quality');
-              try {
-                await track.stopProcessor();
-                backgroundProcessorRef.current = null;
-              } catch (err) {
-                console.warn('[CameraSettings] Error stopping existing processor:', err);
-                // Continue anyway - try to create new processor
-                backgroundProcessorRef.current = null;
-              }
-            }
+            // CRITICAL: For MacBook/desktop, avoid processor recreation if possible to prevent jitter
+            // Only recreate if quality actually changed or processor doesn't exist
+            const needsRecreation = !backgroundProcessorRef.current || 
+              (currentProcessorRef.current?.blurQuality !== blurQuality);
             
-            // Create new processor with updated blur quality settings
-            console.log('[CameraSettings] Creating BackgroundProcessor with blur quality:', blurQuality);
-            backgroundProcessorRef.current = BackgroundProcessor({
-              blurRadius: blurConfig.blurRadius,
-              segmenterOptions: {
-                delegate,
-              },
-            });
-            await track.setProcessor(backgroundProcessorRef.current);
+            if (needsRecreation) {
+              if (backgroundProcessorRef.current) {
+                console.log('[CameraSettings] Stopping existing processor to apply new blur quality');
+                try {
+                  await track.stopProcessor();
+                  // Longer pause for desktop to ensure resources are fully released
+                  // This prevents jitter/seizure-inducing frame drops
+                  const pauseDuration = isDesktop ? 200 : 50; // 200ms for desktop, 50ms for mobile
+                  await new Promise(resolve => setTimeout(resolve, pauseDuration));
+                  backgroundProcessorRef.current = null;
+                } catch (err) {
+                  console.warn('[CameraSettings] Error stopping existing processor:', err);
+                  backgroundProcessorRef.current = null;
+                }
+              }
+              
+              // Create new processor with updated blur quality settings
+              console.log('[CameraSettings] Creating BackgroundProcessor with blur quality:', blurQuality);
+              backgroundProcessorRef.current = BackgroundProcessor({
+                blurRadius: blurConfig.blurRadius,
+                segmenterOptions: {
+                  delegate,
+                },
+              });
+              await track.setProcessor(backgroundProcessorRef.current);
+            } else {
+              console.log('[CameraSettings] Processor already exists with correct quality, skipping recreation');
+            }
             console.log(`[CameraSettings] ✅ Processor updated with ${blurQuality} quality (${blurConfig.blurRadius}px blur, ${delegate})`);
+            
+            // Add longer stabilization delay for desktop to prevent jitter
+            // Critical for preventing seizure-inducing frame drops on MacBook
+            if (isDesktop) {
+              console.log('[CameraSettings] Waiting for processor to stabilize on desktop...');
+              await new Promise(resolve => setTimeout(resolve, 300)); // 300ms for desktop stability
+              
+              // SLOW DOWN BACKGROUND REFRESH: Reduce frame rate when blur is active on desktop
+              // This makes the background refresh slower and smoother, reducing jitter
+              try {
+                const currentSettings = finalMediaStreamTrack.getSettings();
+                const currentFrameRate = currentSettings.frameRate || 30;
+                
+                // Store original frame rate if not already stored
+                if (originalFrameRateRef.current === null) {
+                  originalFrameRateRef.current = currentFrameRate;
+                  console.log(`[CameraSettings] Stored original frame rate: ${currentFrameRate}fps`);
+                }
+                
+                // Only reduce if current frame rate is above 15fps
+                if (currentFrameRate > 15) {
+                  console.log(`[CameraSettings] Reducing frame rate from ${currentFrameRate}fps to 15fps to slow background refresh`);
+                  await finalMediaStreamTrack.applyConstraints({
+                    frameRate: 15, // Lower frame rate = slower, smoother background refresh
+                  });
+                  console.log('[CameraSettings] ✅ Frame rate reduced to 15fps for smoother blur');
+                }
+              } catch (frameRateError) {
+                console.warn('[CameraSettings] Could not reduce frame rate (may not be supported):', frameRateError);
+                // Continue anyway - frame rate reduction is optional
+              }
+            } else if (delegate === 'GPU') {
+              console.log('[CameraSettings] Waiting for GPU processor to stabilize...');
+              await new Promise(resolve => setTimeout(resolve, 100)); // 100ms for mobile GPU
+            } else {
+              await new Promise(resolve => setTimeout(resolve, 50)); // 50ms for mobile CPU
+            }
+            console.log('[CameraSettings] Processor stabilized');
             
             // Update the processor ref AFTER successful application
             currentProcessorRef.current = {
@@ -601,6 +659,30 @@ export function CameraSettings() {
 
           if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
             try {
+              // RESTORE FRAME RATE: Restore original frame rate when blur is disabled
+              const isDesktop = typeof navigator !== 'undefined' && 
+                (/macintosh|mac os x/.test(navigator.userAgent.toLowerCase()) || 
+                 (!/iphone|ipod|ipad|android/.test(navigator.userAgent.toLowerCase()) && window.innerWidth > 768));
+              
+              if (isDesktop && originalFrameRateRef.current !== null) {
+                try {
+                  const currentSettings = mediaStreamTrack.getSettings();
+                  const currentFrameRate = currentSettings.frameRate || 15;
+                  
+                  // Only restore if current frame rate is lower than original (was reduced)
+                  if (currentFrameRate < originalFrameRateRef.current) {
+                    console.log(`[CameraSettings] Restoring frame rate from ${currentFrameRate}fps to ${originalFrameRateRef.current}fps`);
+                    await mediaStreamTrack.applyConstraints({
+                      frameRate: originalFrameRateRef.current,
+                    });
+                    console.log(`[CameraSettings] ✅ Frame rate restored to ${originalFrameRateRef.current}fps`);
+                  }
+                  originalFrameRateRef.current = null; // Clear after restore
+                } catch (frameRateError) {
+                  console.warn('[CameraSettings] Could not restore frame rate:', frameRateError);
+                }
+              }
+              
               if (backgroundProcessorRef.current && typeof backgroundProcessorRef.current.switchTo === 'function') {
                 // V2 API: Switch to disabled mode instead of stopping
                 console.log('[CameraSettings] Switching to disabled mode using v2 API');

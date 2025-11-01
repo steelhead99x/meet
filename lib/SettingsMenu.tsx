@@ -7,6 +7,7 @@ import {
   TrackToggle,
   useRoomContext,
   useIsRecording,
+  useTracks,
 } from '@livekit/components-react';
 import styles from '../styles/SettingsMenu.module.css';
 import { CameraSettings } from './CameraSettings';
@@ -34,8 +35,42 @@ export function SettingsMenu(props: SettingsMenuProps) {
   const room = useRoomContext();
   const recordingEndpoint = process.env.NEXT_PUBLIC_LK_RECORD_ENDPOINT;
   
+  // Check if screen sharing is active
+  const screenShareTracks = useTracks([{ source: Track.Source.ScreenShare, withPlaceholder: false }]);
+  const hasScreenShare = screenShareTracks.length > 0;
+  
   // Track settings menu visibility state from LayoutContext
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  
+  // Close settings if screen share becomes active
+  React.useEffect(() => {
+    if (hasScreenShare && isSettingsOpen) {
+      setIsSettingsOpen(false);
+      // Close via LayoutContext if available
+      if (layoutContext?.widget?.dispatch) {
+        const state = layoutContext.widget.state as any;
+        if (state?.settings === true) {
+          layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+        }
+      }
+      // Close any modal wrappers
+      const modalSelectors = [
+        '.lk-widget-modal',
+        '.lk-settings-menu-modal',
+        '[data-lk-widget="settings"]',
+        '[data-lk-settings-menu-open="true"]',
+      ];
+      modalSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.setAttribute('aria-hidden', 'true');
+            el.removeAttribute('data-lk-settings-menu-open');
+          }
+        });
+      });
+    }
+  }, [hasScreenShare, isSettingsOpen, layoutContext]);
   
   // Listen to LayoutContext widget state changes
   React.useEffect(() => {
@@ -44,6 +79,12 @@ export function SettingsMenu(props: SettingsMenuProps) {
     // Check if widget state has settings property
     // LiveKit's ControlBar toggles settings via widget state
     const checkState = () => {
+      // Prevent opening if screen share is active
+      if (hasScreenShare) {
+        setIsSettingsOpen(false);
+        return;
+      }
+      
       const state = layoutContext.widget.state as any;
       const widgetStateOpen = state?.settings === true;
       // Settings can be tracked via widget.state or we can listen to DOM changes
@@ -51,7 +92,10 @@ export function SettingsMenu(props: SettingsMenuProps) {
       const modal = document.querySelector('.lk-settings-menu-modal');
       const modalOpen = modal && modal.getAttribute('aria-hidden') !== 'true';
       const isOpen = widgetStateOpen || modalOpen;
-      setIsSettingsOpen(isOpen);
+      // Only set to open if screen share is not active
+      if (!hasScreenShare) {
+        setIsSettingsOpen(isOpen);
+      }
     };
     
     // Check initial state
@@ -63,12 +107,41 @@ export function SettingsMenu(props: SettingsMenuProps) {
     if (widget?.subscribe) {
       unsubscribe = widget.subscribe((state: any) => {
         const isOpen = state?.settings === true;
-        setIsSettingsOpen(isOpen);
+        // Prevent opening if screen share is active
+        if (hasScreenShare) {
+          if (isOpen && layoutContext?.widget?.dispatch) {
+            // Force close if it tries to open during screen share
+            layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+          }
+          setIsSettingsOpen(false);
+        } else {
+          setIsSettingsOpen(isOpen);
+        }
       });
     }
     
     // Watch for DOM changes (when LiveKit creates modal wrapper)
-    const observer = new MutationObserver(checkState);
+    const observer = new MutationObserver(() => {
+      // Prevent opening if screen share is active
+      if (hasScreenShare) {
+        const modal = document.querySelector('.lk-settings-menu-modal');
+        if (modal && modal.getAttribute('aria-hidden') !== 'true') {
+          // Force close if it opened during screen share
+          modal.setAttribute('aria-hidden', 'true');
+          modal.removeAttribute('data-lk-settings-menu-open');
+          if (layoutContext?.widget?.dispatch) {
+            const state = layoutContext.widget.state as any;
+            if (state?.settings === true) {
+              layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+            }
+          }
+        }
+        setIsSettingsOpen(false);
+        return;
+      }
+      checkState();
+    });
+    
     observer.observe(document.body, {
       childList: true,
       subtree: true,
@@ -82,7 +155,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
         unsubscribe();
       }
     };
-  }, [layoutContext]);
+  }, [layoutContext, hasScreenShare]);
 
   const settings = React.useMemo(() => {
     return {
@@ -705,7 +778,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
                       💡 How Quality Settings Work
                     </div>
                     <div style={{ lineHeight: '1.5' }}>
-                      <strong>Blur Strength:</strong> 15px (Low) → 45px (Medium) → 90px (High) → 150px (Ultra)
+                      <strong>Blur Strength:</strong> 10px (Low) → 15px (Medium) → 20px (High) → 25px (Ultra) <em>(Desktop optimized to prevent jitter)</em>
                       <br/><br/>
                       <strong>Segmentation Engine:</strong>
                       <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>

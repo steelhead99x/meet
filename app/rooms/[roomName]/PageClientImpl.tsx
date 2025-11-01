@@ -1099,21 +1099,62 @@ function RoomContentInner() {
   
   // Listen for settings button clicks from ControlBar and LayoutContext
   React.useEffect(() => {
-    if (hasScreenShare) return; // VideoConference handles settings
+    if (hasScreenShare) {
+      // If screen share is active, ensure settings is closed and don't listen for changes
+      if (isSettingsOpen) {
+        setIsSettingsOpen(false);
+        // Close via LayoutContext if available
+        if (layoutContext?.widget?.dispatch) {
+          const state = layoutContext.widget.state as any;
+          if (state?.settings === true) {
+            layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+          }
+        }
+        // Close any modal wrappers
+        const modalSelectors = [
+          '.lk-widget-modal',
+          '.lk-settings-menu-modal',
+          '[data-lk-widget="settings"]',
+          '[data-lk-settings-menu-open="true"]',
+        ];
+        modalSelectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach((el) => {
+            if (el instanceof HTMLElement) {
+              el.setAttribute('aria-hidden', 'true');
+              el.removeAttribute('data-lk-settings-menu-open');
+            }
+          });
+        });
+      }
+      return; // VideoConference handles settings when screen sharing
+    }
     
     const checkSettingsState = () => {
+      // Always close settings if screen share is active
+      if (hasScreenShare) {
+        setIsSettingsOpen(false);
+        return;
+      }
+      
       // Check LayoutContext widget state first (most reliable)
       if (layoutContext?.widget?.state) {
         const state = layoutContext.widget.state as any;
         const isOpen = state.settings === true;
-        setIsSettingsOpen(isOpen);
+        // Only set to open if screen share is not active
+        if (!hasScreenShare) {
+          setIsSettingsOpen(isOpen);
+        }
         return;
       }
       
       // Fallback: check DOM for modal state
       const modal = document.querySelector('.lk-settings-menu-modal');
       const isOpen = modal && modal.getAttribute('aria-hidden') !== 'true';
-      setIsSettingsOpen(!!isOpen);
+      // Only set to open if screen share is not active
+      if (!hasScreenShare) {
+        setIsSettingsOpen(!!isOpen);
+      }
     };
     
     // Check initial state
@@ -1125,12 +1166,38 @@ function RoomContentInner() {
     if (widget?.subscribe) {
       unsubscribe = widget.subscribe((state: any) => {
         const isOpen = state.settings === true;
-        setIsSettingsOpen(isOpen);
+        // Prevent opening settings if screen share is active
+        if (hasScreenShare) {
+          if (isOpen && layoutContext?.widget?.dispatch) {
+            // Force close if it tries to open during screen share
+            layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+          }
+          setIsSettingsOpen(false);
+        } else {
+          setIsSettingsOpen(isOpen);
+        }
       });
     }
     
     // Watch for DOM changes (when LiveKit toggles settings via ControlBar)
     const observer = new MutationObserver(() => {
+      // Prevent opening settings if screen share is active
+      if (hasScreenShare) {
+        const modal = document.querySelector('.lk-settings-menu-modal');
+        if (modal && modal.getAttribute('aria-hidden') !== 'true') {
+          // Force close if it opened during screen share
+          modal.setAttribute('aria-hidden', 'true');
+          modal.removeAttribute('data-lk-settings-menu-open');
+          if (layoutContext?.widget?.dispatch) {
+            const state = layoutContext.widget.state as any;
+            if (state?.settings === true) {
+              layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+            }
+          }
+        }
+        setIsSettingsOpen(false);
+        return;
+      }
       checkSettingsState();
     });
     
@@ -1147,7 +1214,41 @@ function RoomContentInner() {
         unsubscribe();
       }
     };
-  }, [hasScreenShare, layoutContext]);
+  }, [hasScreenShare, layoutContext, isSettingsOpen]);
+  
+  // Close settings menu when screen sharing starts
+  React.useEffect(() => {
+    if (hasScreenShare && isSettingsOpen) {
+      // Close settings menu when screensharing starts
+      setIsSettingsOpen(false);
+      
+      // Also close via LayoutContext if available
+      if (layoutContext?.widget?.dispatch) {
+        const state = layoutContext.widget.state as any;
+        if (state?.settings === true) {
+          layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+        }
+      }
+      
+      // Close any modal wrappers
+      const modalSelectors = [
+        '.lk-widget-modal',
+        '.lk-settings-menu-modal',
+        '[data-lk-widget="settings"]',
+        '[data-lk-settings-menu-open="true"]',
+      ];
+      
+      modalSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.setAttribute('aria-hidden', 'true');
+            el.removeAttribute('data-lk-settings-menu-open');
+          }
+        });
+      });
+    }
+  }, [hasScreenShare, isSettingsOpen, layoutContext]);
   
   // Listen for chat button clicks from ControlBar and LayoutContext
   React.useEffect(() => {
@@ -1206,9 +1307,32 @@ function RoomContentInner() {
 
   // Also listen for direct button clicks as fallback
   React.useEffect(() => {
-    if (hasScreenShare) return;
-    
     const handleSettingsClick = (e: MouseEvent) => {
+      // Block any settings opening if screen share is active
+      if (hasScreenShare) {
+        const target = e.target as HTMLElement;
+        const button = target.closest('button[aria-label*="Settings"]') || 
+                       target.closest('button[aria-label*="settings"]') ||
+                       target.closest('.lk-settings-menu-toggle') ||
+                       target.closest('.lk-settings-toggle') ||
+                       target.closest('button[data-lk-source="settings"]');
+        
+        if (button) {
+          // Prevent settings from opening during screen share
+          e.preventDefault();
+          e.stopPropagation();
+          // Ensure settings stays closed
+          setIsSettingsOpen(false);
+          if (layoutContext?.widget?.dispatch) {
+            const state = layoutContext.widget.state as any;
+            if (state?.settings === true) {
+              layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+            }
+          }
+        }
+        return;
+      }
+      
       const target = e.target as HTMLElement;
       
       // Check if click is on settings button - try multiple selectors

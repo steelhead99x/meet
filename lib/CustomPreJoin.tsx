@@ -199,6 +199,8 @@ export function CustomPreJoin({
   const blurProcessorRef = React.useRef<any>(null);
   const processedTrackIdRef = React.useRef<string | null>(null);
   const isApplyingBlurRef = React.useRef(false);
+  // Store original frame rate to restore when blur is disabled
+  const originalFrameRateRef = React.useRef<number | null>(null);
   // Start with isPreparingVideo=true if blur/effects are enabled (for privacy)
   const [isPreparingVideo, setIsPreparingVideo] = React.useState(() => {
     return backgroundType !== 'none'; // Hide video initially if effect is enabled
@@ -223,6 +225,30 @@ export function CustomPreJoin({
       const mediaStreamTrack = videoTrack.mediaStreamTrack;
       if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
         try {
+          // RESTORE FRAME RATE: Restore original frame rate when blur is disabled
+          const isDesktop = typeof navigator !== 'undefined' && 
+            (/macintosh|mac os x/.test(navigator.userAgent.toLowerCase()) || 
+             (!/iphone|ipod|ipad|android/.test(navigator.userAgent.toLowerCase()) && window.innerWidth > 768));
+          
+          if (isDesktop && originalFrameRateRef.current !== null && type === 'none') {
+            try {
+              const currentSettings = mediaStreamTrack.getSettings();
+              const currentFrameRate = currentSettings.frameRate || 15;
+              
+              // Only restore if current frame rate is lower than original (was reduced)
+              if (currentFrameRate < originalFrameRateRef.current) {
+                console.log(`[CustomPreJoin] Restoring frame rate from ${currentFrameRate}fps to ${originalFrameRateRef.current}fps`);
+                await mediaStreamTrack.applyConstraints({
+                  frameRate: originalFrameRateRef.current,
+                });
+                console.log(`[CustomPreJoin] ✅ Frame rate restored to ${originalFrameRateRef.current}fps`);
+              }
+              originalFrameRateRef.current = null; // Clear after restore
+            } catch (frameRateError) {
+              console.warn('[CustomPreJoin] Could not restore frame rate:', frameRateError);
+            }
+          }
+          
           // If we have a v2 BackgroundProcessor and switching to 'none', use switchTo disabled
           if (isBlurProcessor && type === 'none') {
             console.log('[CustomPreJoin] Using v2 API to switch to disabled mode');
@@ -372,11 +398,18 @@ export function CustomPreJoin({
         }
         
         // Stop any existing processor before applying a new one
-        // This ensures clean transitions when changing filters
+        // Add longer pause for desktop to prevent jitter
+        const isDesktop = typeof navigator !== 'undefined' && 
+          (/macintosh|mac os x/.test(navigator.userAgent.toLowerCase()) || 
+           (!/iphone|ipod|ipad|android/.test(navigator.userAgent.toLowerCase()) && window.innerWidth > 768));
+        
         if (blurProcessorRef.current) {
           try {
             await videoTrack.stopProcessor();
             console.log('[CustomPreJoin] Stopped existing processor before applying new effect');
+            // Longer pause for desktop to ensure resources are fully released
+            const pauseDuration = isDesktop ? 200 : 50;
+            await new Promise(resolve => setTimeout(resolve, pauseDuration));
             blurProcessorRef.current = null;
           } catch (err) {
             console.warn('[CustomPreJoin] Error stopping existing processor (may not exist):', err);
@@ -429,8 +462,13 @@ export function CustomPreJoin({
           if (backgroundType === 'blur') {
             // Get blur configuration based on quality setting
             const blurConfig = getBlurConfig(blurQuality);
-            // Use CPU for low quality, GPU for others (better performance on MacBook Pro)
-            const delegate = blurQuality === 'low' ? 'CPU' : 'GPU';
+            // CRITICAL FIX: Use CPU for all blur on desktop/MacBook to prevent jitter
+            const isDesktop = typeof navigator !== 'undefined' && 
+              (/macintosh|mac os x/.test(navigator.userAgent.toLowerCase()) || 
+               (!/iphone|ipod|ipad|android/.test(navigator.userAgent.toLowerCase()) && window.innerWidth > 768));
+            
+            // Always use CPU for desktop to prevent jitter
+            const delegate = isDesktop ? 'CPU' : (blurQuality === 'low' ? 'CPU' : 'GPU');
             
             console.log(`[CustomPreJoin] Initializing BackgroundProcessor v2 in blur mode with quality: ${blurQuality}, radius: ${blurConfig.blurRadius}px, delegate: ${delegate}`);
             blurProcessorRef.current = BackgroundProcessor({
@@ -439,6 +477,42 @@ export function CustomPreJoin({
                 delegate,
               },
             });
+            
+            // Add longer stabilization delay for desktop to prevent jitter
+            if (isDesktop) {
+              console.log('[CustomPreJoin] Waiting for processor to stabilize on desktop...');
+              await new Promise(resolve => setTimeout(resolve, 300)); // 300ms for desktop
+              
+              // SLOW DOWN BACKGROUND REFRESH: Reduce frame rate when blur is active on desktop
+              // This makes the background refresh slower and smoother, reducing jitter
+              try {
+                const currentSettings = mediaStreamTrack.getSettings();
+                const currentFrameRate = currentSettings.frameRate || 30;
+                
+                // Store original frame rate if not already stored
+                if (originalFrameRateRef.current === null) {
+                  originalFrameRateRef.current = currentFrameRate;
+                  console.log(`[CustomPreJoin] Stored original frame rate: ${currentFrameRate}fps`);
+                }
+                
+                // Only reduce if current frame rate is above 15fps
+                if (currentFrameRate > 15) {
+                  console.log(`[CustomPreJoin] Reducing frame rate from ${currentFrameRate}fps to 15fps to slow background refresh`);
+                  await mediaStreamTrack.applyConstraints({
+                    frameRate: 15, // Lower frame rate = slower, smoother background refresh
+                  });
+                  console.log('[CustomPreJoin] ✅ Frame rate reduced to 15fps for smoother blur');
+                }
+              } catch (frameRateError) {
+                console.warn('[CustomPreJoin] Could not reduce frame rate (may not be supported):', frameRateError);
+                // Continue anyway - frame rate reduction is optional
+              }
+            } else if (delegate === 'GPU') {
+              console.log('[CustomPreJoin] Waiting for GPU processor to stabilize...');
+              await new Promise(resolve => setTimeout(resolve, 100)); // 100ms for mobile GPU
+            } else {
+              await new Promise(resolve => setTimeout(resolve, 50)); // 50ms for mobile CPU
+            }
           } else if ((backgroundType === 'gradient' || backgroundType === 'image') && backgroundPath) {
             let imageSrc = backgroundPath;
             if (backgroundType === 'gradient') {
