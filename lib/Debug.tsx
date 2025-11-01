@@ -7,6 +7,9 @@ import { datadogLogs } from '@datadog/browser-logs';
 
 import styles from '../styles/Debug.module.css';
 
+// Track if Datadog has been initialized to prevent multiple initializations
+let datadogInitialized = false;
+
 export const useDebugMode = ({ logLevel }: { logLevel?: LogLevel }) => {
   const room = useRoomContext();
 
@@ -14,13 +17,17 @@ export const useDebugMode = ({ logLevel }: { logLevel?: LogLevel }) => {
     setLogLevel(logLevel ?? 'debug');
 
     if (process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN && process.env.NEXT_PUBLIC_DATADOG_SITE) {
-      console.log('setting up datadog logs');
-      datadogLogs.init({
-        clientToken: process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN,
-        site: process.env.NEXT_PUBLIC_DATADOG_SITE,
-        forwardErrorsToLogs: true,
-        sessionSampleRate: 100,
-      });
+      // Only initialize Datadog once, even if the effect runs multiple times
+      if (!datadogInitialized) {
+        console.log('setting up datadog logs');
+        datadogLogs.init({
+          clientToken: process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN,
+          site: process.env.NEXT_PUBLIC_DATADOG_SITE,
+          forwardErrorsToLogs: true,
+          sessionSampleRate: 100,
+        });
+        datadogInitialized = true;
+      }
 
       setLogExtension((level, msg, context) => {
         switch (level) {

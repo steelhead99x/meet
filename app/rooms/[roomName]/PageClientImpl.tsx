@@ -19,6 +19,7 @@ import {
   Chat,
   useTracks,
   LayoutContextProvider,
+  useMaybeLayoutContext,
 } from '@livekit/components-react';
 import {
   ExternalE2EEKeyProvider,
@@ -557,6 +558,57 @@ function VideoConferenceComponent(props: {
   );
 }
 
+// Wrapper component to apply chat visibility attributes
+function ChatWrapper({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  
+  React.useEffect(() => {
+    const updateChatAttributes = () => {
+      if (wrapperRef.current) {
+        const chatElement = wrapperRef.current.querySelector('.lk-chat') as HTMLElement;
+        if (chatElement) {
+          chatElement.setAttribute('data-lk-chat-open', isOpen ? 'true' : 'false');
+          chatElement.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    // Try to update immediately
+    if (updateChatAttributes()) {
+      return;
+    }
+    
+    // If chat element not found yet, wait for it to be rendered
+    const observer = new MutationObserver(() => {
+      if (updateChatAttributes()) {
+        observer.disconnect();
+      }
+    });
+    
+    if (wrapperRef.current) {
+      observer.observe(wrapperRef.current, {
+        childList: true,
+        subtree: true,
+      });
+    }
+    
+    // Also try after a short delay in case MutationObserver doesn't catch it
+    const timeout = setTimeout(() => {
+      updateChatAttributes();
+      observer.disconnect();
+    }, 100);
+    
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+    };
+  }, [isOpen]);
+  
+  return <div ref={wrapperRef} style={{ height: '100%' }}>{children}</div>;
+}
+
 // Separate component for room content to isolate hooks
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
   return (
@@ -575,11 +627,233 @@ function RoomContentInner() {
   // Check if anyone is screen sharing - now safe to use useTracks inside RoomContext
   const tracks = useTracks([{ source: Track.Source.ScreenShare, withPlaceholder: false }]);
   const hasScreenShare = tracks.length > 0;
+  
+  // Track settings menu open state manually (for when not using VideoConference)
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  // Track chat open state manually (for when not using VideoConference)
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
+  const layoutContext = useMaybeLayoutContext();
 
   console.log('[RoomContent] Rendering', {
     hasScreenShare,
     screenShareCount: tracks.length,
   });
+  
+  // Listen for settings button clicks from ControlBar and LayoutContext
+  React.useEffect(() => {
+    if (hasScreenShare) return; // VideoConference handles settings
+    
+    const checkSettingsState = () => {
+      // Check LayoutContext widget state first (most reliable)
+      if (layoutContext?.widget?.state) {
+        const state = layoutContext.widget.state as any;
+        const isOpen = state.settings === true;
+        setIsSettingsOpen(isOpen);
+        return;
+      }
+      
+      // Fallback: check DOM for modal state
+      const modal = document.querySelector('.lk-settings-menu-modal');
+      const isOpen = modal && modal.getAttribute('aria-hidden') !== 'true';
+      setIsSettingsOpen(!!isOpen);
+    };
+    
+    // Check initial state
+    checkSettingsState();
+    
+    // Subscribe to widget state changes if available
+    let unsubscribe: (() => void) | undefined;
+    const widget = layoutContext?.widget as any;
+    if (widget?.subscribe) {
+      unsubscribe = widget.subscribe((state: any) => {
+        const isOpen = state.settings === true;
+        setIsSettingsOpen(isOpen);
+      });
+    }
+    
+    // Watch for DOM changes (when LiveKit toggles settings via ControlBar)
+    const observer = new MutationObserver(() => {
+      checkSettingsState();
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-hidden', 'data-lk-settings-menu-open']
+    });
+    
+    return () => {
+      observer.disconnect();
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [hasScreenShare, layoutContext]);
+  
+  // Listen for chat button clicks from ControlBar and LayoutContext
+  React.useEffect(() => {
+    if (hasScreenShare) return; // VideoConference handles chat
+    
+    const checkChatState = () => {
+      // Check LayoutContext widget state first (most reliable)
+      if (layoutContext?.widget?.state) {
+        const state = layoutContext.widget.state as any;
+        const isOpen = state.chat === true;
+        setIsChatOpen(isOpen);
+        return;
+      }
+      
+      // Fallback: check DOM for chat state
+      const chat = document.querySelector('.lk-chat');
+      const isOpen = chat && (
+        chat.getAttribute('data-lk-chat-open') === 'true' ||
+        chat.getAttribute('aria-hidden') !== 'true'
+      );
+      setIsChatOpen(!!isOpen);
+    };
+    
+    // Check initial state
+    checkChatState();
+    
+    // Subscribe to widget state changes if available
+    let unsubscribe: (() => void) | undefined;
+    const widget = layoutContext?.widget as any;
+    if (widget?.subscribe) {
+      unsubscribe = widget.subscribe((state: any) => {
+        const isOpen = state.chat === true;
+        setIsChatOpen(isOpen);
+      });
+    }
+    
+    // Watch for DOM changes (when LiveKit toggles chat via ControlBar)
+    const observer = new MutationObserver(() => {
+      checkChatState();
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-hidden', 'data-lk-chat-open']
+    });
+    
+    return () => {
+      observer.disconnect();
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [hasScreenShare, layoutContext]);
+
+  // Also listen for direct button clicks as fallback
+  React.useEffect(() => {
+    if (hasScreenShare) return;
+    
+    const handleSettingsClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Check if click is on settings button - try multiple selectors
+      const button = target.closest('button[aria-label*="Settings"]') || 
+                     target.closest('button[aria-label*="settings"]') ||
+                     target.closest('.lk-settings-menu-toggle') ||
+                     target.closest('.lk-settings-toggle') ||
+                     target.closest('button[data-lk-source="settings"]');
+      
+      // Don't handle clicks inside the settings menu itself or the modal overlay
+      if (button && !target.closest('.settings-menu') && !target.closest('.lk-settings-menu-modal')) {
+        const buttonLabel = (button.getAttribute('aria-label') || '').toLowerCase();
+        const buttonClass = (button.className || '').toLowerCase();
+        const isSettingsButton = buttonLabel.includes('setting') ||
+                               buttonClass.includes('settings') ||
+                               buttonClass.includes('lk-settings');
+        
+        if (isSettingsButton) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Toggle via LayoutContext if available
+          if (layoutContext?.widget?.dispatch) {
+            layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+          } else {
+            // Fallback: toggle manually
+            setIsSettingsOpen(prev => {
+              const newState = !prev;
+              console.log('[Settings] Toggling settings menu:', newState);
+              return newState;
+            });
+          }
+        }
+      }
+      
+      // Close menu when clicking outside (on overlay)
+      if (!target.closest('.settings-menu') && target.closest('.lk-settings-menu-modal')) {
+        if (layoutContext?.widget?.dispatch) {
+          layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+        } else {
+          setIsSettingsOpen(false);
+        }
+      }
+    };
+    
+    // Use capture phase to catch the event early
+    document.addEventListener('click', handleSettingsClick, true);
+    return () => {
+      document.removeEventListener('click', handleSettingsClick, true);
+    };
+  }, [hasScreenShare, layoutContext]);
+
+  // Also listen for direct chat button clicks as fallback
+  React.useEffect(() => {
+    if (hasScreenShare) return;
+    
+    const handleChatClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Check if click is on chat button - try multiple selectors
+      const button = target.closest('.lk-chat-toggle') ||
+                     target.closest('button[aria-label*="Chat"]') || 
+                     target.closest('button[aria-label*="chat"]') ||
+                     target.closest('button[data-lk-source="chat"]');
+      
+      // Don't handle clicks inside the chat panel itself
+      if (button && !target.closest('.lk-chat') && !target.closest('.lk-chat-messages') && !target.closest('.lk-chat-form')) {
+        const buttonLabel = (button.getAttribute('aria-label') || '').toLowerCase();
+        const buttonClass = (button.className || '').toLowerCase();
+        const isChatButton = buttonClass.includes('lk-chat-toggle') ||
+                           buttonLabel.includes('chat') ||
+                           buttonClass.includes('chat');
+        
+        if (isChatButton) {
+          console.log('[Chat] Chat button clicked, current state:', isChatOpen);
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Always toggle manually - more reliable
+          setIsChatOpen(prev => {
+            const newState = !prev;
+            console.log('[Chat] Toggling chat panel to:', newState);
+            return newState;
+          });
+          
+          // Also try LayoutContext dispatch if available (but don't rely on it)
+          if (layoutContext?.widget?.dispatch) {
+            try {
+              layoutContext.widget.dispatch({ msg: 'toggle_chat' });
+            } catch (err) {
+              console.warn('[Chat] LayoutContext dispatch failed:', err);
+            }
+          }
+        }
+      }
+    };
+    
+    // Use capture phase to catch the event early
+    document.addEventListener('click', handleChatClick, true);
+    return () => {
+      document.removeEventListener('click', handleChatClick, true);
+    };
+  }, [hasScreenShare, layoutContext, isChatOpen]);
 
   return (
     <>
@@ -655,19 +929,41 @@ function RoomContentInner() {
           </div>
 
           {/* Chat panel - only show when not using VideoConference (which has its own chat) */}
+          {/* Chat visibility is controlled by ControlBar via LayoutContext */}
           {!hasScreenShare && (
-            <Chat
-              style={{
-                height: '100%',
-                width: '360px',
-              }}
-              messageFormatter={formatChatMessageLinks}
-            />
+            <ChatWrapper isOpen={isChatOpen}>
+              <Chat
+                style={{
+                  height: '100%',
+                  width: '380px',
+                }}
+                messageFormatter={formatChatMessageLinks}
+              />
+            </ChatWrapper>
           )}
         </div>
 
-        {/* Settings menu - only show when not using VideoConference and settings are enabled */}
-        {!hasScreenShare && SHOW_SETTINGS_MENU && <SettingsMenu />}
+        {/* Settings menu - ControlBar manages it via LayoutContext */}
+        {/* Wrap in modal structure that LiveKit expects when settings is toggled */}
+        {!hasScreenShare && SHOW_SETTINGS_MENU && (
+          <div 
+            className="lk-settings-menu-modal" 
+            aria-hidden={!isSettingsOpen ? "true" : "false"}
+            data-lk-settings-menu-open={isSettingsOpen ? "true" : undefined}
+            onClick={(e) => {
+              // Close when clicking on the overlay (not on the menu itself)
+              if (e.target === e.currentTarget) {
+                if (layoutContext?.widget?.dispatch) {
+                  layoutContext.widget.dispatch({ msg: 'toggle_settings' });
+                } else {
+                  setIsSettingsOpen(false);
+                }
+              }
+            }}
+          >
+            <SettingsMenu />
+          </div>
+        )}
       </LayoutContextProvider>
     </>
   );

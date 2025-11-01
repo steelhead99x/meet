@@ -22,27 +22,196 @@ import {
   useParticipants,
   TrackReference,
   isTrackReference,
+  useLocalParticipant,
 } from '@livekit/components-react';
 import { Track, Participant } from 'livekit-client';
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
+
+/**
+ * Helper function to check if a track should show a placeholder
+ * Returns true if the track is muted or doesn't have a video stream
+ */
+function shouldShowPlaceholder(
+  trackRef: TrackReference | undefined,
+  participant?: Participant
+): boolean {
+  if (!trackRef) return true;
+  
+  // Primary check: Use participant's camera track publication if available
+  if (participant) {
+    // Find camera track publication (not screen share)
+    const cameraPub = Array.from(participant.videoTrackPublications.values()).find(
+      (pub) => pub.source === Track.Source.Camera
+    );
+    
+    if (!cameraPub) {
+      // No camera publication exists - show placeholder
+      return true;
+    }
+    
+    // Check if camera is muted or has no track
+    if (cameraPub.isMuted || !cameraPub.track) {
+      return true;
+    }
+  }
+  
+  // Secondary check: Check if trackRef has a publication property (for remote tracks)
+  const publication = (trackRef as any).publication;
+  if (publication) {
+    if (publication.isMuted || !publication.track) {
+      return true;
+    }
+  } else {
+    // If trackRef has no publication, it's a manually created placeholder
+    // Show placeholder if participant has no video track publications
+    if (!participant || participant.videoTrackPublications.size === 0) {
+      return true;
+    }
+  }
+  
+  // Final fallback: If TrackReference was created without a real track
+  if (!publication && !participant?.videoTrackPublications.size) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Placeholder component for participants with video disabled
+ */
+function VideoPlaceholder({
+  participant,
+  size = 'normal',
+}: {
+  participant: Participant;
+  size?: 'small' | 'normal';
+}) {
+  // Get initials from participant name or identity
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const displayName = participant.name || participant.identity;
+  const initials = getInitials(displayName);
+
+  return (
+    <div
+      className="lk-participant-placeholder"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)',
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      {/* Avatar circle with initials */}
+      <div
+        style={{
+          width: size === 'small' ? '48px' : '80px',
+          height: size === 'small' ? '48px' : '80px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: size === 'small' ? '18px' : '32px',
+          fontWeight: 600,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+        }}
+      >
+        {initials}
+      </div>
+      
+      {/* Camera off icon indicator */}
+      <div
+        style={{
+          marginTop: size === 'small' ? '4px' : '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          color: 'rgba(255, 255, 255, 0.6)',
+          fontSize: size === 'small' ? '10px' : '12px',
+        }}
+      >
+        <svg
+          width={size === 'small' ? '12' : '16'}
+          height={size === 'small' ? '12' : '16'}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+          <line x1="12" y1="17" x2="12" y2="17" />
+        </svg>
+      </div>
+    </div>
+  );
+}
 
 export function AdaptiveVideoLayout() {
   const participants = useParticipants();
   const tracks = useTracks(
     [
-      { source: Track.Source.Camera, withPlaceholder: false },
+      { source: Track.Source.Camera, withPlaceholder: true },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
     { onlySubscribed: false },
   );
 
-  // Filter to get camera tracks only (no screen shares) and ensure they are full TrackReferences
-  const cameraTracks: TrackReference[] = tracks.filter(
-    (track): track is TrackReference =>
-      track.source === Track.Source.Camera &&
-      track.publication !== undefined &&
-      isTrackReference(track)
-  );
+  // Get camera tracks for all participants (including placeholders)
+  // When withPlaceholder: true, useTracks returns placeholder tracks for participants without video
+  // Order them to match the participants array order for consistent layout
+  const cameraTracks: TrackReference[] = React.useMemo(() => {
+    // Filter to get all camera tracks (including placeholders)
+    const allCameraTracks = tracks.filter(
+      (track): track is TrackReference =>
+        track.source === Track.Source.Camera &&
+        isTrackReference(track) &&
+        track.participant !== undefined
+    );
+    
+    // Create a map for quick lookup
+    const trackMap = new Map<string, TrackReference>();
+    allCameraTracks.forEach((track) => {
+      if (track.participant) {
+        trackMap.set(track.participant.identity, track);
+      }
+    });
+    
+    // Order tracks to match participants array order
+    // IMPORTANT: Ensure every participant has a track reference (even if placeholder)
+    // This fixes the issue where joining without video shows "Waiting for participants"
+    const orderedTracks: TrackReference[] = [];
+    participants.forEach((participant) => {
+      const track = trackMap.get(participant.identity);
+      if (track) {
+        orderedTracks.push(track);
+      } else {
+        // If participant has no track from useTracks, create a placeholder track reference
+        // This can happen when a participant joins without video
+        const placeholderTrack: TrackReference = {
+          participant,
+          publication: undefined,
+          source: Track.Source.Camera,
+        } as TrackReference;
+        orderedTracks.push(placeholderTrack);
+      }
+    });
+    
+    return orderedTracks;
+  }, [tracks, participants]);
 
   // State for orientation and layout
   const [orientation, setOrientation] = React.useState<'portrait' | 'landscape'>('landscape');
@@ -78,13 +247,20 @@ export function AdaptiveVideoLayout() {
   }, [orientation]);
 
   // Determine layout based on participant count
+  // Use participants.length to ensure we show layout even when participants have no video
   const layoutType = React.useMemo(() => {
-    const count = cameraTracks.length;
-    if (count <= 1) return 'single';
-    if (count === 2) return 'pip'; // Picture-in-picture for 2 people
-    if (count <= 4) return 'pip'; // PIP works well up to 4 people
+    const participantCount = participants.length;
+    const trackCount = cameraTracks.length;
+    
+    // If no participants at all, default to single (will show "Waiting for participants")
+    if (participantCount === 0) return 'single';
+    
+    // Use participant count for layout determination (tracks now always match participants)
+    if (participantCount <= 1) return 'single';
+    if (participantCount === 2) return 'pip'; // Picture-in-picture for 2 people
+    if (participantCount <= 4) return 'pip'; // PIP works well up to 4 people
     return 'grid'; // Grid for 5+ people
-  }, [cameraTracks.length]);
+  }, [participants.length, cameraTracks.length]);
 
   console.log('[AdaptiveVideoLayout] Rendering', {
     participantCount: participants.length,
@@ -104,7 +280,29 @@ export function AdaptiveVideoLayout() {
   // Single participant view
   if (layoutType === 'single') {
     const singleTrack = cameraTracks[0];
+    const singleParticipant = participants[0];
 
+    // Show placeholder if no participant exists yet
+    if (!singleParticipant) {
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#000',
+          }}
+        >
+          <div style={{ color: 'white', fontSize: '18px' }}>
+            Waiting for participants...
+          </div>
+        </div>
+      );
+    }
+
+    // Always show the participant (with placeholder if no video)
     return (
       <div
         style={{
@@ -116,29 +314,30 @@ export function AdaptiveVideoLayout() {
           background: '#000',
         }}
       >
-        {singleTrack ? (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              position: 'relative',
-            }}
-          >
-            <VideoTrack
-              trackRef={singleTrack}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover', // Fill screen, crop sides if needed (Zoom-like)
-              }}
-            />
-            <ParticipantInfo participant={singleTrack.participant} />
-          </div>
-        ) : (
-          <div style={{ color: 'white', fontSize: '18px' }}>
-            Waiting for participants...
-          </div>
-        )}
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            background: '#1a1a1a',
+          }}
+        >
+          {shouldShowPlaceholder(singleTrack, singleParticipant) ? (
+            <VideoPlaceholder participant={singleParticipant} />
+          ) : (
+            singleTrack && (
+              <VideoTrack
+                trackRef={singleTrack}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover', // Fill screen, crop sides if needed (Zoom-like)
+                }}
+              />
+            )
+          )}
+          <ParticipantInfo participant={singleParticipant} />
+        </div>
       </div>
     );
   }
@@ -146,9 +345,10 @@ export function AdaptiveVideoLayout() {
   // PIP layout (one large + one/more small)
   if (layoutType === 'pip') {
     const focusedTrack = cameraTracks[focusedTrackIndex] || cameraTracks[0];
+    const focusedParticipant = focusedTrack?.participant || participants[focusedTrackIndex] || participants[0];
     const otherTracks = cameraTracks.filter((_, index) => index !== focusedTrackIndex);
 
-    if (!focusedTrack) {
+    if (!focusedTrack || !focusedParticipant) {
       return (
         <div
           style={{
@@ -184,17 +384,22 @@ export function AdaptiveVideoLayout() {
             height: '100%',
             position: 'relative',
             cursor: 'pointer',
+            background: '#1a1a1a',
           }}
         >
-          <VideoTrack
-            trackRef={focusedTrack}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover', // Fill screen, faces centered
-            }}
-          />
-          <ParticipantInfo participant={focusedTrack.participant} />
+          {shouldShowPlaceholder(focusedTrack, focusedParticipant) ? (
+            <VideoPlaceholder participant={focusedParticipant} />
+          ) : (
+            <VideoTrack
+              trackRef={focusedTrack}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover', // Fill screen, faces centered
+              }}
+            />
+          )}
+          <ParticipantInfo participant={focusedParticipant} />
         </div>
 
         {/* Small PIP videos in corner */}
@@ -213,9 +418,13 @@ export function AdaptiveVideoLayout() {
         >
           {otherTracks.map((track, index) => {
             const actualIndex = cameraTracks.indexOf(track);
+            const participant = track.participant || participants[actualIndex];
+            
+            if (!participant) return null;
+            
             return (
               <div
-                key={track.participant.identity}
+                key={participant.identity}
                 onClick={() => handleTrackClick(actualIndex)}
                 style={{
                   width: orientation === 'portrait' ? '100px' : '160px',
@@ -237,15 +446,19 @@ export function AdaptiveVideoLayout() {
                   e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
                 }}
               >
-                <VideoTrack
-                  trackRef={track}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-                <ParticipantInfo participant={track.participant} isSmall />
+                {shouldShowPlaceholder(track, participant) ? (
+                  <VideoPlaceholder participant={participant} size="small" />
+                ) : (
+                  <VideoTrack
+                    trackRef={track}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                )}
+                <ParticipantInfo participant={participant} isSmall />
               </div>
             );
           })}
@@ -275,29 +488,39 @@ export function AdaptiveVideoLayout() {
         background: '#000',
       }}
     >
-      {cameraTracks.map((track, index) => (
-        <div
-          key={track.participant.identity}
-          onClick={() => handleTrackClick(index)}
-          style={{
-            position: 'relative',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            background: '#1a1a1a',
-            cursor: 'pointer',
-          }}
-        >
-          <VideoTrack
-            trackRef={track}
+      {cameraTracks.map((track, index) => {
+        const participant = track.participant || participants[index];
+        
+        if (!participant) return null;
+        
+        return (
+          <div
+            key={participant.identity}
+            onClick={() => handleTrackClick(index)}
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
+              position: 'relative',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              background: '#1a1a1a',
+              cursor: 'pointer',
             }}
-          />
-          <ParticipantInfo participant={track.participant} />
-        </div>
-      ))}
+          >
+            {shouldShowPlaceholder(track, participant) ? (
+              <VideoPlaceholder participant={participant} />
+            ) : (
+              <VideoTrack
+                trackRef={track}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+            )}
+            <ParticipantInfo participant={participant} />
+          </div>
+        );
+      })}
     </div>
   );
 }

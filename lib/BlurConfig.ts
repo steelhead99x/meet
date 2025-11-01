@@ -146,7 +146,7 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
   /**
    * MEDIUM QUALITY - Standard laptops and tablets
    * - Moderate blur with GPU acceleration
-   * - Basic edge smoothing
+   * - Basic edge smoothing with temporal smoothing
    * - Good balance of quality and performance
    * - Uses LiveKit default for reliability
    */
@@ -173,14 +173,12 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
 
   /**
    * HIGH QUALITY - Modern desktops with good GPUs
-   * - Strong blur with advanced edge smoothing
-   * - GPU-accelerated processing
-   * - Enhanced edge refinement
-   * - Uses MediaPipe Image Segmenter with ProcessorWrapper
+   * - Strong blur with GPU acceleration
+   * - Uses reliable LiveKit default processor for best performance
    */
   high: {
     blurRadius: 90,
-    processorType: 'livekit-default',
+    processorType: 'livekit-default', // Use reliable default processor
     segmenterOptions: {
       delegate: 'GPU',
     },
@@ -202,13 +200,11 @@ export const BLUR_PRESETS: Record<BlurQuality, BlurConfig> = {
   /**
    * ULTRA QUALITY - High-end desktops with powerful GPUs
    * - Maximum blur for best background separation
-   * - Advanced edge processing
-   * - Utilizes all available GPU resources
-   * - Uses LiveKit default for reliability
+   * - Uses reliable LiveKit default processor with GPU acceleration
    */
   ultra: {
     blurRadius: 150,
-    processorType: 'livekit-default',
+    processorType: 'livekit-default', // Use reliable default processor
     segmenterOptions: {
       delegate: 'GPU',
     },
