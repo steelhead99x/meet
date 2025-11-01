@@ -9,6 +9,7 @@ import {
   RoomEvent,
   RoomOptions,
   VideoPresets,
+  Track,
   type VideoCodec,
 } from 'livekit-client';
 import { DebugMode } from '@/lib/Debug';
@@ -203,6 +204,50 @@ export function VideoConferenceClientImpl(props: {
 
     return () => {
       room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
+    };
+  }, [room]);
+
+  // Screen share event listeners for debugging
+  useEffect(() => {
+    if (!room) return;
+
+    const onLocalTrackPublished = (publication: any) => {
+      if (publication.source === Track.Source.ScreenShare) {
+        console.log('[ScreenShare] ✅ Track published successfully:', {
+          trackSid: publication.trackSid,
+          kind: publication.kind,
+          isSubscribed: !!publication.track,
+          dimensions: publication.dimensions,
+        });
+        toast.success('Screen sharing started', {
+          duration: 3000,
+          position: 'top-center',
+        });
+      }
+    };
+
+    const onLocalTrackUnpublished = (publication: any) => {
+      if (publication.source === Track.Source.ScreenShare) {
+        console.log('[ScreenShare] ❌ Track unpublished:', {
+          trackSid: publication.trackSid,
+        });
+      }
+    };
+
+    const onTrackPublished = (publication: any, participant: any) => {
+      if (publication.source === Track.Source.ScreenShare) {
+        console.log('[ScreenShare] 📺 Remote screen share track published by:', participant.identity);
+      }
+    };
+
+    room.on(RoomEvent.LocalTrackPublished, onLocalTrackPublished);
+    room.on(RoomEvent.LocalTrackUnpublished, onLocalTrackUnpublished);
+    room.on(RoomEvent.TrackPublished, onTrackPublished);
+
+    return () => {
+      room.off(RoomEvent.LocalTrackPublished, onLocalTrackPublished);
+      room.off(RoomEvent.LocalTrackUnpublished, onLocalTrackUnpublished);
+      room.off(RoomEvent.TrackPublished, onTrackPublished);
     };
   }, [room]);
 
