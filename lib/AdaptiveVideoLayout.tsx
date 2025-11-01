@@ -162,6 +162,7 @@ function VideoPlaceholder({
 
 export function AdaptiveVideoLayout() {
   const participants = useParticipants();
+  const { localParticipant } = useLocalParticipant();
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -190,11 +191,22 @@ export function AdaptiveVideoLayout() {
       }
     });
     
+    // Combine all participants - useParticipants() may not include local participant immediately
+    // So we merge it with the participants array
+    const participantSet = new Map<string, Participant>();
+    if (localParticipant) {
+      participantSet.set(localParticipant.identity, localParticipant);
+    }
+    participants.forEach((p) => {
+      participantSet.set(p.identity, p);
+    });
+    const allParticipants = Array.from(participantSet.values());
+    
     // Order tracks to match participants array order
     // IMPORTANT: Ensure every participant has a track reference (even if placeholder)
     // This fixes the issue where joining without video shows "Waiting for participants"
     const orderedTracks: TrackReference[] = [];
-    participants.forEach((participant) => {
+    allParticipants.forEach((participant) => {
       const track = trackMap.get(participant.identity);
       if (track) {
         orderedTracks.push(track);
@@ -210,8 +222,15 @@ export function AdaptiveVideoLayout() {
       }
     });
     
+    console.log('[AdaptiveVideoLayout] Camera tracks computed', {
+      participantsCount: allParticipants.length,
+      tracksCount: orderedTracks.length,
+      localParticipantExists: !!localParticipant,
+      participantIdentities: allParticipants.map(p => p.identity),
+    });
+    
     return orderedTracks;
-  }, [tracks, participants]);
+  }, [tracks, participants, localParticipant]);
 
   // State for orientation and layout
   const [orientation, setOrientation] = React.useState<'portrait' | 'landscape'>('landscape');
@@ -247,20 +266,20 @@ export function AdaptiveVideoLayout() {
   }, [orientation]);
 
   // Determine layout based on participant count
-  // Use participants.length to ensure we show layout even when participants have no video
+  // Use cameraTracks.length to ensure we show layout even when participants have no video
+  // (cameraTracks now includes placeholders for all participants)
   const layoutType = React.useMemo(() => {
-    const participantCount = participants.length;
     const trackCount = cameraTracks.length;
     
-    // If no participants at all, default to single (will show "Waiting for participants")
-    if (participantCount === 0) return 'single';
+    // If no tracks/participants at all, default to single (will show "Waiting for participants")
+    if (trackCount === 0) return 'single';
     
-    // Use participant count for layout determination (tracks now always match participants)
-    if (participantCount <= 1) return 'single';
-    if (participantCount === 2) return 'pip'; // Picture-in-picture for 2 people
-    if (participantCount <= 4) return 'pip'; // PIP works well up to 4 people
+    // Use track count for layout determination (tracks now always match participants)
+    if (trackCount <= 1) return 'single';
+    if (trackCount === 2) return 'pip'; // Picture-in-picture for 2 people
+    if (trackCount <= 4) return 'pip'; // PIP works well up to 4 people
     return 'grid'; // Grid for 5+ people
-  }, [participants.length, cameraTracks.length]);
+  }, [cameraTracks.length]);
 
   console.log('[AdaptiveVideoLayout] Rendering', {
     participantCount: participants.length,
@@ -280,7 +299,8 @@ export function AdaptiveVideoLayout() {
   // Single participant view
   if (layoutType === 'single') {
     const singleTrack = cameraTracks[0];
-    const singleParticipant = participants[0];
+    // Get participant from track first, then fallback to participants array
+    const singleParticipant = singleTrack?.participant || localParticipant || participants[0];
 
     // Show placeholder if no participant exists yet
     if (!singleParticipant) {
