@@ -934,14 +934,14 @@
   margin: 0 auto !important;
 }
 
-/* Reduce button menu size in room context (control bar), but keep original size in prejoin */
+/* Match button menu size in room context (control bar) to prejoin - same size */
 [data-lk-theme] .lk-control-bar .lk-button-menu {
-  width: 20px !important;
-  min-width: 20px !important;
-  max-width: 20px !important;
-  height: 20px !important;
-  min-height: 20px !important;
-  max-height: 20px !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
 }
 
 [data-lk-theme] .lk-button-menu:hover {
@@ -1001,12 +1001,12 @@
   z-index: 1 !important;
 }
 
-/* Smaller SVG for button menu in room context (control bar) */
+/* Match SVG size for button menu in room context (control bar) to prejoin - same size */
 [data-lk-theme] .lk-control-bar .lk-button-menu svg {
-  width: 10px !important;
-  height: 10px !important;
-  min-width: 10px !important;
-  min-height: 10px !important;
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
 }
 
 /* Ensure SVG children in dropdown menu buttons are visible */
@@ -2713,7 +2713,8 @@
 
 /* Add arrow icon (matching prejoin style) if no SVG is present */
 [data-lk-theme] .lk-chat-form-button:not(:has(svg))::before,
-[data-lk-theme] .lk-button.lk-chat-form-button:not(:has(svg))::before {
+[data-lk-theme] .lk-button.lk-chat-form-button:not(:has(svg))::before,
+[data-lk-theme] .lk-chat-form button:not(:has(svg))::before {
   content: "";
   position: absolute;
   width: 0;
@@ -2728,6 +2729,13 @@
   transition: transform 0.2s ease;
 }
 
+/* When SVG is present, hide the pseudo-element icon */
+[data-lk-theme] .lk-chat-form-button:has(svg)::before,
+[data-lk-theme] .lk-button.lk-chat-form-button:has(svg)::before,
+[data-lk-theme] .lk-chat-form button:has(svg)::before {
+  display: none !important;
+}
+
 [data-lk-theme] .lk-chat-form-button:hover,
 [data-lk-theme] .lk-button.lk-chat-form-button:hover {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
@@ -2739,7 +2747,8 @@
 
 /* Icon animation on hover */
 [data-lk-theme] .lk-chat-form-button:hover:not(:has(svg))::before,
-[data-lk-theme] .lk-button.lk-chat-form-button:hover:not(:has(svg))::before {
+[data-lk-theme] .lk-button.lk-chat-form-button:hover:not(:has(svg))::before,
+[data-lk-theme] .lk-chat-form button:hover:not(:has(svg))::before {
   transform: translate(-40%, -50%);
 }
 

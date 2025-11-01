@@ -26,29 +26,35 @@ export function MicrophoneSettings() {
   // Check if microphone is currently enabled
   const isMicrophoneEnabled = localParticipant?.isMicrophoneEnabled ?? false;
 
-  // Initialize Krisp: enabled by default, or auto-enable when mic is enabled
+  // Track if we've initialized Krisp to avoid repeated initialization
+  const hasInitializedRef = React.useRef(false);
+
+  // Initialize Krisp: enabled by default regardless of mic state
   React.useEffect(() => {
     if (isNoiseFilterPending) return; // Don't interfere if operation is in progress
 
-    // Always enable Krisp when microphone is enabled
-    if (isMicrophoneEnabled) {
-      if (!isNoiseFilterEnabled) {
-        console.log('[MicrophoneSettings] Microphone is enabled, auto-enabling Krisp noise suppression');
-        setNoiseFilterEnabled(true);
-      }
-    } else {
-      // If mic is disabled, load saved preference or enable by default (first time only)
-      // Only set on initial mount to avoid overriding user's manual choice when mic is off
+    // Initialize Krisp on first mount - enabled by default
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       const prefs = loadUserPreferences();
-      const shouldEnable = prefs.noiseFilterEnabled !== undefined 
-        ? prefs.noiseFilterEnabled 
-        : true; // Enabled by default if no preference saved
       
-      // Only set if we haven't initialized yet (to avoid overriding user's manual toggle when mic is off)
-      if (prefs.noiseFilterEnabled === undefined && !isNoiseFilterEnabled) {
-        setNoiseFilterEnabled(shouldEnable);
-        console.log('[MicrophoneSettings] Initializing Krisp to default enabled state');
+      // If no saved preference exists, enable by default (even if mic is muted)
+      if (prefs.noiseFilterEnabled === undefined) {
+        setNoiseFilterEnabled(true);
+        console.log('[MicrophoneSettings] Initializing Krisp to default enabled state (even with muted audio)');
+      } else {
+        // Respect saved preference
+        if (prefs.noiseFilterEnabled !== isNoiseFilterEnabled) {
+          setNoiseFilterEnabled(prefs.noiseFilterEnabled);
+        }
       }
+      return;
+    }
+
+    // After initialization, always enable Krisp when microphone is enabled
+    if (isMicrophoneEnabled && !isNoiseFilterEnabled) {
+      console.log('[MicrophoneSettings] Microphone is enabled, auto-enabling Krisp noise suppression');
+      setNoiseFilterEnabled(true);
     }
   }, [isMicrophoneEnabled, isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled]);
 
