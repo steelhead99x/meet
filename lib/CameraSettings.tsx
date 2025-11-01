@@ -972,41 +972,44 @@ export function CameraSettings() {
               }
             }}
             disabled={isUploading}
+            title="Upload custom background image or video (max 100MB)"
             style={{
-              border: '2px dashed rgba(255, 255, 255, 0.3)',
-              background: 'rgba(255, 255, 255, 0.05)',
+              border: '2px dashed rgba(59, 130, 246, 0.5)',
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.1))',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               minWidth: '60px',
               minHeight: '60px',
-              borderRadius: '8px',
+              borderRadius: '12px',
               padding: '0',
               cursor: isUploading ? 'not-allowed' : 'pointer',
               opacity: isUploading ? 0.6 : 1,
               position: 'relative',
+              transition: 'all 0.2s ease',
             }}
           >
             {isUploading ? (
-              <div style={{ fontSize: '10px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', pointerEvents: 'none' }}>
+              <div style={{ fontSize: '11px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.95)', pointerEvents: 'none' }}>
                 <div style={{
-                  width: '16px',
-                  height: '16px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  borderTopColor: '#fff',
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid rgba(59, 130, 246, 0.3)',
+                  borderTopColor: '#60a5fa',
                   borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  margin: '0 auto 4px',
+                  animation: 'spin 0.8s linear infinite',
+                  margin: '0 auto 6px',
                 }} />
-                Uploading...
+                <span style={{ fontSize: '10px', fontWeight: 500 }}>Uploading...</span>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', pointerEvents: 'none' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', pointerEvents: 'none' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ color: 'rgba(96, 165, 250, 0.9)' }}>
+                  <path d="M7 18C4.23858 18 2 15.7614 2 13C2 10.4003 4.01099 8.26756 6.5 8.03302V8C6.5 5.23858 8.73858 3 11.5 3C13.8595 3 15.8291 4.64832 16.381 6.86155C18.8843 7.42648 20.5 9.64141 20.5 12.25C20.5 15.1495 18.1495 17.5 15.25 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 11V21M12 11L9 14M12 11L15 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>Upload</span>
+                <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.95)', fontWeight: 500 }}>Upload</span>
               </div>
             )}
             
@@ -1019,7 +1022,7 @@ export function CameraSettings() {
               disabled={isUploading}
               title="Upload custom background (image or video)"
               aria-label="Upload custom background"
-              style={{ 
+              style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
@@ -1027,8 +1030,7 @@ export function CameraSettings() {
                 height: '100%',
                 opacity: 0,
                 cursor: isUploading ? 'not-allowed' : 'pointer',
-                zIndex: 1,
-                pointerEvents: 'none',
+                zIndex: 2,
               }}
             />
           </button>

@@ -11,6 +11,13 @@ import {
 import { loadUserPreferences, saveUserPreferences } from './userPreferences';
 import { BackgroundProcessor, VirtualBackground } from '@livekit/track-processors';
 import { useProcessorLoading } from './ProcessorLoadingContext';
+import {
+  saveCustomBackground,
+  getAllCustomBackgrounds,
+  deleteCustomBackground,
+  formatBytes,
+  type CustomBackground
+} from './customBackgrounds';
 
 // Helper function to create a canvas with gradient for VirtualBackground
 // Placed outside component to avoid recreation
@@ -87,7 +94,13 @@ export function CustomPreJoin({
   const [mirrorVideo, setMirrorVideo] = React.useState(
     savedPrefs.mirrorVideo !== undefined ? savedPrefs.mirrorVideo : true
   );
-  
+
+  // Custom backgrounds state
+  const [customBackgrounds, setCustomBackgrounds] = React.useState<CustomBackground[]>([]);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [selectedCustomBgId, setSelectedCustomBgId] = React.useState<string | null>(null);
+
   // Use shared processor loading context for privacy screen during room join
   const { setIsApplyingProcessor } = useProcessorLoading();
 
@@ -229,6 +242,51 @@ export function CustomPreJoin({
       backgroundPath: path || '',
     });
   }, [videoTrack]);
+
+  // Load custom backgrounds on mount
+  React.useEffect(() => {
+    const loadBgs = async () => {
+      try {
+        const backgrounds = await getAllCustomBackgrounds();
+        setCustomBackgrounds(backgrounds);
+        console.log('[CustomPreJoin] Loaded custom backgrounds:', backgrounds.length);
+      } catch (error) {
+        console.error('[CustomPreJoin] Failed to load custom backgrounds:', error);
+      }
+    };
+    loadBgs();
+  }, []);
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const customBg = await saveCustomBackground(file);
+      console.log('[CustomPreJoin] Custom background saved:', customBg);
+
+      // Reload backgrounds
+      const backgrounds = await getAllCustomBackgrounds();
+      setCustomBackgrounds(backgrounds);
+
+      // Auto-select the newly uploaded background
+      const bgType = customBg.type === 'video' ? 'custom-video' : 'custom-image';
+      setSelectedCustomBgId(customBg.id);
+      selectBackground(bgType, customBg.id);
+
+      console.log('[CustomPreJoin] Uploaded custom background:', customBg.name);
+    } catch (error) {
+      console.error('[CustomPreJoin] Failed to upload custom background:', error);
+      alert(error instanceof Error ? error.message : 'Failed to upload file');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   // Initialize and save default settings on first mount (preview stage)
   // This ensures first-time users have blur settings saved to localStorage
@@ -843,6 +901,127 @@ export function CustomPreJoin({
                   }}
                 />
               ))}
+
+              {/* Custom uploaded backgrounds */}
+              {customBackgrounds.map((customBg) => {
+                const bgType = customBg.type === 'video' ? 'custom-video' : 'custom-image';
+                const isSelected = selectedCustomBgId === customBg.id;
+
+                return (
+                  <button
+                    key={customBg.id}
+                    type="button"
+                    onClick={() => !isPreparingVideo && selectBackground(bgType, customBg.id)}
+                    className="lk-button lk-button-visual"
+                    aria-label={`Custom ${customBg.type}: ${customBg.name}`}
+                    aria-pressed={isSelected}
+                    disabled={isPreparingVideo}
+                    style={{
+                      backgroundImage: `url(${customBg.thumbnail})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      border: isSelected
+                        ? '2px solid #3b82f6'
+                        : '2px solid rgba(255, 255, 255, 0.15)',
+                      minWidth: '60px',
+                      minHeight: '60px',
+                      padding: '0',
+                      opacity: isPreparingVideo ? 0.5 : 1,
+                      position: 'relative',
+                    }}
+                  >
+                    {customBg.type === 'video' && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '4px',
+                        right: '4px',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        borderRadius: '4px',
+                        padding: '2px 4px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                      }}>
+                        VIDEO
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Upload button */}
+              <button
+                type="button"
+                className="lk-button lk-button-visual upload-background-button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isUploading && fileInputRef.current) {
+                    fileInputRef.current.click();
+                  }
+                }}
+                disabled={isUploading || isPreparingVideo}
+                title="Upload custom background image or video (max 100MB)"
+                style={{
+                  border: '2px dashed rgba(59, 130, 246, 0.5)',
+                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.1))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '60px',
+                  minHeight: '60px',
+                  borderRadius: '12px',
+                  padding: '0',
+                  cursor: (isUploading || isPreparingVideo) ? 'not-allowed' : 'pointer',
+                  opacity: (isUploading || isPreparingVideo) ? 0.6 : 1,
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isUploading ? (
+                  <div style={{ fontSize: '11px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.95)', pointerEvents: 'none' }}>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      border: '2px solid rgba(59, 130, 246, 0.3)',
+                      borderTopColor: '#60a5fa',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                      margin: '0 auto 6px',
+                    }} />
+                    <span style={{ fontSize: '10px', fontWeight: 500 }}>Uploading...</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', pointerEvents: 'none' }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ color: 'rgba(96, 165, 250, 0.9)' }}>
+                      <path d="M7 18C4.23858 18 2 15.7614 2 13C2 10.4003 4.01099 8.26756 6.5 8.03302V8C6.5 5.23858 8.73858 3 11.5 3C13.8595 3 15.8291 4.64832 16.381 6.86155C18.8843 7.42648 20.5 9.64141 20.5 12.25C20.5 15.1495 18.1495 17.5 15.25 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 11V21M12 11L9 14M12 11L15 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.95)', fontWeight: 500 }}>Upload</span>
+                  </div>
+                )}
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/ogg"
+                  onChange={handleFileUpload}
+                  disabled={isUploading || isPreparingVideo}
+                  title="Upload custom background (image or video)"
+                  aria-label="Upload custom background"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    cursor: (isUploading || isPreparingVideo) ? 'not-allowed' : 'pointer',
+                    zIndex: 2,
+                  }}
+                />
+              </button>
             </div>
           </div>
         )}

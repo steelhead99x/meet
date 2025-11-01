@@ -325,6 +325,21 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+/* Upload background button - Professional styling */
+[data-lk-theme] .upload-background-button:not(:disabled):hover,
+.lk-prejoin .upload-background-button:not(:disabled):hover {
+  border-color: rgba(59, 130, 246, 0.8) !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(37, 99, 235, 0.15)) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-lk-theme] .upload-background-button:not(:disabled):active,
+.lk-prejoin .upload-background-button:not(:disabled):active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+}
+
 /* Visual button text labels - clean and minimal */
 [data-lk-theme] .lk-button-visual-label {
   position: relative;
