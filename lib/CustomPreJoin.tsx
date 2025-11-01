@@ -161,16 +161,23 @@ export function CustomPreJoin({
   const tracks = usePreviewTracks(trackOptions, onError);
 
   React.useEffect(() => {
-    console.log('[CustomPreJoin] Tracks updated:', tracks?.length, 'tracks', 
-                tracks?.map(t => ({ kind: t.kind, id: t.mediaStreamTrack?.id })));
+    if (tracks) {
+      console.log('[CustomPreJoin] Tracks updated:', tracks.length, 'tracks',
+                  tracks.map(t => ({ kind: t.kind, id: t.mediaStreamTrack?.id })));
+    } else {
+      console.log('[CustomPreJoin] Tracks initializing...');
+    }
   }, [tracks]);
 
   const videoEl = React.useRef<HTMLVideoElement>(null);
   const videoTrack = tracks?.filter((t) => t.kind === Track.Kind.Video)[0];
-  
+
   React.useEffect(() => {
-    console.log('[CustomPreJoin] VideoTrack updated:', videoTrack ? 'available' : 'null', 
-                videoTrack?.mediaStreamTrack?.id);
+    if (videoTrack) {
+      console.log('[CustomPreJoin] VideoTrack available:', videoTrack.mediaStreamTrack?.id);
+    } else {
+      console.log('[CustomPreJoin] VideoTrack not yet available');
+    }
   }, [videoTrack]);
   const blurProcessorRef = React.useRef<any>(null);
   const processedTrackIdRef = React.useRef<string | null>(null);

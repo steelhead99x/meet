@@ -18,6 +18,7 @@ import {
   ControlBar,
   Chat,
   useTracks,
+  LayoutContextProvider,
 } from '@livekit/components-react';
 import {
   ExternalE2EEKeyProvider,
@@ -615,13 +616,17 @@ function RoomContentInner() {
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             {hasScreenShare ? (
               // When screen sharing, use default VideoConference layout (better for screen share viewing)
+              // VideoConference provides its own LayoutContextProvider
               <VideoConference
                 SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
                 chatMessageFormatter={formatChatMessageLinks}
               />
             ) : (
               // When no screen share, use adaptive PIP layout
-              <AdaptiveVideoLayout />
+              // Wrap in LayoutContextProvider for ControlBar to work
+              <LayoutContextProvider>
+                <AdaptiveVideoLayout />
+              </LayoutContextProvider>
             )}
           </div>
 
@@ -638,16 +643,18 @@ function RoomContentInner() {
                 padding: '20px 16px 16px',
               }}
             >
-              <ControlBar
-                controls={{
-                  microphone: true,
-                  camera: true,
-                  screenShare: true,
-                  chat: true,
-                  leave: true,
-                  settings: SHOW_SETTINGS_MENU,
-                }}
-              />
+              <LayoutContextProvider>
+                <ControlBar
+                  controls={{
+                    microphone: true,
+                    camera: true,
+                    screenShare: true,
+                    chat: true,
+                    leave: true,
+                    settings: SHOW_SETTINGS_MENU,
+                  }}
+                />
+              </LayoutContextProvider>
             </div>
           )}
         </div>
