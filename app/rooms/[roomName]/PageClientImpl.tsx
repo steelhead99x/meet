@@ -559,7 +559,20 @@ function VideoConferenceComponent(props: {
 
 // Separate component for room content to isolate hooks
 function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined }) {
-  // Check if anyone is screen sharing
+  return (
+    <RoomContext.Provider value={room}>
+      <RoomContentInner />
+      <RoomAudioRenderer />
+      <DebugMode />
+      <RecordingIndicator />
+      <ProcessorLoadingOverlay />
+    </RoomContext.Provider>
+  );
+}
+
+// Inner component that uses hooks requiring room context
+function RoomContentInner() {
+  // Check if anyone is screen sharing - now safe to use useTracks inside RoomContext
   const tracks = useTracks([{ source: Track.Source.ScreenShare, withPlaceholder: false }]);
   const hasScreenShare = tracks.length > 0;
 
@@ -569,7 +582,7 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
   });
 
   return (
-    <RoomContext.Provider value={room}>
+    <>
       <KeyboardShortcuts />
       <ReconnectionBanner />
       <ConnectionQualityTooltip />
@@ -639,12 +652,7 @@ function RoomContent({ room, worker }: { room: Room; worker: Worker | undefined 
           )}
         </div>
       </div>
-
-      <RoomAudioRenderer />
-      <DebugMode />
-      <RecordingIndicator />
-      <ProcessorLoadingOverlay />
-    </RoomContext.Provider>
+    </>
   );
 }
 

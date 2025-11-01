@@ -192,3 +192,4 @@ Check the console logs - they tell you everything:
 The quality improvement is real and noticeable. Users with High/Ultra quality will love it!
 
 
+

@@ -302,3 +302,4 @@ A: Open DevTools → Performance → Record while video calling. Check frame tim
 The framework is ready - just choose which phase to implement first!
 
 
+

@@ -177,3 +177,4 @@ Multiple validation layers ensure we catch state changes at every critical point
 - `lib/BlurConfig.ts` - Blur configuration (unchanged)
 
 
+
