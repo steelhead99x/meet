@@ -290,8 +290,27 @@ function PIPWindowContent({
   isLocalScreenSharing: boolean;
 }) {
   const videoRefs = React.useRef<Map<string, HTMLVideoElement>>(new Map());
+  const attachedTracksRef = React.useRef<Map<string, { track: any; element: HTMLVideoElement }>>(new Map());
 
+  // Attach/detach tracks when cameraTracks change
   React.useEffect(() => {
+    // If screen sharing stops, detach all tracks from PIP window (but keep them in main window)
+    if (!isLocalScreenSharing) {
+      console.log('[PIPWindowContent] Screen sharing stopped - detaching tracks from PIP window');
+      attachedTracksRef.current.forEach((attached, participantId) => {
+        console.log('[PIPWindowContent] Detaching track from PIP window for:', participantId);
+        try {
+          // Only detach from this specific video element (PIP window)
+          // This ensures tracks remain attached to main browser window
+          attached.track.detach(attached.element);
+        } catch (error) {
+          console.warn('[PIPWindowContent] Error detaching track:', error);
+        }
+      });
+      attachedTracksRef.current.clear();
+      return;
+    }
+
     console.log('[PIPWindowContent] Rendering with:', {
       cameraTracks: cameraTracks.length,
       isLocalScreenSharing,
@@ -305,24 +324,60 @@ function PIPWindowContent({
     cameraTracks.forEach((trackRef) => {
       const videoEl = videoRefs.current.get(trackRef.participant.identity);
       if (videoEl && trackRef.publication?.track) {
-        console.log('[PIPWindowContent] Attaching track for:', trackRef.participant.identity);
-        trackRef.publication.track.attach(videoEl);
+        const participantId = trackRef.participant.identity;
+        // Only attach if not already attached to this element
+        if (!attachedTracksRef.current.has(participantId)) {
+          console.log('[PIPWindowContent] Attaching track for:', participantId);
+          trackRef.publication.track.attach(videoEl);
+          attachedTracksRef.current.set(participantId, {
+            track: trackRef.publication.track,
+            element: videoEl,
+          });
+        }
       }
     });
 
-    // Cleanup: detach tracks
+    // Remove tracks that are no longer in the list
+    const currentParticipantIds = new Set(cameraTracks.map(t => t.participant.identity));
+    attachedTracksRef.current.forEach((attached, participantId) => {
+      if (!currentParticipantIds.has(participantId)) {
+        console.log('[PIPWindowContent] Detaching track (no longer in list) for:', participantId);
+        try {
+          attached.track.detach(attached.element);
+        } catch (error) {
+          console.warn('[PIPWindowContent] Error detaching track:', error);
+        }
+        attachedTracksRef.current.delete(participantId);
+      }
+    });
+  }, [cameraTracks, isLocalScreenSharing]);
+
+  // Cleanup: detach tracks ONLY when component actually unmounts (window closes)
+  // This ensures tracks stay attached to main window video elements
+  React.useEffect(() => {
     return () => {
-      cameraTracks.forEach((trackRef) => {
-        if (trackRef.publication?.track) {
-          trackRef.publication.track.detach();
+      // Only detach when component is actually unmounting (PIP window closing)
+      console.log('[PIPWindowContent] Component unmounting - detaching all tracks from PIP window');
+      attachedTracksRef.current.forEach((attached, participantId) => {
+        // Only detach from this specific video element (PIP window)
+        // This prevents detaching from video elements in the main browser window
+        console.log('[PIPWindowContent] Detaching track from PIP window for:', participantId);
+        try {
+          attached.track.detach(attached.element);
+        } catch (error) {
+          console.warn('[PIPWindowContent] Error detaching track:', error);
         }
       });
+      attachedTracksRef.current.clear();
+      videoRefs.current.clear();
     };
-  }, [cameraTracks, isLocalScreenSharing]);
+  }, []); // Only run cleanup on unmount
 
   if (!isLocalScreenSharing) {
     console.log('[PIPWindowContent] Not rendering - screen sharing is off');
-    return null;
+    // Don't return null - instead return empty div to maintain component structure
+    // The window should be closing anyway, but this prevents issues if it's still open
+    return <div style={{ display: 'none' }} />;
   }
 
   return (
