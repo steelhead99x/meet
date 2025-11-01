@@ -58,8 +58,9 @@ export function SettingsMenu(props: SettingsMenuProps) {
     
     // Subscribe to widget state changes if available
     let unsubscribe: (() => void) | undefined;
-    if (layoutContext.widget.subscribe) {
-      unsubscribe = layoutContext.widget.subscribe((state: any) => {
+    const widget = layoutContext.widget as any;
+    if (widget?.subscribe) {
+      unsubscribe = widget.subscribe((state: any) => {
         const isOpen = state?.settings === true;
         setIsSettingsOpen(isOpen);
       });
