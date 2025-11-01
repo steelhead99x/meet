@@ -591,59 +591,56 @@ function RoomContentInner() {
       <CarouselNavigation />
 
       {/* Custom adaptive layout with chat and controls */}
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          position: 'relative',
-          overflow: 'hidden',
-          background: '#000',
-        }}
-      >
-        {/* Main video area - use adaptive layout when no screen share, or default VideoConference with screen share */}
+      <LayoutContextProvider>
         <div
           style={{
-            flex: 1,
+            width: '100%',
+            height: '100%',
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
             position: 'relative',
             overflow: 'hidden',
+            background: '#000',
           }}
         >
-          {/* Videos */}
-          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            {hasScreenShare ? (
-              // When screen sharing, use default VideoConference layout (better for screen share viewing)
-              // VideoConference provides its own LayoutContextProvider
-              <VideoConference
-                SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
-                chatMessageFormatter={formatChatMessageLinks}
-              />
-            ) : (
-              // When no screen share, use adaptive PIP layout
-              // Wrap in LayoutContextProvider for ControlBar to work
-              <LayoutContextProvider>
+          {/* Main video area - use adaptive layout when no screen share, or default VideoConference with screen share */}
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Videos */}
+            <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+              {hasScreenShare ? (
+                // When screen sharing, use default VideoConference layout (better for screen share viewing)
+                // VideoConference provides its own LayoutContextProvider
+                <VideoConference
+                  SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
+                  chatMessageFormatter={formatChatMessageLinks}
+                />
+              ) : (
+                // When no screen share, use adaptive PIP layout
                 <AdaptiveVideoLayout />
-              </LayoutContextProvider>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Control bar at bottom - only show when using adaptive layout */}
-          {!hasScreenShare && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 100,
-                background: 'linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%)',
-                padding: '20px 16px 16px',
-              }}
-            >
-              <LayoutContextProvider>
+            {/* Control bar at bottom - only show when using adaptive layout */}
+            {!hasScreenShare && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 100,
+                  background: 'linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%)',
+                  padding: '20px 16px 16px',
+                }}
+              >
                 <ControlBar
                   controls={{
                     microphone: true,
@@ -654,11 +651,22 @@ function RoomContentInner() {
                     settings: SHOW_SETTINGS_MENU,
                   }}
                 />
-              </LayoutContextProvider>
-            </div>
+              </div>
+            )}
+          </div>
+
+          {/* Chat panel - only show when not using VideoConference (which has its own chat) */}
+          {!hasScreenShare && (
+            <Chat
+              style={{
+                height: '100%',
+                width: '360px',
+              }}
+              messageFormatter={formatChatMessageLinks}
+            />
           )}
         </div>
-      </div>
+      </LayoutContextProvider>
     </>
   );
 }
